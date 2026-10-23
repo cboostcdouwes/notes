@@ -1,0 +1,4 @@
+# Obsidian layout state, changes on every click
+.obsidian/workspace*.json
+# Obsidian trash
+.trash/
