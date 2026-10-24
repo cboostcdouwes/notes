@@ -6,6 +6,7 @@ the run on requirement reasons, the options × requirements matrix only came up 
 research had several hints to it. Constraint for any change: the skill grows only a little (user, 2026-10-24).
 
 ## Related decisions
+- Child (open): `model-side-discovery.md` (D10).
 - Parent: `requirement-reasons.md` (decided). Sibling: `skill-rule-following.md` (decided), `skill-and-log-size.md`
   (decided; sets the size warning at ~4,800 estimated tokens of SKILL.md body).
 
@@ -41,7 +42,10 @@ overview, the implemented files), not its description in a round report.
 | D1b | SKILL.md may grow up to the size warning (~4,800 estimated tokens; ~2,000 characters of room) | a bigger always-loaded skill is followed worse and costs more (Z8a, Z8b of `skill-and-log-size.md`); "this should be the final refinement" | user, round 1 (replaces D1) | preference |
 | D6 | The draft of the leader is, where it makes sense, a throwaway variant of the real artifact (most often code), not a description in the log | the skill is mostly used for programming; the concrete thing is what shows the missing option | user, round 1 | preference |
 | D7 | The wording stays generic enough for other fields (CAD, electrical engineering) | the skill should apply beyond programming | user, round 1 ("if possible") | preference |
-| D8 | H2/H3 (options found from using the result) are in scope | the research should catch them, not the use after implementation | user, round 1 | preference |
+| D8 | H2/H3 (options found from using the result) are in scope | the research should catch them, not the use after implementation | user, round 1; round 2: a partial cover is not enough, look further | preference |
+| D9 | The rejection check stays focused on correcting wrongly filled information; finding options (variants included) is the bias check's job | each check's brief stays focused | user, round 2 | preference |
+| D10 | The model does the out-of-the-box discovery itself; presenting options to the user must not be what finds the better one | that discovery is what the skill is for; delegating it to the user leaves the legwork with them | user, review 2026-10-24 | preference (strength not asked; stated as the skill's purpose) |
+| D7b | The wording isn't shaped by the trial runs (tables, text, markdown); it fits programming first, other fields too | the skill is used mostly for programming problems, also other fields | user, round 2 (sharpens D7) | preference |
 | D2 | No extra agent or extra waiting per round | rounds stay fast; extra agents cost tokens | `skill-and-log-size.md` Z5, `skill-rule-following.md` S11 (preferences) | preference |
 | D3 | Everything stays inside the skill folder | sharable later | `skill-rule-following.md` S1c | preference |
 | D4 | The bias check isn't told the leading option | the main agent's bias reaches the check | `skill-and-log-size.md` Z9b | preference |
@@ -58,13 +62,16 @@ overview, the implemented files), not its description in a round report.
 | O3b | Bias extract drops *Options*; the check proposes options blind | P4, harder | loses the "assumptions behind the strongest options" job (no requirement covers it: tiebreak) | cheap | add-on candidate (vs O3) |
 | O3c | A third, option-only check | P4 | an extra agent per round | cheap | trailing (D2) |
 | O4 | Round report shows a few-line sketch of the leading option | P1-P3, H2 partly | longer reports; a sketch is still a description (H3 needed real files) | cheap | trailing (D5 ~, absorbed by O7) |
-| O5 | Morphological box: Phase 3 lists the design's dimensions (form, place, who acts, when) and tries a few values for each | P2, P3, H3 partly; D7 (known method in mechanical and electrical design) | ~170 characters | cheap | add-on (in the draft; to confirm) |
+| O5 | Morphological box: dimensions (what it is made of, where it lives, who or what acts on it, when), other values for each; merged into the existing "radically different framings" bullet, whose examples are such values | P2, P3, H3 partly; D7 | ~120 characters | cheap | add-on (in the draft) |
 | O6 | Ask the user early for the shape they expect | P1-P3 if the user thinks of it | hands discovery to the user | cheap | trailing (criteria) |
-| O7 | Phase 4 step 4: draft the leader as the thing itself, outside the project (a throwaway variant of the real artifact, or its exact wording), judge the draft; the report gives it to the user to look at | P1 (the table is drafted), H2, H3 partly; D6, D7 | ~400 characters (with the report and checklist lines); a redraft per leader change, costly for non-text artifacts (go-ahead rule) | cheap | leading |
-| O8 | Rejection check proposes the best variant of each trailing option (`checks/rejection.md` only) | H1 (the only option covering it); no SKILL.md growth | the record already has a best-variant field (possibly a follow-through gap) | cheap | add-on candidate (user didn't select it, round 1; no requirement against it; asked round 2) |
-| O9 | Show the Phase 6 overview as a draft once the ranking is stable, before the stop condition | H2, H3 (the user reviews earlier) | an extra overview the user reads; overlaps O7; describes, doesn't build (D6 ✗) | cheap | runner-up |
+| O7 | Phase 4 step 4: draft the leader as the thing itself, outside the project (a throwaway variant of the real artifact, or its exact wording), judge the draft; the report gives it to the user to look at | ~ P1 (the table is drafted), H2, H3 partly; D6, D7 | ~400 characters (with the report and checklist lines); a redraft per leader change, costly for non-text artifacts (go-ahead rule) | cheap | leading |
+| O8 | Rejection check proposes the best variant of each trailing option (`checks/rejection.md` only) | H1; no SKILL.md growth | widens the rejection check's job | cheap | trailing (D9) |
+| O12 | In the draft step: put the draft through its real use, as often and at the scale it will meet, and note what each use costs | H2 (the checklist pasted every round shows its per-round cost), H3 (a round run with the split reads `questions.md` and `options.md` every time); D7b | ~110 characters; a walkthrough per leader | cheap | leading (part of O7) |
+| O13 | `decision.md`: the plan ends with a step of its own: once the first step is in use, ask the user what using it showed; amend or reopen (the plan carries the trigger, since nothing loads the skill after the research) | H2, H3 where a walkthrough misses them; no SKILL.md growth | catches them after implementation, not before (D8 ~) | cheap | add-on |
+| O14 | Draft the runner-up too when it is close to the leader | H1 partly (anchoring on the leader); a better trailing variant gets judged concretely | a second draft per round when close (D2 ~) | cheap | add-on (user, round 3) |
+| O9 | Show the Phase 6 overview as a draft once the ranking is stable, before the stop condition | H2, H3 (the user reviews earlier) | an extra overview the user reads; overlaps O7's draft shown each round | cheap | runner-up (tiebreak: overlap) |
 | O10 | Pre-mortem in the stress test: "if the user rejects the leader at review, why?" | H1-H3 partly | ~60 characters; a self-question the agent may answer shallowly | cheap | add-on candidate |
-| O11 | Running cost per round as a column in *Options* | H2 | template change; narrow (one case) | cheap | trailing (criteria: one case) |
+| O11 | Running cost per round as a column in *Options* | H2 | template change; narrow (one case); O12's "note what each use costs" covers it | cheap | trailing (absorbed by O12) |
 
 ## Matrix
 Round 1 matrix, kept for history of cells; D1 is replaced by D1b (every option fits: all ✓). D6-D8 per option in
@@ -82,14 +89,16 @@ Round 1 matrix, kept for history of cells; D1 is replaced by D1b (every option f
 | O4 | ? | ✓ | ✓ | ✓ | ~ | ~ P1-P3 | ~ H2 | ~ D5, P, H |
 | O5 | ? | ✓ | ✓ | ✓ | ✓ | ~ P2, P3 | ~ H3 | ~ P, H |
 | O6 | ✓ | ✓ | ✓ | ✓ | ✓ | ~ | ✗ | ✗ H |
-| O7 | ? | ✓ | ✓ | ✓ | ✓ | ~ P1 (P2, P3 via O2b) | ~ H2, H3 | ~ P, H |
+| O7 | ? | ~ (redraft time) | ✓ | ✓ | ~ | ~ P1 (P2, P3 via O2b) | ~ H2, H3 | ~ D2, D5, P, H |
+| O12 | ? | ~ (walkthrough time) | ✓ | ✓ | ✓ | ✗ | ? H2, H3 (asked: D8) | ~ D2, ? H |
+| O13 | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ~ H2, H3 (after use) | ~ H |
 | O8 | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ~ H1 | ✗ P |
 | O9 | ? | ✓ | ✓ | ✓ | ~ | ~ | ~ H2, H3 | ~ D5, P, H |
 | O10 | ? | ✓ | ✓ | ✓ | ✓ | ? | ~ H1-H3 | ? P, ~ H |
 | O11 | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ~ H2 | ✗ P |
 
 ## Evaluation
-Round 2 draft of the leader (O7 + O2b + O3 + O5 + O10), as the exact text; applied to a scratch copy of SKILL.md
+Round 2 draft of the leader (superseded by the round 3 draft in `<scratchpad>/skill-draft/`; changes in the rounds file) (O7 + O2b + O3 + O5 + O10), as the exact text; applied to a scratch copy of SKILL.md
 (`<scratchpad>/skill-draft/SKILL.md`) to measure it:
 - Intro, line 20: "Throwaway spikes outside the project are fine (*Phase 4*)." → "Throwaway spikes and drafts
   outside the project are fine (*Phase 4*)."
@@ -122,7 +131,9 @@ shared cause "the option shows when the concrete thing is seen" is my inference 
 Whether H1 happened with the best-variant field already in the skill is unverified (both edits 2026-10-24, order not
 recorded).
 
-Rejection records (no requirement fails outright for any option but O3c; all others trail on the success criteria,
+Tension: O7 and O12 cost time each round (D2 ~, preference); for non-text artifacts a costly redraft asks for a go-ahead each time the leader changes. Not ranked against them: no other option covers H2/H3 before use.
+H1 doesn't fit the shared cause (it came from a challenged rejection, not from seeing a draft); and H1-H3 are no longer held out (O12 was built with them in view): only the next real run is a clean test.
+Rejection records (no requirement fails outright for any option but O3c (D2, a preference from other logs, not confirmed here); all others trail on the success criteria,
 compared with O7):
 - O1, O1b: ✓ on every requirement but D8 (preference, user round 1); "relies on rule following" is O7's cost too and
   doesn't count. Trailing on D8 only.
@@ -130,7 +141,10 @@ compared with O7):
   either way at Phase 6.
 - O2 vs O2b: the overfit risk is shared; ~150 characters within D1b's room is a tiebreak, said as such.
 - O3c (D2, preference): an extra agent per round; O3/O3b give the same cover in the existing check.
-- O4: O7 does the same in the log, at full detail, without growing the report (D5); O4's ~ D5 is not shared by O7.
+- O4: trailing on D6 (preference): a sketch is still a description (H3 needed the real use); the D5 cost is shared with O7.
+- O3b vs O3: O3b loses the bias check's "assumptions behind the strongest options" job; no requirement covers it, so a tiebreak, said as such.
+- O9: the D6 citation was stretched (D6 is about how the leader's draft is made); O9 trails only on overlap with O7's draft shown each round (tiebreak).
+- O8, trailing (D9, preference, user round 2): it would widen the rejection check; the bias check's "missing options" covers variants. H1 rests on the bias check (known gap if it misses).
 - O6, O11: no requirement fails; tiebreaks only (O6 hands discovery to the user; O11 covers one case).
 Harms (O7): drafting each round wastes work while the leader changes (a draft is a few lines to a table; drafted only
 for the leader); a draft anchors the researcher on the leader (the bias check doesn't see it if it sits in
@@ -143,9 +157,7 @@ covered (O8's job).
 Reversibility: every option cheap (skill text).
 
 ## Open questions
-1. O8 not kept: why (it covers H1, which nothing else does, at no SKILL.md cost).
-2. O5 (dimensions varied): in or out.
-3. The draft's wording.
+None deciding. Remark (round 3): does step 6 (spikes) still need to exist next to step 4? Answered in the overview.
 
 ## Sources
 | Claim | Source (URL or `file:line`) | Date | Reliability |
@@ -156,30 +168,80 @@ Reversibility: every option cheap (skill text).
 
 ## Round checklist
 Checklist:
-- [x] Log (first round): its path in the report; new or resumed, and what was outdated
-- [x] Problem and success criteria (first round): stated without solution words
-- [x] Scope: split, widened or unchanged (unchanged; D8 widens the target, not the topic)
-- [x] Requirements: new or changed ones, each with reason, source and status (D1b, D6, D7, D8)
-- [x] Replaced requirements: new IDs, old rows moved; options re-checked from the old matrix column (D1 -> D1b; D1 column was ? for all, nothing to re-check)
-- [x] Written requirements: evidence found for each (commit, decision log) (n/a: none new)
-- [x] Deciding unverified requirements: asked this round, or assumptions after "can't answer" (none left unverified)
-- [x] Options: added, by the categories of Phase 3 (O5 back)
-- [x] Searches: recorded in the round's entry; or "no web search", said in the report (no web search; said in the report)
-- [x] Deciding claims: cross-checked against a second source, or marked unverified (n/a: none new)
-- [x] Matrix: updated (D6-D8 scored in Evaluation)
-- [x] Rejection records: one per trailing or not applicable option (scenario, best variant, leader's cells compared) (O8 updated)
-- [x] Harms: scenarios for the leading option
-- [x] Reversibility: every option rated; one-way means extra stress-testing, said in the report
-- [x] Stress test: of the leading option (of the draft)
-- [x] Bias check: findings in the log and the report; or "not independent" (wording fixed in the draft; D8 at most partial for a throwaway draft)
-- [x] Rejection check: findings in the log and the report; verdicts corrected (O8, O9 records; shared costs removed; O7 cost ~400)
-- [x] Ranking change: recorded (none; O8 back)
+- [x] Log (first round): its path in the report; new or resumed, and what was outdated (n/a)
+- [x] Problem and success criteria (first round): stated without solution words (n/a)
+- [x] Scope: split, widened or unchanged (unchanged)
+- [x] Requirements: new or changed ones, each with reason, source and status (D9, D7b)
+- [x] Replaced requirements: new IDs, old rows moved; options re-checked from the old matrix column (n/a: D7b sharpens D7, same meaning)
+- [x] Written requirements: evidence found for each (commit, decision log) (n/a)
+- [x] Deciding unverified requirements: asked this round, or assumptions after "can't answer" (none)
+- [x] Options: added, by the categories of Phase 3 (O12, O13; O5 merged)
+- [x] Searches: recorded in the round's entry; or "no web search", said in the report (no web search)
+- [x] Deciding claims: cross-checked against a second source, or marked unverified (n/a)
+- [x] Matrix: updated (verdicts in Options; matrix unchanged in structure)
+- [x] Rejection records: one per trailing or not applicable option (scenario, best variant, leader's cells compared) (O8 on D9)
+- [x] Harms: scenarios for the leading option (O12: a walkthrough per leader costs time; covered by the go-ahead rule)
+- [x] Reversibility: every option rated; one-way means extra stress-testing, said in the report (all cheap)
+- [x] Stress test: of the leading option (O12 replayed on H2, H3)
+- [x] Bias check: findings in the log and the report; or "not independent" (premise and held-out caveats recorded; step 4 split; O14)
+- [x] Rejection check: findings in the log and the report; verdicts corrected (O4, O9, O3b records; matrix rows O12, O13; O7 D5 ~)
+- [x] Ranking change: recorded (none; O14 candidate)
 - [x] Report: what changed, recommendation, runner-up, core rejections, the checks' findings
 - [x] Questions: deciding unverified ones first, ordered by ranking impact, through the question tool, remarks last
-- [x] Pushback: if the user picked a worse option, asked what makes it better (O8 asked)
+- [x] Pushback: if the user picked a worse option, asked what makes it better (n/a)
 
 ## Rounds
 - Round 1: framed with held-out cases H1-H3; after the checks leading O7 (draft the leader in the log), runner-up O9; add-ons O2b, O3, O8.
 - Round 2: D1b, D6-D8 from answers; O7 redrafted as a throwaway variant of the real artifact, the draft given to the user; O5 in; O8 back as candidate (asked); runner-up O9. Draft: `<scratchpad>/skill-draft/` (~4,360 tokens est.).
+- Round 3: D9 (O8 trails), D7b (wording broadened); O12 (use the draft as often and at scale) joins the leader for H2/H3; O13 add-on; O5 merged into "radically different framings". ~4,390 tokens est.
+- Round 3 (after the checks): step 4 split into a list, keeps "stress-test"; O13 triggered from the plan; O14 new; O9 record corrected; matrix rows O12, O13.
+- Round 4: answers: wording as drafted, O14 in, O12 enough for H2/H3. No new requirement, no ranking change: stop condition met. Decision drafted.
 
 ## Decision
+Reviewed by the user, 2026-10-24 (*Why* corrected: options turned up when presented to the user, so discovery was
+delegated to the user; D10 and its gap added; the choice kept "for now"). Step 6 tightened at the review ("claims
+about any option"; user). Installed 2026-10-25: SKILL.md, `checks/bias.md`, `decision.md`; ~4,420 tokens est.; backup
+of the old skill in the session scratchpad (`design-research-before-option-discovery/`). Child: `model-side-discovery.md`
+(open).
+**Choice:** O7 + O12 + O14, with O2b, O3, O5, O10, O13 (the draft in `<scratchpad>/skill-draft/`, ~4,420 tokens est.):
+1. Phase 4 step 4: stress-test the leader, and the runner-up when close, on a draft of the thing itself (a throwaway
+   variant of the real artifact outside the project, or its exact wording), put through its real use as often and at
+   the scale it will meet, noting each use's cost; ask why the user would reject it once in use; redraft when the
+   leader changes. The report gives the draft to the user; the checklist line follows; step 6 covers a costly draft.
+2. Phase 3: "do nothing" includes the written rules and plans followed in full; others' solutions taken whole; what
+   you built to judge the options may be the option; "radically different framings" varies the design's dimensions.
+3. `checks/bias.md`: list options from *Problem* and *Requirements* before reading *Options*.
+4. `decision.md`: the plan ends with a step asking what using the first step showed.
+
+**Why:**
+1. An improvement for now, not the fix (user, review): the options turned up when the current options were presented
+   to the user, so out-of-the-box thinking was delegated to the user (D10). The draft lets the user see the real shape
+   every round instead of only at review: D6, D8 (preferences, user rounds 1-2); O12 enough for H2/H3 (user, round 3).
+2. The wording fits programming first and other fields too: D7, D7b (preferences, user rounds 1-2); confirmed as
+   drafted (user, round 3).
+3. Growth up to the warning is allowed: D1b (preference, user round 1).
+
+**Rejected (closest first):**
+- O9, an early decision overview: overlaps the draft shown each round (tiebreak).
+- O8, variants from the rejection check: D9 (user, round 2).
+- O4, a sketch in the report: still a description (D6).
+- O1/O1b, do nothing / follow what's written: H2, H3 not covered (D8).
+- O3b (blind bias check): loses the assumptions job (tiebreak); O3c: an extra agent (D2); O6, O11: tiebreaks.
+
+**Known gaps:**
+- D10 not met: the user still does the discovery legwork, now each round instead of at the review. Open child
+  decision: how the model itself finds the options the user found (user, review).
+- H1-H3 are no longer held out; only the next real run tests the change.
+- H1 (a better variant of a trailing option) rests on the bias check and O14.
+- A costly redraft (code, CAD, hardware) asks for a go-ahead each time the leader changes.
+- The shared cause ("seen and used") is an inference from seven cases.
+
+**Decision checklist:**
+- [x] Stop condition: no new requirements, no ranking change, nothing deciding left unverified
+- [x] Why and Rejected: each on a requirement the user confirmed; confirmed by the user
+- [x] Known gaps and open child decisions: listed in *Decision* (child: D10, model-side discovery)
+- [x] Documentation: updated where the rule takes effect; overstated requirements corrected; commit message proposed (the rule takes effect in the skill itself; no git there)
+- [x] Success criteria: carried over only as project rules (none carried over)
+- [x] Out of scope: noted where open work is kept (`~/Cboost/Notes/_global/TODO.md`)
+- [x] Overview: choice, pros and cons, rejected, gaps, plan, files
+- [x] Review: in open chat; nothing implemented before it

@@ -36,3 +36,26 @@ draft; nothing covers H1 without O8; trim existing text to make room (not done: 
 and plans already written, followed in full"; own working tools as their own bullet; "try a few values for each";
 bias brief "name the ones it lacks"; step 6 "a costly draft or spike".
 Searches: no web search this round.
+
+## Round 3
+Answers (round 2): O8 out: the rejection check stays focused on correcting wrongly filled information, finding
+variants is in theory the bias check's job (D9); the wording leaned on the trial runs (tables, text, markdown), make
+it broader (D7b); H2/H3 partial cover not accepted, look further. No remarks.
+Draft changes: "How others solved it, taken whole: the shape of their solution, not only the parts that fit yours";
+"What you built to judge the options: a comparison, a test or a prototype may itself be the option"; the dimensions
+bullet merged into "Radically different framings" (its examples are values of those dimensions); step 4 adds "Put
+the draft through its real use, as often and at the scale it will meet, and note what each use costs" (O12) and
+"when the result is a text"; `decision.md` adds O13. ~4,390 tokens est.
+Searches: no web search this round.
+Rejection check: O9's D6 citation stretched (now a tiebreak); O4's D5 claim wrong (now D6); O7's D5 cell ~; O3b
+record added (tiebreak); O12, O13 matrix rows added; O7's P1 cell ~.
+Bias check: H1-H3 no longer held out (O12 built with them in view): only the next real run is a clean test; H1
+doesn't fit the shared cause; drafting only the leader anchors on it (O14 new: draft the runner-up when close); real
+use needs an example outside software ("a run, a simulation, a fit check" added); step 4 too dense and dropped
+"stress-test" which other lines name (split into a list, wording restored); costly redrafts mean repeated go-aheads
+(recorded); `decision.md` addition had no trigger (now a step of the plan itself); offset growth by cutting unused
+rules (out of scope; growth allowed up to the warning). ~4,410 tokens est.
+
+## Round 4
+Answers (round 3): wording as drafted; O14 in; O12 enough for H2/H3. Remark: does step 6 still need to exist next to
+step 4? No new requirement, no ranking change: stop condition met; decision drafted.
