@@ -306,3 +306,86 @@ Round 8 checks:
   "shopping"; laptop vibration → child decision (bags).
 
 Ranking: O29 leads on tie-breakers (R7, user preference); O4, O25/O28 runners-up.
+
+## Round 9
+Answers (verbatim in `replay.md`): "Another rack I own"; "The bolts on the seat support tube are way too far forward
+to make a stable strut from the rack to that point."; no remarks.
+
+Checks:
+- Bias check: owned rack on lugs + axle variant (noted, O24 with the sound rack); a top stay to the seat itself is the
+  usual lowracer way → O29b; R9/R7 stale after F11 → R9 restored for the sound rack; R3 should be about the seat
+  back and chain line, not heels (noted); the upper seat fixture is the seat-angle adjustment joint, so a strut
+  there may move with it.
+- Rejection check: O29 R7 ✓ contradicted its bracket cost → ~; O23a beats O29 on R3 (assumed) with no record against
+  O29 → record added, close, O29 ahead on R9; O25/O28 R10 drop is an inference from F11 → marked.
+
+## Round 10
+Answers (verbatim in `replay.md`): "The frame tubes of the rear fork would work, the seat itself flexes, so attaching
+it to the seat would destroy the mount over time."; bracket or longer struts "Yes"; no remarks.
+
+New: R11 (core): anchors only on parts that don't move relative to each other, not the flexing seat. O31 (owned rack
+wholly on the rear fork) leads; O4c close.
+
+Checks:
+- Rejection check: R11 stretched to the seat-frame fixtures without a source → O29/O1/O25/O28/O23a trailing (asked);
+  O31 R2/R10 ✓ unearned (tube clamp, like the old setup) → ~; no R11 column, O4c row missing → added.
+- Bias check: axle + fork-clamp variant (O4c) compared directly; clamps may not fit oval/shaped 7005 tubes; rubber
+  lining can creep (fitted metal clamp + shim variant); strut angle to near-level fork tubes may not brace; R11
+  named a mechanism → reworded; R3 should be brake and seat-back clearance; rack top vs reclined seat back is a real
+  risk.
+
+## Round 11
+Answers (verbatim in `replay.md`): "Only the shell flexes"; "Round, steep strut"; no remarks.
+
+Checks:
+- Bias check: rubber spacers at the seat fixtures could make O29's top springy (R10, R11); O31's steep strut makes a
+  tall narrow triangle whose clamp loads along the tube (creep); missing O32, a top stay bolted to a rear fork bridge
+  or hole; a slotted stay handles seat-angle changes.
+- Rejection check: O29 ✓ R2/R10 vs O31 ~ for equally untested upper anchors → both ~, tie on core; O23a's R11 record
+  stale → close again; R11 column missing; O4c R5 → ~.
+
+## Round 12
+Answers (verbatim in `replay.md`): "Yes, with a hole"; spacers "Shell to seat frame"; seat angle "Yes, sometimes";
+no remarks.
+
+O32 (owned rack: lugs + top stay bolted through the rear fork bridge hole) leads on every cell.
+
+Checks:
+- Bias check: rack top vs reclined seat back is the main unchecked risk for every lug-based upright rack; the bridge
+  hole's use (brake or mudguard) unknown; load position relative to the axle matters for a lowracer in tight
+  corners; the owned rack's wheel size unknown.
+- Rejection check: O32 R5 ✓ unsupported → ~; O29b/O30 not-applicable verdicts may stretch R11 (shell vs mounting) →
+  trailing; stale records noted. Leader unchanged.
+
+## Round 13
+Answers (verbatim in `replay.md`): clears the seat back; bridge hole holds the mudguard; decision "No": "I do not
+have easy access to a long strip of material, and it seems that it might be unstable against sideways movement."
+
+O32 → trailing (R10 sideways, R7); O31 leads.
+
+Checks:
+- Bias check: O32 with a short cross-plate on the bridge bolt (two-point top), sharing the mudguard bolt; a central
+  stay is standard on uprights (F15 worry maybe overstated); O31's steep clamps load along the tube (slip); R7 named a
+  mechanism; R12 may not apply if the rack sits on the frame side of the seat-angle joint.
+- Rejection check: O29 ✓ R10 and bolted (F13/F14) vs O31 ~ → O29 ahead on core, O31 only on R12 (preference) →
+  asked whether R12 is core; O32 V-strut variant (O32b) avoids both objections → added; O23a's ✓ cells assumed → ~;
+  O4c R2 → ~; O29b/O30 record updated.
+
+## Round 14
+Answers (verbatim in `replay.md`): V/plate to the bridge bolt "doesn't seem stable either, as sideways movement at the
+front of the rack would still only be constrained by one bolt"; refitting after seat-angle changes "Not acceptable".
+
+R12 → core; R10 sharpened (front held sideways by more than one bolt). O31 is the only option meeting every core
+requirement; Decision drafted.
+
+Round 14 checks:
+- Bias check: O31's clamps are the kind of joint blamed for the old sway (R10 risk at fitting); cross-plate on the
+  bridge bolt with two strut landings (the user had already rejected a plate on one bolt: it pivots); "more than one
+  bolt" may mean "no play"; bought adjustable stays not listed; fork tube diameter and bridge hole thickness unknown.
+- Rejection check: leader holds; R12 rejections rest on the researcher's reading that seat-fixture racks need
+  refitting → stated as an inference in Decision; O4, O23b share the failure; Options verdicts and Matrix lag round
+  14 (R11/R12 columns missing); O32b + O31 hybrid → recorded as an optional variant.
+
+## Round 15 (review)
+Answers: "Yes, confirmed"; a rack on the seat fixtures "just tilts" with a seat-angle change (no refit); no remarks.
+Seat-fixture options → trailing on R12, not ruled out. Decision O31 reviewed.

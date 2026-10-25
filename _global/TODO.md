@@ -4,6 +4,9 @@ Topics outside any repo. Most important first.
 
 ## design-research skill
 
+- **Improve design-research from the recumbent-rack benchmark** (`design-research/benchmarks/recumbent-luggage-rack/`,
+  scored 2026-10-25): the README's four replay targets (ask about the current setup early, reusable parts, time
+  horizons, rejections within a requirement's wording); then replay with `replay.md`.
 - **Watch the next design-research run** after the skill-and-log-size changes (all four steps done 2026-10-24): do
   the checks stay independent with the extract files, do round entries land in `<topic>.rounds.md`, does the core stay
   under the gate's 4,800-token warning.

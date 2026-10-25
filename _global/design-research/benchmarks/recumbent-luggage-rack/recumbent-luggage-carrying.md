@@ -24,6 +24,11 @@ laptop, charger, phone, notebook); the bike is ridden on bike lanes and through 
 | F4 | "The rack fixes to the frame using the upper seat fixtures and the bolts half way down the seat support tube." Optima's Orynx/Dolphin rack uses the same points and integrates the upper seat frame; the Stinger rack fastens to the upper adjustable seat mounting, bolted to the seat with 4 bolts | Baron user manual, p. 12 "Fitting the seat and rack" | maker; single source |
 | F5 | Seat angle adjusts ~5° at the seat mountings. The 6 Nm limit is for "the bolts holding the seat onto the seat frame" (shell to seat frame); over-tightening cracks the seat. The seat mounting frames are fixed to the bike frame with other bolts (6 mm Allen), no torque given; where the rubber spacers go is not stated. The rack shares the seat-frame-to-bike-frame fixtures, not the shell bolts (corrected round 4; rounds 2-3 had the rack sharing the 6 Nm bolts) | Baron user manual, p. 12, re-read round 4 | maker; OCR text |
 | F7 | Both of the maker's rack points (F4) exist on the user's Baron: the upper seat fixtures and the bolt half way down the seat support tube (user, round 8 checked; round 5 had "only one / unsure") | user, rounds 5, 8 | user, checked |
+| F11 | The bolts half way down the seat support tube are "way too far forward to make a stable strut from the rack to that point"; the user owns another (sound) rack for the lugs | user, round 9 | user, about their bike |
+| F12 | The seat flexes: a rack attached to the seat "would destroy the mount over time". The tubes of the rear fork are a workable upper anchor | user, round 10 | user, about their bike |
+| F13 | Only the seat shell flexes; the seat-frame fixtures (where the seat bolts onto the bike frame) don't. The rear fork tubes are round and a strut from the rack top meets them steeply | user, round 11 | user, about their bike |
+| F14 | The rear fork has a bridge with a hole between its tubes above the wheel; the seat's rubber spacers sit between the shell and the seat frame; the user re-adjusts the seat angle sometimes | user, round 12 | user, about their bike |
+| F15 | The rack top clears the seat back; the bridge hole holds the mudguard; the user has no easy access to a long strip of material; a single central stay to the bridge "might be unstable against sideways movement" | user, round 13 | user |
 | F10 | The lugs held the DIY rack "fine for years"; the user says "I already have a rack for the lugs" (unclear: the current DIY rack, which round 5 said to replace, or a rack that fits lugs) | user, round 8 | user; ambiguity asked |
 | F9 | Old Man Mountain QR fit kits: adjustable 295 mm QR skewer (cut to length), clamp width 160-280 mm; pucks for frames without upper eyelets; axle-mounted rating 33 kg. Fit on a recumbent not documented | bike24.com/p21012226.html; campfirecycling.com OMM fit kits; oldmanmountain.com | retailer + maker; recumbent fit unverified |
 | F6 | Optima (and its US importer) stopped trading around 2008: no new maker rack can be bought | web search summary of BHPC forum / BentRider | unverified |
@@ -47,9 +52,11 @@ frame.
 | R4 | The loaded bike still handles safely (steering, low-speed balance, braking) | Recumbents, especially short-wheelbase and high-seat ones, are sensitive to weight high up or far behind/ahead | inferred | unverified |
 | R5 | The bike's frame and seat keep their strength | Cracked or weakened frame or seat. Warranty moot (bike from ≤2008). The maker's "not for racks" on its own is not a requirement for the user (round 3: acceptable "if it holds"); what is left is actual damage | inferred; reworded rounds 1 and 3 | unverified |
 | R6 | Getting on and off the bike stays as easy as now | Most riders step through in front of the seat, so this mainly bites loads high on the seat back (bias check) | inferred | unverified |
-| R7 | The user can fit it at home with ordinary tools, nothing to fabricate; budget unstated | User's choice ("Buy, I can fit it") | user, round 5; reworded after bias check (was "buys a ready rack", a mechanism) | preference |
-| R10 | The rack doesn't sway or rattle and sits right | The current one does, and the user reads it as a sign it will fall apart (R2) | user, round 4 | core (reason stated by the user) |
-| R9 | Reuse owned gear: rejected for the rack (user, round 5: "Replace it"); bags not asked | Saves buying; "other options are fine too I suppose" | user, round 2 | preference |
+| R7 | The user can fit it at home with ordinary tools and parts at hand or bought; no long strip of material to source and shape (round 13); budget unstated | User's choice ("Buy, I can fit it") | user, round 5; reworded after bias check (was "buys a ready rack", a mechanism) | preference |
+| R10 | The rack doesn't sway or rattle, fore-aft or sideways, and sits right; sideways movement at the rack's front must be held by more than one bolt (round 14) | The current one does, and the user reads it as a sign it will fall apart (R2) | user, round 4 | core (reason stated by the user) |
+| R11 | All rack anchors sit on parts that don't move relative to each other; the flexing seat is not one of them | The seat flexes; a mount there fatigues and fails over time (F12). The seat-frame fixtures don't move (F13) | user, round 10; reworded after bias check (was "not the seat", a mechanism) | core (user stated what breaks) |
+| R12 | Re-adjusting the seat angle doesn't disturb the rack's fit | The user re-adjusts it sometimes (F14); refitting the rack (or straining it) each time is "Not acceptable" (round 14) | user, rounds 12 and 14 | core |
+| R9 | Reuse owned gear: rejected for the badly made DIY rack (user, round 5: "Replace it"); applies to the other, sound rack the user owns (round 9) | Saves buying; "other options are fine too I suppose" | user, round 2 | preference |
 | R8 | The loaded bike still rides bike lanes and takes tight corners: two rear panniers are fine, a trailer is not | The user has to ride it there | user, rounds 6 and 8 | core |
 
 ## Options
@@ -63,7 +70,7 @@ table is in the rounds file.
 | O23a | A second-hand original Optima rack on the maker's points (upper seat fixtures + bolts half way down the seat support tube, F4) | Designed for exactly these points and this seat: fit, stiffness, clearance solved at once (R2, R3, R10) | Supply thin since ~2008 (F6, unverified): luck and time; the original may have been light-duty (R10 unverified); load through the seat-frame fixtures (R5, shared by every F4 option) | cheap | runner-up (if one can be found and both F4 points exist) |
 | O25 | A quality off-the-shelf rack (Tubus, Racktime etc.) fixed to the maker's points with short triangulated brackets: metal-to-metal, M5/M6 stainless, threadlock, spherical washers to match angles, a cross-member between the legs | Buyable now; triangulated and preloaded joints cure sway and rattle (R10); points the maker chose for a rack (R2) | Brackets to make or have made (R7); fit of a 26" rack's geometry behind a very low seat unchecked (R3); load through the seat-frame fixtures (R5, shared with O23a) | cheap | runner-up (tie; R7 tie-breaker: brackets to make) |
 | O23b | A rack built for this bike by a framebuilder or ligfiets shop, on the F4 points | Best fit and stiffness (R10, R3) | €150-400 estimated, lead time, the bike at the workshop (R7) | cheap | trailing (R7) |
-| O29 | A quality bought rack (Tubus, Racktime, 26") with its lower legs on the mudguard lugs (held for years, F10) and its upper struts to one of the maker's rack points (the upper seat fixture or the bolt half way down the seat support tube, F7: both exist), metal-to-metal, M6 steel bolts | Standard rack on standard-pattern eyelets: no adapters for the lower legs; the upper strut needs a bracket to the seat fixture, as O4 (R7 ~); the lugs held even a badly made rack (F8) | Upper struts may need bending or the rack maker's longer struts to reach the seat point (R7 ~); rack top vs the reclined seat back unchecked (R3); F3's "not for racks" weighed by the user as acceptable (rounds 3, 6, 8) | cheap | leading (tie on requirements; R7 and the user's lug preference break it) |
+| O29 | A quality bought rack (Tubus, Racktime, 26") with its lower legs on the mudguard lugs (held for years, F10) and its upper struts to the upper seat fixture (the mid seat-support-tube bolts are too far forward for a stable strut, F11); the user owns a rack for this (F11), metal-to-metal, M6 steel bolts | Standard rack on standard-pattern eyelets: no adapters for the lower legs; the upper strut needs a bracket to the seat fixture, as O4 (R7 ~); the lugs held even a badly made rack (F8) | Upper struts may need bending or the rack maker's longer struts to reach the seat point (R7 ~); rack top vs the reclined seat back unchecked (R3); F3's "not for racks" weighed by the user as acceptable (rounds 3, 6, 8) | cheap | not applicable (R12, core) |
 | O28 | A rack from another recumbent maker (Azub, HP Velotechnik, Nazca, Flevobike), adapted to the F4 points | Made for a low seat, so geometry closer than an upright rack (R3) | Adapters (R7); availability second-hand or new per model | cheap | runner-up |
 | O4 | An axle-mounted rack (Old Man Mountain, ~33 kg claimed axle-mounted; Tailfin) with its upper end on the F4 points | Lower load into the axle, not the lugs (R2); rated rack (R10) | €150-350; QR type and dropout spacing unchecked; rack height/strut geometry for a 26" wheel under a low seat unchecked (R3, R7); upper end on the seat-frame fixtures (R5, shared) | cheap | runner-up |
 | O1 | The current rack re-mounted on the F4 points with triangulated, preloaded brackets (no lugs, no tube clamp) | Cheap (€20-40); cures the mounting half of R10 | The rack itself is "badly made" (R2, R10); user replaces it | cheap | trailing (R10; user replaces the rack) |
@@ -80,18 +87,25 @@ table is in the rounds file.
 | O14, O15, O16 | Longtail; second bike; do nothing/delivery | — | Length (R8); second vehicle (R7); outside the Problem | — | trailing |
 | O30 | A rack bolted to the seat's own upper mounting (Stinger-style, F4: "connected to the seat itself with 4 bolts"); lowracer racks that hang off the seat frame | Avoids the lugs and the F7 doubt | No such rack found for sale; load into the seat (R5); geometry per seat | cheap | trailing (no product found; R5) |
 | Find point 2 | Done (round 8): the bolt exists | — | — | — | done |
+| O31 | The owned sound rack entirely on the rear fork: lower legs on the mudguard lugs (held for years), upper struts clamped to the rear fork's tubes with rubber-lined tube clamps (Tubus seat-stay mounts, 14-25 mm, or P-clamps) or a small bracket; slack backup tether | One rigid structure carries the rack, independent of the flexing seat (R11); triangle per side (R10); reuses the owned rack (R9); bought clamps or a simple bracket (R7, user: acceptable) | Clamps on thin 7005 tubes: crush or slip if wrongly sized or unlined (R2, R5 ~); fork tube diameter vs clamp range unknown; strut angle to the fork tubes unchecked (R3) | cheap | leading (round 14) |
+| O32 | The owned rack wholly on the rear fork: lower legs on the lugs, top stay bolted to a bridge or hole between the rear fork tubes above the wheel (brake or mudguard bridge), if one exists: the standard upright-bike way | Single rigid structure (R11); bolted, not clamped (R2, R10); no seat-angle dependence (R3) | The bridge hole exists (F14); its use (brake or mudguard) unknown; rack top vs reclined seat back unchecked (R3); stay length (R7) | cheap | trailing (R10, R7) |
+| O32b | As O32, but the rack's own two upper struts (or two bought adjustable stays) run in a V from the rack-top corners to the bridge bolt, shared with the mudguard on a longer bolt; or a short cross-plate on that bolt with a strut landing at each end | All on the rear fork (R11), independent of the seat angle (R12); bolted, not clamped (R2, R10 better than O31); a V or plate braces sideways (answers F15); no long strip (R7) | Room at the bridge for two struts plus the mudguard (unknown); bridge hole made for a mudguard, not rack loads (R5 ~) | cheap | not applicable (R10, core: one bolt holds the rack's front sideways, user) |
+| O29b | As O29, but the top stay goes to the seat itself (the seat back's upper mounting) instead of the seat-frame fixture: the usual way lowracer racks are steadied (bias check, round 9) | Doesn't move with the seat-angle adjustment at the fixture; short stay | Load into the seat shell or its mounting (R5); a stay or strap to make or buy (R7) | cheap | trailing (R12, R5) |
 | Diagnose | Before replacing: find where the current sway and rattle come from (rack joints, lug bolts, tube clamp) | If only the clamp, O1/O26 may do; if the rack's joints, no re-mount helps | An hour | cheap | step before the decision |
 | Wanted ad | A free "wanted: Optima Baron rack" ad (Marktplaats, ligfiets.net forum) alongside any option | Raises O23a's odds at no cost | Time | cheap | add-on |
 
 ## Matrix
 | Option | R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 | ✗ or ~ |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| *status* | core | core | unverified | unverified | unverified | unverified | preference | core | rejected | core | |
+| *status* | core | core | unverified | unverified | unverified | unverified | preference | core | preference | core | |
 | O23a | ✓ | ✓ | ✓ | ~ | ~ | ~ | ✓ (bought) | ✓ | – | ✓ | ~ R4, R5, R6; F7 (both points needed), supply luck |
-| O25 | ✓ | ✓ | ~ | ~ | ~ (seat-frame points, shared) | ~ | ~ (brackets to make or have made: the cost R7 names) | ✓ | – | ✓ | ~ R3, R4, R5, R6, R7 |
+| O25 | ✓ | ✓ | ~ | ~ | ~ (seat-frame points, shared) | ~ | ~ (brackets to make or have made: the cost R7 names) | ✓ | – | ~ (mid bolts too far forward to brace a standard rack, F11) | ~ R3, R4, R5, R6, R7 |
 | O23b | ✓ | ✓ | ✓ | ~ | ~ | ~ | ✗ (workshop build) | ✓ | – | ✓ | ✗ R7 |
 | O4 | ✓ | ✓ | ~ | ~ | ~ | ~ | ~ (upper bracket to the seat fixture, shared with O29) | ✓ | – | ✓ (top on the seat fixture) / ~ (top on pucks) | ~ R3, R4, R5, R6, R7 |
-| O29 | ✓ | ✓ (held for years, F10) | ~ | ~ | ~ (seat-frame point, shared) | ~ | ~ (struts to the seat point) | ✓ | – | ✓ (triangle per side; old rack and tube clamp gone) | ~ R3, R4, R5, R6, R7 |
+| O32 | ✓ | ✓ (bolted top) | ~ (rack top vs seat back, brake: check at fitting) | ~ | ~ (bridge hole made for a brake or mudguard, not rack loads; it takes mostly fore-aft and side load) | ~ | ✗ (a long strip the user can't easily get) | ✓ | ✓ (owned rack) | ~ (one central stay: weak against sideways sway, user) | ~ R3, R4, R5, R6, R10; ✗ R7 (R11 ✓, R12 ✓) |
+| O31 | ✓ | ~ (clamp slip along the tube untested) | ✓ (clears the seat back, F15; steep strut, F13) | ~ | ~ (clamps on 7005) | ~ | ~ (bracket if tubes aren't round 14-25 mm) | ✓ | ✓ | ~ (a strut and clamp per side brace sideways; clamp creep along the tube untested) | ~ R2, R3, R4, R5, R6, R7, R10 (R11 ✓) |
+| O4c | ✓ | ~ (axle lower end; same upper clamps as O31) | ~ | ~ | ~ (same fork-tube clamps) | ~ | ~ (QR kit + fork clamps) | ✓ | ? (owned rack brand unknown) | ~ (same upper clamps) | ~ R3, R4, R6, R7, R10 (R11 ✓) |
+| O29 | ✓ | ✓ (bolted to a rigid fixture, F13/F14) | ~ (rack angle moves with seat-angle adjustment; seat back clearance) | ~ | ~ (seat-frame fixture load) | ~ | ~ (a bracket or longer struts to the seat fixture, accepted) | ✓ | ✓ (owned sound rack) | ✓ (triangle per side; old rack and tube clamp gone) | ~ R3, R4, R5, R6 |
 | O28 | ✓ | ✓ | ~ | ~ | ~ | ~ | ~ (adapters) | ✓ | – | ✓ | ~ R3, R4, R5, R6, R7 |
 | O1 | ✓ | ~ | ~ | ~ | ~ | ~ | ✓ | ✓ | – | ~ | ~ R2, R3, R4, R5, R6, R10 |
 | O26 | ✓ | ~ | ✓ | ~ | ~ | ~ | ✓ | ✓ | – | ~ | ~ R2, R4, R5, R6, R10 |
@@ -106,6 +120,102 @@ table is in the rounds file.
 | O9, O11, O18 | ✗ | ~ | ~ | ✓ | ✓ | ✓ | ✓ | ✓ | – | ✓ | ✗ R1 |
 
 ## Evaluation
+Round 14: the user rules out every single-bolt top fixing (R10: "sideways movement at the front of the rack would
+still only be constrained by one bolt": O32, O32b not applicable) and makes R12 core (refitting after a seat-angle
+change "Not acceptable": O29, O23a, O25, O28, O1 not applicable, all on the seat fixtures). O31 is the only option
+left that meets every core requirement: the owned rack's lower legs on the mudguard lugs, one upper strut per side
+clamped to the round rear fork tubes at a steep angle: two separate anchors at the top, all on the rigid rear fork,
+independent of the seat. Its ~ cells are R2/R5 (clamps on thin 7005: size them to the tube, metal clamps with a thin
+shim or lined clamps, a stop below each against creep), R3 (brake clearance at fitting), R4, R6 (shared). O4c (axle
+lower end, same clamps) is the fallback if a lug thread loosens.
+
+Round 13 (after checks): with F13/F14, O29's upper joint is bolted to a rigid fixture (✓ R2, R10) where O31's is a
+friction clamp on thin 7005 (~ R2, R5, R10): on core requirements O29 is ahead of O31; O31 leads O29 only on R12
+(preference: the rack doesn't follow seat-angle changes). Whether R12 is more than a preference is asked: a rack
+bolted to the seat-angle fixture has to be refitted (or strains) each time the angle changes. Both checks found a
+variant of O32 that answers the user's two objections: the rack's two struts in a V to the bridge bolt, or a short
+cross-plate on it (O32b): bolted, braced sideways, no long strip, all on the rear fork. If there is room at the
+bridge, O32b is ✓ on R2, R10, R11, R12 and leads; asked. O23a's ✓ R2/R10 are assumed from the maker's design, not
+checked: ~; it trails on R12 and R9 and supply. O29b/O30: trailing (R12, R5), record updated.
+
+Round 13: the user rejects O32: one central stay through the mudguard bridge "might be unstable against sideways
+movement" (R10 ~), and it needs a long strip of material the user can't easily get (R7 ✗). O31 leads: the owned
+rack's lower legs on the lugs, its two upper struts (one per side) clamped to the round rear fork tubes at a steep
+angle. A strut per side braces sideways where a central stay doesn't; it uses the rack's own struts and bought
+clamps (R7 ✓, no strip); all on the rigid rear fork (R11 ✓), independent of the seat angle (R12 ✓); the rack top
+clears the seat back (F15). Its ~: R2/R10 clamp creep along the tube (untested: rubber-lined or fitted metal clamps
+with a stop below them), R5 clamping thin 7005 tubes (size the clamp to the tube), R4, R6 shared. Runner-up: O29
+(struts to the upper seat fixture: solid, bolted, but tilts with seat-angle changes, R12). O4c stays the lower-end
+fallback.
+
+Round 12 (after checks): O32 still leads. Its R5 is ~, not ✓ (the bridge hole was made for a brake or mudguard,
+not rack loads; with the lugs taking the vertical load the stay carries mostly fore-aft and side load). Two
+conditions decide whether O32 (and every lug-based upright rack) works at all: the rack top must clear the reclined
+seat back over the 559 wheel (R3), and the bridge hole must be able to carry the stay alongside whatever it holds.
+If the rack top doesn't clear, a lower rack or a rack made for the bike (O23a, O28, O23b) returns. O29b and O30:
+whether they anchor on the shell or on its mounting is unclear; trailing (R12, R5) rather than not applicable. Load
+position: panniers low and as far forward as clearance allows (R4, tight corners).
+
+Round 12 (before checks): the rear fork has a bridge with a hole (F14). O32 leads: the owned rack's lower legs on the mudguard lugs,
+its top stay bolted through the bridge hole: the whole rack on the rear fork, every joint bolted, nothing on the seat.
+It meets every core requirement (R1, R2, R8, R10, R11) and R12 (seat-angle changes don't touch it); its remaining ~
+cells (R3 clearance, R4, R6) are shared by every rear rack. Compared with O31: bolted where O31 clamps (✓ R2, R5, R10
+where O31 is ~). Compared with O29: ✓ R12 where O29's rack tilts with the seat angle (the spacers sit shell-to-seat
+frame, so O29's fixture is solid, but the user re-adjusts the angle). O31 is runner-up (if the bridge hole proves too
+small or badly placed); O29 trails on R12; O4c stays the fallback for the lower end if a lug thread loosens.
+
+Round 11 (after checks): scored alike, O29 and O31 tie on every core requirement: both upper anchors are untested
+(O29: a bracket to the upper seat fixture, on rubber spacers of unknown position; O31: a clamp on a round tube, steep
+strut, that may creep along the tube), so both ~ R2 and R10. Remaining tie-breaker: R3, whether the user re-adjusts
+the seat angle (O29's rack moves with it). New option O32: if the rear fork has a bridge or hole above the wheel, the
+top stay bolts there, all on the rear fork, bolted not clamped: it would beat both. O23a's R11 record is stale (the
+fixtures don't flex): it is close again on assumed R3 vs R9; the Stinger variant (bolted to the seat shell) is not
+applicable. Asked: bridge or hole on the rear fork; rubber spacer position; seat-angle re-adjustment.
+
+Round 11 (before checks): the seat-frame fixtures don't flex (F13), so O29 (lower legs on the lugs, upper struts bolted to the upper
+seat fixture) meets R11 again; the fork tubes are round with a steep strut angle, so O31 (upper struts clamped to the
+fork tubes) braces well too. Both meet every core requirement (R1, R2, R8, R10, R11). They differ on: R2, a bolted
+joint at an existing fixture (O29) against a friction clamp on a thin 7005 tube (O31, slip untested, ~); and R3, the
+upper seat fixture is also the seat-angle adjustment joint (F5), so with O29 the rack's angle and clearance change
+when the seat is re-angled (~), where O31 is independent of the seat. R2 is core, R3 is unverified: O29 leads, O31
+is runner-up and wins if the user re-adjusts the seat angle often or the fixture can't take a strut. O4c stays the
+fallback for the lower end. O25/O28 stay trailing on F11 (mid bolts too far forward).
+
+Round 10 (after checks): R11 as the user worded it rules out the seat itself (O29b, O30: not applicable). That the
+seat-frame fixtures and the mid seat-support-tube bolts move with the seat is the researcher's inference: O29, O1,
+O25, O28 and O23a are trailing (R11 ~, asked), all alike. O31's R2 and R10 are ~, not ✓: its upper anchor is a tube
+clamp, like the old setup's, untested; rubber lining may let it creep (a fitted metal clamp with a thin shim is the
+variant); the strut angle to low, near-level fork tubes may barely brace fore-aft; the fork tubes may not be round
+14-25 mm (then a bracket, R7 ~). O4c (axle-mounted lower end, upper clamps on the fork tubes) is ✓ on R2 and R5 where
+O31 is ~, ~ on R7, ? on R9: it now ties or leads on core R2. The tube shape and strut angle decide between them and
+whether either works: asked.
+
+Round 10: the user rules out the seat as an anchor (R11, core: it flexes and would destroy the mount) and names the
+rear fork's tubes. O31 leads: the owned rack wholly on the rear fork, lower legs on the lugs, upper struts clamped
+to the fork tubes. It meets every core requirement (R1, R2, R8, R10, R11); its ~ cells are R3 (strut angle), R4, R6
+(shared by every rear rack) and R5 (clamps on 7005 tubes: lined, correctly sized). Not applicable on R11: O29, O29b
+(top on the seat or seat fixture), O30 (rack bolted to the seat), O1, O25, O28 (seat fixtures; the upper seat
+fixture moves with the seat). O23a (Optima's own rack on the seat fixtures): R11 ~ at best; the maker designed it
+there, but the user's experience of the seat flex says otherwise: trailing (R11). O4c (axle + upper clamps on the
+fork tubes) is the runner-up: it wins if a lug thread loosens. O5 (tube clamps), rejected in round 4 on R10 as "a
+single tube clamp", returns as part of O31: with the lugs as the lower anchor the clamps only brace the top, forming
+a triangle; slip remains unsourced (R2 ~).
+
+Round 9 (after checks): O29's R7 is ~ (a bracket or longer struts to the seat fixture), as in earlier records; its
+lead over O4 and O25 now rests on R9 (owned sound rack, preference) and the user's lug evidence (F10). O23a (a
+second-hand Optima rack on the maker's points, designed for them) has no requirement against it either: ✓ R3
+(assumed, designed fit) where O29 is ~, ✗ R9 where O29 is ✓; supply luck is covered by no requirement. So O29 and
+O23a are close; O29 leads because its rack is in hand and its fit can be checked now. The R10 drop of O25/O28 is an
+inference from F11 (a long strut forward is unstable; short brackets might not be): ~ kept, marked inferred. New
+variant O29b: top stay to the seat back's upper mounting instead of the seat-frame fixture (avoids the seat-angle
+adjustment joint). The upper anchor is the remaining choice: asked.
+
+Round 9: F11 narrows the top fixing to the upper seat fixture: a strut forward to the mid seat-support-tube bolts is
+too flat to brace the rack. O29 keeps the lead with its upper struts on the upper seat fixture, using a rack the user
+owns (R7 ✓ now: no buying, at most longer struts). O25/O28 (a standard rack using both maker points) lose R10: their
+lower point is the one that can't brace a standard rack (~ R10); Optima's own rack (O23a) was shaped for it and stays
+possible. O4 unchanged.
+
 Round 8 (after checks): with R5 and R7 cited as worded, O25/O28, O4 and O29 meet R1, R2, R8, R10 (core) equally;
 none fails a core requirement and their ~ cells are shared (R3 geometry under the seat, R4, R5 seat-frame load, R6).
 The tie breaks on R7 (preference: nothing to fabricate) and the user's stated preference for the lugs (F10, rounds
@@ -165,6 +275,16 @@ Rejection records (each against O23a):
   Optima rack turns up within the user's patience.
 - **O23b (trailing, round 5)**: R7: a workshop build, not bought and self-fitted. Round 4 record: R7 (open): €150-400 estimated and lead time. Compared with O23a: same cells, ? R7 both; more certain
   supply, higher cost. Leads if the user prefers paying for certainty over searching.
+- **O31 (leading, round 10)**: see the round 10 paragraph. Harms: a clamp sized wrong or unlined crushes or slips on
+  a thin 7005 tube (use rubber-lined clamps of the measured diameter, torque to spec, check after 50 km); a lug
+  thread can still strip (tether; move the lower legs to the axle, O4c).
+- **O4c (runner-up, round 10)**: an axle-mounted lower end (QR kit) with the same upper clamps on the fork tubes.
+  Compared with O31: ✓ R5 at the lower end where O31 uses the lugs; ~ R7 (QR kit); ✗ R9 (OMM kits need OMM racks;
+  Tubus adapter only Tubus racks). Leads if a lug thread loosens.
+- **O29b, O30**: trailing (R12, R5): unclear whether they anchor on the shell or its mounting. **O29, O1, O25, O28, O23a**: trailing
+  (R11 ~, inferred that the seat-frame fixtures move with the seat; asked).
+- **O23a**: trailing (R11): Optima's rack used the seat fixtures; the user's experience says seat-mounted loads
+  fail there.
 - **O29 (leading, round 8)**: ✓ R1, R2 (years of evidence), R8, R10; ~ R3, R4, R5, R6 shared with O25 and O4; ~ R7
   (struts to the seat point), the lightest R7 cost of the three.
 - **O25/O28 (runner-up, round 8)**: R7 "nothing to fabricate": brackets to make (O25) or adapters (O28). Same cells as
@@ -224,14 +344,16 @@ Harms of the leader O4 (round 5), a few steps ahead:
   the shell bolts (6 Nm).
 - Removing the rear wheel now means handling the rack too.
 
+Harms of the leader O32, a few steps ahead:
+- A lug thread strips: the slack tether holds the rack off the tyre; move the lower legs to the axle (O4c).
+- The bridge hole may be meant for a brake or mudguard: share it with a longer bolt and a spacer, don't drop the
+  mudguard.
+- Seat-angle changes may bring the seat back close to the rack top: recheck clearance after each change.
+
 Reversibility: all cheap (bolts on existing points) except O6 (one-way).
 
 ## Open questions
-1. "I already have a rack for the lugs": the current DIY rack (round 5: replace it) or another rack? Decides whether
-   O29 uses an owned rack or a bought one; the mount is the same.
-2. Confirm the decision (O29) and its Why/Rejected.
-3. Known gaps: rack top vs the reclined seat back; rubber spacer position; laptop vibration (bag choice, a child
-   decision).
+1. Confirm the decision (O31) with its Why and Rejected.
 
 ## Sources
 | Claim | Source (URL or `file:line`) | Date | Reliability |
@@ -255,27 +377,27 @@ Reversibility: all cheap (bolts on existing points) except O6 (one-way).
 
 ## Round checklist
 Checklist:
-- [x] Log (first round): n/a: round 8
+- [x] Log (first round): n/a: round 13
 - [x] Problem and success criteria (first round): n/a
 - [x] Scope: unchanged
-- [x] Requirements: R8 confirmed (panniers fine, trailer out); F7, F10 facts
-- [x] Replaced requirements: n/a
+- [x] Requirements: R7 refined (no long strip), R10 sideways made explicit (user)
+- [x] Replaced requirements: n/a (meanings sharpened, not changed)
 - [x] Written requirements: n/a
-- [x] Deciding unverified requirements: none decides; R3-R6 remain unverified, shared by the top options (gaps)
-- [x] Options: O29 widened to either maker's seat point; "Find point 2" done
-- [x] Searches: none this round
-- [x] Deciding claims: n/a
-- [x] Matrix: O25, O28, O29 corrected
-- [x] Rejection records: round 8 records for O29, O25/O28, O4, O10
-- [x] Harms: O29's (see round 6 list)
+- [x] Deciding unverified requirements: none left deciding
+- [x] Options: none new
+- [x] Searches: none
+- [x] Deciding claims: user facts
+- [x] Matrix: O31, O32
+- [x] Rejection records: round 13 paragraph
+- [x] Harms: O31 (clamp creep, tube crush, lug thread)
 - [x] Reversibility: cheap
-- [x] Draft and stress test: draft-o29-lug-rack.md
+- [x] Draft and stress test: draft-o31-rear-fork-rack.md
 - [x] Bias check: done, applied
 - [x] Rejection check: done, applied
 - [x] Ranking change: recorded
 - [x] Report: in chat
-- [x] Questions: ambiguity and decision confirmation, remarks last
-- [x] Pushback: done in round 7; the user's reason (evidence of years) recorded
+- [x] Questions: decision confirmation, remarks last
+- [x] Pushback: the user rejected O32 with two reasons; both recorded, no worse option picked
 
 ## Rounds
 - Round 1: O1 (maker rack on designed mounts) leads narrowly; O2 (under-seat) and O20 (hybrid split) runners-up, O10 (trailer) co-runner-up for heavy loads. Lead rests on the unknown bike model and load.
@@ -288,5 +410,70 @@ Checklist:
 - Round 6: User fine with the lugs; daily load two bags; rides bike lanes and tight corners (R8 core). O29 (quality rack on the lugs + seat fixture) leads on the user's choice of lugs; O4 (axle-mounted) runner-up; trailer not applicable.
 - Round 7 (from round 6 checks): O29's R7 corrected to ~ (upper bracket, as O4); on scores O4 leads again, O29 only on the user's lug preference: pushback asked. R8 reworded to the user's words; trailer back to trailing. O30 (seat-mounted rack) and "find point 2" added.
 - Round 8: Both maker's points exist; lugs held for years; trailer out. Before checks O25/O28 led; after checks (R5/R7 cited as worded) O25, O4, O29 tie on requirements; O29 (lugs + struts to a maker's seat point) leads on R7 and the user's preference.
+- Round 9 (after checks): O29 R7 back to ~; O29 vs O23a close (R9 vs assumed R3); O29b (top stay to the seat back) added; upper anchor asked.
+- Round 9: The mid seat-support-tube bolts are too far forward for a strut; the user owns a suitable rack. O29 (lugs + upper struts to the upper seat fixture) leads, now ✓ R7; O25/O28 drop on R10; O4 runner-up.
+- Round 10: The seat flexes; the rear fork tubes can anchor the top (R11 core: no load into the seat). O31 (owned rack wholly on the rear fork: lugs + clamps on the fork tubes) leads; O4c (axle + clamps) runner-up; all seat-anchored options not applicable.
+- Round 10 (after checks): R11 reworded; seat-fixture options trailing (inferred, asked), seat-itself options n/a; O31 R2/R10 → ~; O4c (axle + fork clamps) close, ✓ R2. Fork tube shape and strut angle asked.
+- Round 11: Seat fixtures don't flex; fork tubes round, strut steep. O29 (lugs + top bolted to the upper seat fixture) leads on R2 (bolt vs clamp); O31 (lugs + clamps on the fork tubes) runner-up; O4c fallback.
+- Round 11 (after checks): O29 and O31 tie on core; O32 (top stay bolted to a rear fork bridge, if any) added; O23a close again. Asked: bridge, spacers, seat-angle use.
+- Round 12: The rear fork has a bridge with a hole; the user re-adjusts the seat angle. O32 (owned rack: lower legs on the lugs, top stay bolted to the rear fork bridge) leads on every cell; O31 runner-up; O29 trails (R12).
+- Round 12 (after checks): O32 leads, R5 → ~; conditional on seat-back clearance and the bridge hole's use (asked).
+- Round 13: The user rejects the central bridge stay (sideways instability, no long strip). O31 (lugs + a strut per side clamped to the round rear fork tubes) leads; O29 runner-up; O32 trails.
+- Round 13 (after checks): O29 ahead of O31 on core (bolt vs clamp) but behind on R12; O32b (V struts or cross-plate to the bridge bolt) added, leads if it fits. Asked: room at the bridge; R12 strength.
+- Round 14: Single-bolt tops rejected (R10, user); seat-angle refitting not acceptable (R12 core). O31 (lugs + a strut per side clamped to the rear fork tubes) is the only option meeting every core requirement; O4c fallback.
+- Round 15 (review): confirmed. Seat-fixture options corrected from not applicable to trailing (R12: the rack tilts). O31 stays.
 
 ## Decision
+Reviewed (user, round 15: "Yes, confirmed")
+
+**Choice (O31).** Mount the user's own sound rack wholly on the rigid rear fork:
+- lower legs on the mudguard lugs above the dropouts (steel bolts of the lug's thread, threadlock, washer);
+- one upper strut per side clamped to the round rear fork tubes, where a strut meets them steeply (clamps sized to
+  the tube; fitted metal clamps with a thin shim, or rubber-lined ones, with a stop below each against creep);
+- a slack steel cable from each lower leg to the axle as a backup;
+- nothing on the seat, the seat fixtures or the seat support tube.
+
+**Why** (each on a requirement the user confirmed):
+- R11 (core, round 10): all anchors on one rigid part; the seat shell flexes and would destroy a mount on it.
+- R12 (core, round 14): seat-angle changes don't touch the rack.
+- R10 (core, rounds 4 and 14): a triangle per side and two separate top anchors hold sway fore-aft and sideways;
+  a single top bolt doesn't.
+- R2 (core, round 3; evidence F10): the lugs held a rack for years.
+- R1, R8 (core): two panniers carry the daily load and keep the bike fit for bike lanes and tight corners.
+- R9, R7 (preferences): reuses the owned rack; the rack's own struts and bought clamps, no long strip.
+
+**Rejected:**
+- O21 keep the current DIY rack: R10 (sways, rattles, badly made).
+- O32 central stay to the bridge, O32b V or plate on the bridge bolt: R10 (one bolt holds the front sideways), O32
+  also R7.
+- O29 top to the upper seat fixture, O1/O25/O28/O23a on the seat fixtures: trailing on R12 (the rack tilts with every
+  seat-angle change; corrected at review from "refit").
+- O29b, O30 on the seat itself: R11 / R12.
+- O10 trailer, O14 longtail: R8.
+- O9, O11, O18 small bags: R1. O7, O8 seat bags: R1 volume and the seat shell flexes (R11).
+- O2, O13, O20 under-seat / front: no room on a lowracer (R3, inferred).
+- O3, O5 clamps elsewhere, O6 added bosses: superseded by O31's clamps on the fork / R5 (welding 7005).
+- O4, O4c axle-mounted: fallback if a lug thread loosens (✓ R5 at the lower end, but a kit to match: R7, R9).
+
+**Variant kept on record:** O31 plus the bridge bolt as an extra, bolted brace (struts clamped to the fork tubes and
+also tied to a plate on the bridge bolt): more than one anchor at the front with one of them bolted; costs room at
+the bridge and a mudguard hole carrying some rack load (R5 ~). Optional at fitting if a clamp creeps.
+
+**Corrected at review:** a rack on the seat fixtures doesn't need refitting after a seat-angle change, it tilts with
+the seat (user, round 15). O29, O1, O25, O28, O23a, O23b, O4 are therefore trailing on R12 (the rack's angle and
+clearance change with the seat), not ruled out; O31 stays the decision on R12 and the user's confirmation.
+
+**Known gaps:** fork tube diameter vs clamp size; lug thread size; clamp creep and brake clearance, checked at the
+fit check; bags for the laptop (child decision).
+
+**Open child decisions:** panniers / laptop bag.
+
+Decision checklist:
+- [x] Stop condition: round 15 brought no new requirement and no ranking change; the user agreed
+- [x] Why and Rejected: each on a requirement the user confirmed; confirmed by the user (round 15)
+- [x] Known gaps and open child decisions: listed
+- [x] Documentation: n/a (no project docs); benchmark README updated with the outcome
+- [x] Success criteria: benchmark: compare with the user's expected answer (not yet revealed)
+- [x] Out of scope: bags as a child decision
+- [x] Overview: choice, pros and cons, rejected, gaps, plan, files (round 14 report)
+- [x] Review: in open chat, confirmed

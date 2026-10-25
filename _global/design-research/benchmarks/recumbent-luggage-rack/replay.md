@@ -101,3 +101,91 @@ seat fixture) runner-up.
 
 Leader at the time of asking: O4 on scores (axle-mounted rack); O29 (quality rack on lugs + seat fixture) on the
 user's lug preference.
+
+## Round 7 (numbered round 8 in the log)
+1. **Which rack** — "\"I already have a rack for the lugs\": do you mean the current DIY rack (earlier you said to
+   replace it), or another rack you own?" Options: Buy a new rack · Another rack I own · Keep the DIY rack.
+   **Answer:** Another rack I own.
+2. **Decision** — "Does the decision fit: lower legs on the mudguard lugs, upper struts to a maker's seat point (upper
+   seat fixture or the bolt half way down the seat support tube), with the axle mount as fallback?"
+   Options: Yes, that's it · Prefer maker's points only · Prefer the axle.
+   **Answer (Other):** "The bolts on the seat support tube are way too far forward to make a stable strut from the
+   rack to that point."
+3. **Remarks** — **Answer:** No remarks.
+
+Leader at the time of asking: O29 (rack on the lugs, upper struts to a maker's seat point) on tie-breakers; O4, O25/O28
+runners-up.
+
+## Round 8 (numbered round 9 in the log)
+1. **Top anchor** — "Where can the top of your rack get a stable brace on your Baron?"
+   Options: Upper seat fixture · The seat back itself · Somewhere else.
+   **Answer (Other):** "The frame tubes of the rear fork would work, the seat itself flexes, so attaching it to the
+   seat would destroy the mount over time."
+2. **Bracket** — "Is a small bracket or longer struts (bought or simple to make) acceptable for that top brace?"
+   Options: Yes · Only off-the-shelf parts · No.
+   **Answer:** Yes.
+3. **Remarks** — **Answer:** No remarks.
+
+Leader at the time of asking: O29 (owned rack on the lugs, top to the upper seat fixture) / O29b (top stay to the seat
+back); O23a (second-hand Optima rack) close.
+
+## Round 9 (numbered round 10 in the log)
+1. **Fixtures** — "Do the seat-frame fixtures (where the seat bolts onto the bike frame) move when the seat flexes, or
+   only the seat shell itself?" Options: Fixtures move too · Only the shell flexes · Don't know.
+   **Answer:** Only the shell flexes.
+2. **Fork tubes** — "The rear fork tubes: what shape are they, and would a strut from the rack top meet them at a
+   useful angle?" Options: Round, steep strut · Not round / large · Strut nearly parallel.
+   **Answer:** Round, steep strut.
+3. **Remarks** — **Answer:** No remarks.
+
+Leader at the time of asking: O31 (owned rack wholly on the rear fork: lugs + clamps on the fork tubes); O4c (axle +
+fork clamps) close; seat-fixture options trailing pending question 1.
+
+## Round 10 (numbered round 11 in the log)
+1. **Fork bridge** — "Is there a bridge or a hole between the two rear fork tubes, above the rear wheel (e.g. a brake
+   or mudguard bridge)?" Options: Yes, with a hole · Bridge, no hole · No bridge.
+   **Answer:** Yes, with a hole.
+2. **Spacers** — "Where do the seat's rubber spacers sit?" Options: Shell to seat frame · Seat frame to bike frame ·
+   Don't know. **Answer:** Shell to seat frame.
+3. **Seat angle** — "Do you re-adjust the seat angle (now and then)?" Options: No, it's set · Yes, sometimes.
+   **Answer:** Yes, sometimes.
+4. **Remarks** — **Answer:** No remarks.
+
+Leader at the time of asking: O29 and O31 tied; O32 (top stay bolted to a rear fork bridge, if any) proposed.
+
+## Round 11 (numbered round 12 in the log)
+1. **Clearance** — "Does the rack top clear the seat back at the seat angles you use (the old rack's position is a
+   guide)?" Options: Yes, clears · Tight / touches · Don't know yet. **Answer:** Yes, clears.
+2. **Bridge hole** — "What is the hole in the rear fork bridge used for now?" Options: Nothing · Mudguard · Rear
+   brake. **Answer:** Mudguard.
+3. **Decision** — "Does the decision fit: your rack, lower legs on the mudguard lugs, top stay bolted through the
+   rear fork bridge, nothing on the seat?" Options: Yes · No. **Answer:** No.
+4. **Remarks** — **Answer (Other):** "I do not have easy access to a long strip of material, and it seems that it
+   might be unstable against sideways movement."
+
+Leader at the time of asking: O32 (lugs + top stay bolted through the rear fork bridge hole); O31 (lugs + upper struts
+clamped to the rear fork tubes) runner-up.
+
+## Round 12 (numbered round 13 in the log)
+1. **V to bridge** — "Is there room at the bridge bolt for the rack's two struts (in a V, or on a short cross-plate)
+   together with the mudguard, and would that feel stable sideways to you?" Options: Yes, that works · No room / not
+   stable.
+   **Answer (Other):** "That doesn't seem stable either, as sideways movement at the front of the rack would still only
+   be constrained by one bolt."
+2. **Refitting** — "If the rack's top is bolted to the upper seat fixture, it has to be refitted (or it strains) each
+   time you change the seat angle. Is that acceptable?" Options: Acceptable · Not acceptable.
+   **Answer:** Not acceptable.
+3. **Remarks** — **Answer:** No remarks.
+
+Leader at the time of asking: O32b if it fits (V struts / cross-plate to the bridge bolt); else O29 (seat fixture) or
+O31 (clamps on the rear fork tubes) depending on the seat-angle answer.
+
+## Round 13 (numbered round 14 in the log): decision review
+1. **Confirm** — "Do the Why and Rejected above match your view, so I can mark the decision reviewed (and you can
+   reveal the expected answer)?" Options: Yes, confirmed · Something's off. **Answer:** Yes, confirmed.
+2. **Seat fixture** — "Is it right that a rack bolted to the seat fixtures would need refitting after each seat-angle
+   change?" Options: Yes · No, it just tilts. **Answer:** No, it just tilts.
+3. **Remarks** — "Remarks? (e.g. the expected answer, for the benchmark)" **Answer:** No remarks.
+
+Final decision: O31 (owned rack wholly on the rear fork: lower legs on the mudguard lugs, one upper strut per side
+clamped to the round rear fork tubes; nothing on the seat).
