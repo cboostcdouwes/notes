@@ -15,9 +15,10 @@ Release targets, the integration starter and `tests/e2e.sh` are done (design §1
 git history: `git show 88758e0:prototypes/release/<file>` (`release-target.md`: constraints, questions and decisions,
 C/A/P/D/Q codes; `release-options.md`: the four layouts compared; `concept-1/`: the polymx reference).
 
-- **Machines may pull** (REQUIREMENTS.md R18): design §13 says the machine has no registry access and the release
-  file sets `pull_policy: never`; R18 only asks that a release runs without internet access, and allows pulling from
-  a connected registry. Too strict: update §13, the `release` target and the README.
+- **Machines may pull** (REQUIREMENTS.md `release-offline`, `release-registry-pull`): the release file sets
+  `pull_policy: never`, which fits today: pulling from an online registry is a Won't. Waits for a request for an
+  online update process; then update §13, the `release` target and the README. Until then only §13's wording is
+  too strict: it says the machine *has* no registry access, where `release-offline` says it *can* run without one.
 - **Polymx Python dependencies**: proposal in `python-dependencies.md` (pip convention now, a private
   package index later). Waits for the colleague reorganising the branches and dependencies.
 - **Polymx fit** (`release-target.md` D1-D13): the release build stops at rosdep (2026-10-22, base 0.2.0):
