@@ -12,7 +12,7 @@ history only.
 
 | Path | What |
 |---|---|
-| `flexcompose-cli/` | The Go module (`module flexcompose`, Go 1.24, one dependency: `go.yaml.in/yaml/v3`) |
+| `flexcompose-cli/` | The Go module (`module flexcompose`, Go 1.24, one dependency: `go.yaml.in/yaml/v3`; tests also use `pgregory.net/rapid`) |
 | `flexcompose-cli/fragments/` | Plain Compose fragments, embedded with `go:embed` (so they must stay inside the module) |
 | `flexcompose-cli/testdata/ros2-dev/` | The ROS2-DEV template, pinned for `TestOutputFollowsTheOSFragments` (see below) |
 | `templates/devbox/` | Starter template users copy: `flexcompose.yaml`, `.devcontainer/`, `.gitignore`, `README.md` |
@@ -80,7 +80,7 @@ Binaries in `bin/` are never committed (`bin/.gitignore` ignores everything). Th
 ## Invariants to preserve
 
 - **Deterministic output**: LF, no timestamps, paths in the header relative to the output. Same inputs, same bytes
-  (`TestOutputIsDeterministic`, `TestRegenerateReproducesTheSameBytes`). Any change to output bytes recreates every
+  (`TestOutputIsDeterministicAndRecordsTheChoices`, `TestRegenerateReproducesTheSameBytes`). Any change to output bytes recreates every
   user's box on their next `up`, so treat output changes as user-visible and deliberate.
 - **Frozen `source_workspace` declaration** (`TestWorkspaceVolumeDeclarationIsFrozen`): changing it makes Compose
   offer *Recreate (data will be lost)?*.
@@ -99,6 +99,19 @@ Binaries in `bin/` are never committed (`bin/.gitignore` ignores everything). Th
   the body on Linux and Windows; it is the only test of the Windows fragments of `enable_gui` and `enable_gpu`.
   The testdata template deliberately differs from `example/ros2-dev/` (e.g. image tag `0.0.1` vs `0.2.0`); don't sync
   them.
+- Tests check what FlexCompose must achieve: the right Compose file, the same bytes for the same inputs, no lost
+  work, invalid templates refused. Rewording a message must break no test (decided 2026-10-22):
+  - An error test checks *that* it is refused (`wantErr(t, err)`), plus facts the message names (a key path, flag,
+    value, file, project, volume or command) only when that costs no extra lines. Never assert on sentences.
+  - The safety rules on messages stay tested: no `down`, `down -v`, `rm`, `prune`, and no exporting
+    `WORKSPACES_DIR`/`COMPOSE_PROJECT_NAME`.
+  - No tests for notes, hints or help texts, and none for edge cases that don't affect the goal.
+  - Generate's outcome is `contentLine(t, stdout)` (`unchanged`, `changed...`, `project changed...`); choices are
+    read back with `readHeader`. Compare bytes exactly only for output bodies and determinism.
+  - A table of cases with one yes/no column per rule reads best.
+- Property tests (`pgregory.net/rapid`, test-only) only where one stated rule replaces several examples
+  (`containerPath`, `folderProject`, the round trip). Never use the code under test as the oracle. A failing run
+  writes `testdata/rapid/`; delete it, don't commit it.
 
 ## Style
 
@@ -108,5 +121,6 @@ Binaries in `bin/` are never committed (`bin/.gitignore` ignores everything). Th
   renders them), not image files. The template READMEs end with copies of the main README's diagrams: change
   them together. When behavior changes, update
   `FLEXCOMPOSE_DESIGN.md` (including its decision log / known gaps) and the README tables alongside the code.
-- Dependencies: the module has one (`go.yaml.in/yaml/v3`) and should stay small; use the standard library first.
+- Dependencies: the binary has one (`go.yaml.in/yaml/v3`) and should stay small; use the standard library first.
+  Test-only dependencies are fine (`pgregory.net/rapid` for property tests).
 - Commit messages: short, keep to the conventional commits format (`fix:`, `doc:` ect.).

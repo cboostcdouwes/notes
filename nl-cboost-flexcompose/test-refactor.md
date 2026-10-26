@@ -3,7 +3,7 @@
 Self-contained: resume from this file without the chat that produced it. Read *Status* first, then *How to work*,
 then the plan of the next step.
 
-## Status (end of 2026-10-22)
+## Status (2026-10-26)
 
 | Step | State |
 |---|---|
@@ -11,12 +11,14 @@ then the plan of the next step.
 | 1 docs + history out of comments | committed `6a47783` (`doc:`) |
 | 1b One Linux/Windows body test, live-file test deleted | committed `b89244a` (`test:`) |
 | 2 `main_test.go`: facts, not sentences | committed `01b477c` (`test:`) |
-| 3 The other test files | **next** |
-| 4 rapid properties | optional, ask first |
-| 5 Test rules in the project's CLAUDE.md | after 3 (local file, no commit) |
+| 3 The other test files | committed `50fba8b` (`test:`) |
+| 4a `containerPath` property + rapid dependency | committed `f535676` (`test:`) |
+| 4b `folderProject` property | committed `80908d8` (`test:`) |
+| 4c round-trip property | committed `b7f79ad` (`test:`) |
+| 5 Test rules in the project's CLAUDE.md | done (local file) |
 
-**First action in a new chat:** `git status` and `git log --oneline -5` (the tree was clean after `01b477c`). Then
-re-read every file you will touch: the user may have edited them; build on their version. Then step 3.
+**The refactor is done (2026-10-26).** Open follow-ups are in `TODO.md` (a Windows test run, an optional
+`.gitignore` entry).
 
 ## How to work (the user's rules, from ~/.claude/CLAUDE.md and this refactor)
 
@@ -169,6 +171,22 @@ Always on a **copy** of `flexcompose-cli/` in the scratchpad: the rewording tool
 - Step 2: 0 of 84 rewordings break a `main_test.go` test (12 failures left, all in step 3's files). Mutation, same
   code: 308 -> 299 killed; all 9 lost are notes/hints: `chooseHint` (main.go), the host-src "src/ is shared" and
   the version clause of `changeReport`, the dropped-`build:` and `.Xauthority` notes in `render` (output.go).
+
+- Step 3: 0 of 84 rewordings break a test (target met). Mutation, same code: 299 -> 297 killed; both lost are
+  notes: the project check in `sharedSwitchNote` (main.go, only picks the refusal's wording) and the OS wording in
+  `workspaceNote` (output.go). Kept `tmpl+" line 9"` as a fact in `TestHostSrcLayers...` (like merge's
+  `flexcompose.yaml line 2`), dropping only `(from ` and the sentence.
+- Step 4a: mutation unchanged (297 killed before and after); the property replaced 9 of 13 `TestContainerPath`
+  examples. The vault CLAUDE.md dependency lines are updated.
+- Step 4b: 297 -> 300 killed, none lost; the stronger oracle (own characters in order, refused iff no letter or
+  digit, valid names unchanged) kills the `'a'`/`'z'`/`'0'` boundary mutants in `folderProject`. Replaced the three
+  folder examples and the `+++` case; the generate part keeps `ROS2-DEV` -> `ros2-dev`. Not run on Windows (only
+  `GOOS=windows go vet`).
+- Step 4c: 300 -> 300 killed, none lost. `TestOutputIsDeterministicAndRecordsTheChoices` replaced
+  `TestOutputIsDeterministic`, `TestHeaderRecordsTheChoices` and the header check in `TestAllFeaturesInTheFixedOrder`;
+  `TestRegenerateReproducesTheSameBytes` stays (output in another folder, default `--output`, `changed` after an
+  edit). Project names are drawn without `-` (a hyphen could form a date). A failing rapid run writes
+  `testdata/rapid/`; a `.gitignore` entry was offered, not added.
 
 ## Expected effect when done
 

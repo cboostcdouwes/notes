@@ -2,11 +2,12 @@
 
 Most important first. `§n` = FLEXCOMPOSE_DESIGN.md section.
 
-## Test refactor (in progress)
+## Test refactor (done 2026-10-26)
 
-- **Tests check facts and rules, not wording; ytt/legacy support removed.** Steps 1, 1b and 2 done and committed
-  (2026-10-22); next: step 3, the other test files. Full context, decisions and the step plan:
-  `test-refactor.md`.
+- **Run `go test ./...` once on a Windows checkout**: the property tests (`folderProject` folder names, CRLF) were
+  only vetted with `GOOS=windows`. Low urgency; do it with the VS Code Windows check below.
+- **Optional `.gitignore` entry for `flexcompose-cli/testdata/rapid/`** (a failing rapid run writes it). Small,
+  separate commit if wanted. Context: `test-refactor.md`.
 
 ## Release targets: open points
 
