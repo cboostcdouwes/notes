@@ -28,13 +28,13 @@ C/A/P/D/Q codes; `release-options.md`: the four layouts compared; `concept-1/`: 
   the box, a failing hook (rosdep) shown clearly with the box still usable, and a reopen that skips existing
   checkouts. Windows: the same list, plus line endings on a Windows checkout and the hook's `chown`.
   Open: would `postStartCommand` get the agent too (untested, not needed now).
-- **Robot start on boot**: relies on `restart: always` + Docker enabled on boot; not tested with a real reboot. Polymx
+- **Machine start on boot**: relies on `restart: always` + Docker enabled on boot; not tested with a real reboot. Polymx
   wants `restart: "no"` (D10): then nothing starts on boot; a systemd unit would decouple the two (design §12). Also:
   old release folders keep their `images.tar` (disk), and `keep=3` is fixed in `update.sh`.
 - **Revisit (user, "for now" in design §12)**: the override as plain Compose (`name:` and `flexcompose_options`
   refused, no test on purpose; may it switch features?); `--project` always gets `-build`/`-release`; the build
   settings go to every service with `build:`, also a template sidecar.
-- **Release settings for production** (health checks, limits, `restart:`, a `.env` per robot): decide with the first
+- **Release settings for production** (health checks, limits, `restart:`, a `.env` per machine): decide with the first
   real release (polymx, or `example/docker-compose-base.yaml`).
 - **Dev box starter's personal bootstrap**: still in `postCreateCommand` (once per container); move it to
   `postAttachCommand`, as in the integration starter? Low urgency.
@@ -46,13 +46,13 @@ C/A/P/D/Q codes; `release-options.md`: the four layouts compared; `concept-1/`: 
 ## Base image (`nl-cboost-docker-ros2`)
 
 - **Split into a `devbox` and a `runtime` image** (discussed 2026-10-22). Today the release stage is `FROM` the dev box
-  image, so every robot image carries 3.58 GB (2.71 GB of it the install layer: rviz2, ros-gz, rqt, build tools).
+  image, so every release image carries 3.58 GB (2.71 GB of it the install layer: rviz2, ros-gz, rqt, build tools).
   Plan: one Dockerfile with two targets, built and tagged together (`runtime`: `ros:jazzy-ros-core`, user, entrypoint,
   rmw-zenoh, mqtt-client; `devbox`: today's image). FlexCompose needs no CLI change: the starter's Dockerfile gets
   `FROM ${RELEASE_BASE_IMAGE} AS release`, set as `build.args` in `flexcompose.release.yaml`; the build stage keeps
-  the dev box image (same toolchain). Update design §13. Up: much smaller `images.tar` and robot disk, nothing
-  dev-only on the robot. Down: two images to keep in step (same build, same tag, or ABI drift); machines with GUI
-  tools on the robot must add them; undeclared runtime dependencies fail on the robot (see the release checks below,
+  the dev box image (same toolchain). Update design §13. Up: much smaller `images.tar` and machine disk, nothing
+  dev-only on the machine. Down: two images to keep in step (same build, same tag, or ABI drift); machines with GUI
+  tools on the machine must add them; undeclared runtime dependencies fail on the machine (see the release checks below,
   do those first).
 - **Release checks before shipping** (worth it with or without the split: hand-installed packages in a dev box
   never reach the release image either). Each its own step in the integration starter, design §13, and

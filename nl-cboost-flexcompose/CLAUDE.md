@@ -2,11 +2,13 @@
 
 This repo is **FlexCompose**: a Go CLI that turns a template (`flexcompose.yaml`: plain Docker Compose plus
 `flexcompose_options` keys) into one plain Compose file for a cboost ROS 2 dev box, or for a machine's release (its
-images and the robot's file, design §13). It only writes files; boxes run with plain `docker compose`. The repo was once *SCCOTS Docker Templates*; the old ytt-based generator is in git
+images and the machine's file, design §13). It only writes files; boxes run with plain `docker compose`. The repo was once *SCCOTS Docker Templates*; the old ytt-based generator is in git
 history only.
 
-`README.md` is the user guide. `FLEXCOMPOSE_DESIGN.md` is the source of truth for behavior and the reasons behind it
-(the code and tests cite it by section, e.g. "design §7"). `DEVBOX_DESIGN.md` is superseded history: don't follow it.
+`README.md` is the user guide. `REQUIREMENTS.md` is the only source of requirements (what FlexCompose must achieve
+and why, by MoSCoW priority, each verified or not); every other file follows it, and a requirement changes there
+first. `FLEXCOMPOSE_DESIGN.md` is the source of truth for behavior, how the requirements are met (the code and tests
+cite it by section, e.g. "design §7"). `DEVBOX_DESIGN.md` is superseded history: don't follow it.
 
 ## Layout
 
@@ -17,7 +19,7 @@ history only.
 | `flexcompose-cli/testdata/ros2-dev/` | The ROS2-DEV template, pinned for `TestOutputFollowsTheOSFragments` (see below) |
 | `templates/devbox/` | Starter template users copy: `flexcompose.yaml`, `.devcontainer/`, `.gitignore`, `README.md` |
 | `templates/integration/` | Starter integration repo (one per machine): the dev box plus the release (`flexcompose.release.yaml`, `dev.repos`/`release.repos`, `bootstrap.sh`, `Dockerfile`, `release.sh`) |
-| `tests/` | `e2e.sh` + `e2e-lib.sh`: manual end-to-end test of the integration starter (dev box, `release.sh`, robot); not in CI |
+| `tests/` | `e2e.sh` + `e2e-lib.sh`: manual end-to-end test of the integration starter (dev box, `release.sh`, machine); not in CI |
 | `example/ros2-dev/` | Template of the live ROS2-DEV box (project `packml-ros2`), the worked example |
 | `example/docker-compose-base.yaml` | Old multi-service stack in the legacy format, kept unchanged as the first release-target candidate; v1 can't read it |
 | `OLD/` | Unrelated old ROS 2 performance demos (Cyclone vs Fast DDS); untouched |
