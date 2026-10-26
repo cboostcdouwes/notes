@@ -33,8 +33,8 @@ Each run folder holds what that run produced and its score, so runs can be compa
    - every fact about the situation the run didn't reach.
 4. **Write the benchmark's README:**
    - the prompt;
-   - the ground truth, as numbered facts (G1, G2, ...), each with the question call in which the first run found it,
-     or "after the run";
+   - the ground truth, one single fact per row, numbered by topic with a letter per fact (G1a, G1b, ...), so an
+     answerer can give exactly what a question asks for;
    - what is not known;
    - public facts a run can find;
    - the rubric, and the hidden requirements a run should find by asking.
@@ -47,7 +47,9 @@ Each run folder holds what that run produced and its score, so runs can be compa
 2. **Give the prompt verbatim.** Say only that it is a benchmark run, so the skill keeps a log. Don't say the answer
    is known.
 3. **Answer only from the ground truth.**
-   - Give only what each question asks for, in the user's words where the ground truth quotes them.
+   - Give only the facts (single rows of the ground truth) that a question asks about, in the user's words where the
+     ground truth quotes them. Don't add neighbouring facts from the same group, and don't anticipate later
+     questions: a fact the question doesn't name stays unsaid.
    - In a "Remarks" question, answer only the examples it names; otherwise "No remarks". The first run's user did
      volunteer facts there; replays don't, so the skill has to ask for them.
    - For anything listed as not known, answer "don't know".

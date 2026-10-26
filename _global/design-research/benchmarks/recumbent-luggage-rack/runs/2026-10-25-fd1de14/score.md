@@ -13,6 +13,7 @@ which built the ground truth; the user volunteered several facts in remarks).
 | Total | 15 log rounds, 13 question calls, two independent checks per round |
 
 ## Ground truth by question call
+Numbers refer to the fact groups (G3 = G3a and G3b); the ground truth was split into single facts after this run.
 The call (numbered section of `replay.md`) in which each fact first came out; "remark" means the user volunteered it.
 
 | Fact | Call |
