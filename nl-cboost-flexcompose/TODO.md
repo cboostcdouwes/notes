@@ -15,6 +15,10 @@ Release targets, the integration starter and `tests/e2e.sh` are done (design §1
 git history: `git show 88758e0:prototypes/release/<file>` (`release-target.md`: constraints, questions and decisions,
 C/A/P/D/Q codes; `release-options.md`: the four layouts compared; `concept-1/`: the polymx reference).
 
+- **Programs with their own build recipe** (e.g. `nl-polymx-ai-suite-inference`): the starter can't build them;
+  `release:build` forces `target: release`, and `release.sh` never pulls image-only services. Research paused after
+  round 4 (2026-10-26): `machine-release-programs.md` (leader: the override clears the target, FlexCompose unchanged;
+  three questions open). Resume there.
 - **Machines may pull** (REQUIREMENTS.md `release-offline`, `release-registry-pull`): the release file sets
   `pull_policy: never`, which fits today: pulling from an online registry is a Won't. Waits for a request for an
   online update process; then update §13, the `release` target and the README. Until then only §13's wording is
