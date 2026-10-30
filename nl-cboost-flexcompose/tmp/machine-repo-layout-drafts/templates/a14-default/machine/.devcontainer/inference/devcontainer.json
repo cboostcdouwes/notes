@@ -1,0 +1,4 @@
+// Opens inference's container; it runs from source only if this box was generated with inference from source
+// (the default or --source inference): Dev Containers attaches to whatever is running.
+{ "dockerComposeFile": "../../compose.generated.yaml", "service": "inference",
+  "workspaceFolder": "/app/src", "initializeCommand": "flexcompose regenerate", "shutdownAction": "none" }

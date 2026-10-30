@@ -1,0 +1,23 @@
+flexcompose_options:
+  targets: [devbox:host-src, devbox:host, devbox:volume, release:build, release]
+services:
+  app:
+    flexcompose_options:
+      workspace: true
+      source: true                    # PROPOSED: default from source; `generate --image app` overrides
+      enable_gpu: true
+      enable_gui: true
+    image: cboost-c-nas:5100/cboost-ros2-jazzy:0.2.0   # the dev box's image when from source
+    network_mode: host
+    command: dev
+  inference:
+    flexcompose_options:
+      source: false                   # PROPOSED: default as an image; `generate --source inference` overrides
+      source_mount: /app/src          # PROPOSED: where its checkout goes when from source (Python: bind mount)
+      enable_gpu: true
+    image: cboost-c-nas:5100/polymx-serve:<sha>        # the version as two literals (accepted exception to M13)
+    pull_policy: build
+    build:
+      context: git@github.com:Cboostbv/nl-polymx-ai-suite-inference.git#<sha>
+      dockerfile: Dockerfile.serve
+    ports: ["127.0.0.1:8080:8080"]

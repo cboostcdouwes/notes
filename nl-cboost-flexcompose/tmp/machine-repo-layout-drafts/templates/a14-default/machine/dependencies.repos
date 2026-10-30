@@ -1,0 +1,6 @@
+# Top level for cdr: the colcon service repos the machine builds from source. Their own dependencies.repos bring the rest.
+repositories:
+  nl-polymx-automated-qc-application:
+    type: git
+    url: git@github.com:Cboostbv/nl-polymx-automated-qc-application.git
+    version: main

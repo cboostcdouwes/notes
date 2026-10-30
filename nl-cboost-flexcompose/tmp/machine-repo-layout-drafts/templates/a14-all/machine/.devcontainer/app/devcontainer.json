@@ -1,0 +1,3 @@
+{ "dockerComposeFile": "../../compose.generated.yaml", "service": "app",
+  "workspaceFolder": "/home/cboost-user/workspaces", "initializeCommand": "flexcompose regenerate",
+  "shutdownAction": "none", "postAttachCommand": "bash /home/cboost-user/workspaces/src/bootstrap.sh" }

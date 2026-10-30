@@ -1,0 +1,11 @@
+services:
+  app:
+    image: "cboost-c-nas:5100/polymx-qc:${RELEASE_VERSION:?}"
+    build:
+      context: .
+      dockerfile: services/app/Dockerfile
+      target: release
+      ssh: [default]
+      additional_contexts: {lock: "variants/${CUSTOMER:?}"}   # the build's input: lock.repos
+      args: {BASE_IMAGE: cboost-c-nas:5100/cboost-ros2-jazzy:0.2.0}   # sibling F2 (a copy under M13: open point 3)
+    command: ros2 launch polymx_qc_app polymx_stack.launch.py

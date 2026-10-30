@@ -1,0 +1,9 @@
+# The repositories this machine builds from source, for cdr (nl-cboost-ros-tools, deps-resolve): the top-level file.
+# List only what the machine uses directly; each repository's own dependencies.repos brings in the rest. Only this
+# file may settle a conflict between two pins (override: true). A customer branch pins its own versions here.
+# After a change: bash src/bootstrap.sh --update in the dev box, and ./lock.sh before the next release.
+repositories:
+  example_machine:
+    type: git
+    url: git@github.com:Cboostbv/example_machine.git
+    version: main

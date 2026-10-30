@@ -1,0 +1,3 @@
+// Opens inference's container, which always runs from its checkout in A14-all.
+{ "dockerComposeFile": "../../compose.generated.yaml", "service": "inference",
+  "workspaceFolder": "/app/src", "initializeCommand": "flexcompose regenerate", "shutdownAction": "none" }

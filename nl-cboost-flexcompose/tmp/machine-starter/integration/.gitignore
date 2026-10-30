@@ -1,0 +1,10 @@
+# Every folder here is personal (the dev box's checkouts, workspaces/, the release bundles release-<tag>/),
+# except the ones this repo ships.
+/*/
+!/.devcontainer/
+!/bundle/
+!/image/
+# Generated per developer (FLEXCOMPOSE_DESIGN.md §2): never commit these.
+compose.generated.yaml
+compose.release-build.yaml
+compose.release.yaml

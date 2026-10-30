@@ -11,6 +11,10 @@ Everything known about the user's situation, one fact per row. The answerer uses
 only the facts a question asks for (see `../README.md`, *Running*). Facts are numbered by topic (G1, G2, ...) and
 split into single facts with a letter (G1a, G1b, ...); a number without a letter means the whole group.
 
+Some facts are never offered (G16a, G16b, G25d): the answerer gives one only when a question asks
+for exactly that (which of the old rack's parts can be reused; what the user wants in the long term), never in a
+review, a correction or an "Other" answer. The user doesn't think of them unprompted (user, 2026-10-28).
+
 ### The bike
 | # | Fact |
 |---|---|
@@ -23,6 +27,7 @@ split into single facts with a letter (G1a, G1b, ...); a number without a letter
 | G3b | The manual says those lugs look like rack mounts but are "not to be used for racks" (manual p. 11) |
 | G4a | The manual's rack points are the upper seat fixtures and the bolts half way down the seat support tube (manual p. 12) |
 | G4b | Both of those points exist on this bike |
+| G4c | Optima made no rack for the Baron; the manual's rack pages show a different bike (added 2026-10-28) |
 | G5 | The bolts half way down the seat support tube are too far forward for a stable strut from the rack |
 | G6a | The hardshell seat flexes |
 | G6b | A rack attached to the seat would destroy its mount over time |
@@ -53,8 +58,13 @@ split into single facts with a letter (G1a, G1b, ...); a number without a letter
 | G14c | It is badly made and badly mounted |
 | G14d | The user fears it will fall apart soon |
 | G15a | The user owns another, sound rack that fits the lugs |
-| G15b | That rack has no struts of its own |
-| G16 | The old rack's U-tube can be reused as the new rack's struts |
+| G15b | That rack has no usable struts of its own (reworded 2026-10-28) |
+| G15c | The struts that came with that rack are far too short to reach the frame's tubes (added 2026-10-28) |
+| G15d | The front of that rack's top has holes or tabs for struts (added 2026-10-28) |
+| G15e | A strut from that rack's top to the highest clamp point on the rear fork tubes is about 35 cm (added 2026-10-28) |
+| G15f | That rack's own struts are round rods bent to 45 degrees, with flat ends with holes through them (added 2026-10-28) |
+| G16a | The old rack's U-tube can be reused as the new rack's struts |
+| G16b | The old rack's clamps and bolts can be reused to fix the struts to the rear fork tubes (added 2026-10-28) |
 
 ### Load and use
 | # | Fact |
@@ -63,10 +73,15 @@ split into single facts with a letter (G1a, G1b, ...); a number without a letter
 | G17b | One bag holds a coat, a lock and tools |
 | G17c | The other bag holds a laptop, charger, phone and notebook |
 | G17d | The load is under 15 kg |
+| G17m | The typical load is under 10 kg: a light commuting load (added 2026-10-28) |
 | G17e | The bike is used for commuting |
 | G17f | Shopping is not done with this bike, or only small and light items (added 2026-10-25) |
 | G17g | The laptop is a 17-inch model (added 2026-10-25) |
 | G17h | The laptop is carried to the office every day (added 2026-10-25) |
+| G17i | One bag is a pannier, the other a laptop shoulder bag (added 2026-10-28) |
+| G17j | Both bags have rack hooks (added 2026-10-28) |
+| G17k | The user doesn't want to change the bags (added 2026-10-28) |
+| G17l | Whether bags fit under the seat or beside the front wheel depends on the bag(s) (added 2026-10-28) |
 | G18a | The bike is ridden on bike lanes and through tight corners |
 | G18b | Two rear panniers are fine for that |
 | G18c | A trailer is not an option |
@@ -92,11 +107,16 @@ split into single facts with a letter (G1a, G1b, ...); a number without a letter
 | G26c | Must-have: no change to the seat position, pedalling, or getting on and off (added 2026-10-25) |
 | G26d | Must-have: clears kerbs and speed bumps (added 2026-10-25) |
 | G26e | Must-have: the rear light and reflector stay visible (added 2026-10-25) |
+| G27a | No permanent changes to the bike: keep it as original as possible (added 2026-10-28) |
+| G27b | Any change made to the bike should ideally be reversible (added 2026-10-28) |
+| G28 | The bike has to fit in a car or on a train with the rack fitted (added 2026-10-28) |
+| G29 | The user has hand tools and a drill (added 2026-10-28) |
+| G30 | The rack doesn't need to come off quickly (added 2026-10-28) |
+| G31 | The budget is low: under 50 euros (added 2026-10-28) |
 
 ### Not known
 The answerer replies "don't know" to these. If a run needs one of them, the user decides it, and it is added above
 with the date.
-- Budget.
 - The lug thread size; the fork tube diameter; the brand of the owned rack.
 - How the rear wheel is held (quick-release, thru-axle or nutted), the hub width, and the rear brake type.
 - How often the seat angle is changed, and whether re-tightening one bolt after a change would be acceptable.
@@ -107,15 +127,20 @@ mudguard lugs "not to be used for racks", the maker's rack points, and the 6 Nm 
 shell on the seat frame (not the seat-frame fixtures). One Baron owner on CycleChat mounted a cheap rack on the lugs
 with its top cable-tied to the headrest.
 
+Pitfall: the manual's rack pages show a different bike; there is no Optima rack for the Baron (G4c).
+
 ## Expected answer and rubric
 | Element | Points |
 |---|---|
 | Match, short term: the new rack's lower legs on the mudguard lugs, its struts to the rear fork's tubes; nothing on the seat | match |
 | Match, alternative: in the long term a tailbox (as long as it fits a laptop) | match |
 | Both: the rack now, a tailbox in the long term | +1 |
-| The new rack's struts made from the old rack's U-tube (G16) | +1 |
+| The new rack's struts made from the old rack's U-tube (G16a) | +1 |
+| The old rack's clamps and bolts reused to fix the struts (G16b) (added 2026-10-28) | +1 |
 
-Full marks: both horizons and the U-tube reuse.
+Full marks (3): both horizons, the U-tube reuse and the clamp reuse.
+
+Price of the expected short-term answer: €0, as every part is already owned (G15a, G16a, G16b) (user, 2026-10-28).
 
 Hidden requirements a run should find by asking: G5/G8d (why not the seat bolts), G6 (seat flex), G13 and G16 (the
 old rack's parts and their reuse), G14 (what is wrong now), G19 (seat adjustment), G24 (sideways stability), G25

@@ -1,0 +1,10 @@
+# The machine's release definition (root). Services by repo + version; everything else comes from their envelope.
+services:
+  app:
+    repo: git@github.com:Cboostbv/nl-polymx-automated-qc-application.git
+    version: v2.3.0
+    env: {INFERENCE_URL: http://127.0.0.1:8080}
+  inference:
+    repo: git@github.com:Cboostbv/nl-polymx-ai-suite-inference.git
+    version: <sha>
+base: cboost-c-nas:5100/cboost-ros2-jazzy:0.2.0

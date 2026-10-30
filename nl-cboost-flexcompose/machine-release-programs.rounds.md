@@ -106,3 +106,30 @@ Checks: rejection check: F2c ties F5d once its `release.sh` guard is added; tie-
 F11 unscored; F14, F15 ✗ as worded; stale cells. Bias check: N20b can't mean byte-reproducible (inference recipe
 unpinned: verified); N24 needs the NAS for the base on a fresh PC (spike `spike-nasdown`: a cached base builds);
 F16 submodule; the F5d check's `sed` is fragile; N23b reason reworded. Ranking: three-way tie F5d, F5c, F2c.
+
+## Round 9 (2026-10-27)
+Answers: reproducible = same source commit (F14 stays out); `pull_policy: build` fetch per `up` acceptable; the tie:
+the user asked for an overview of the choices' strengths and weaknesses (written in the log's *Evaluation*).
+
+## Round 10 (2026-10-28)
+Answers: the dev box image may grow heavy, and the build stage may then get its own, smaller base (N23c, could).
+F2 added to the overview as the fourth choice, today's injection as a baseline column. The user picked F2
+(simplest, room for the split). Checks: rejection check: F2c meets N23c with one repo line, its rsd cell stale
+since round 8, so F2c leads alone; F5d's ✓ rsd lasts only while its check stays; F5d's `sed` claim stale (Compose
+normalizes `args`); F2's record wording updated. Bias check: proposed splitting off the app's base (rests on open
+question 2, answered in round 7: not adopted), F17 (`release.sh` builds programs: added, trailing), N20b's reason
+also hits the recipe's own `FROM` (weighed: N20b means the same commit, round 9). No web search this round.
+Ranking: F2c leading, F5d runner-up, F5c and F2 trailing. Pushback on F2 asked.
+Pushback answer: no `.env` wanted (F2 over F2c); need and priority asked as a follow-up.
+Round 10 end: the user asked what changes if the app's image is built from `-application`; answers: the dev box runs all release services at once, drivers one pattern, fewer repos, team ownership, reuse elsewhere; decision paused; exploration moved to `machine-repo-layout.md`.
+Round 10 end: the user asked what changes if the app's image is built from `-application`; answers: the dev box runs all release services at once, drivers one pattern, fewer repos, team ownership, reuse elsewhere; decision paused; exploration moved to `machine-repo-layout.md`.
+
+## Round 11 (2026-10-28)
+Resumed as A-5 of `machine-repo-layout.md`: the child decided that recipes live in the services' repos (A-2),
+`cdr` locks (A-1), customer branches (A-4), and added M13 (no copies; overrides fine) and M14 (FlexCompose simple).
+F2d′: the base named once as the app Dockerfile's `ARG BASE_IMAGE` default, the dev box builds its `dev` stage from
+the app's git context, FlexCompose's devbox rule "drop build: of a workspace service" goes. Leader F2d′, runner-up
+F2c; F2 ~ M13; D (today's derivation) ✗ N22. No web search.
+Checks (round 11): rejection: F2d′ needs a pinned app ref (recreate-announced), a breaking devbox change, plan step 1 for N22; its ~ N25 deeper than F2c's; D ~ M14. Bias: Dev Containers with a git context unverified (spike); ref-tagged dev image; N25 reword; F2's M13 reading.
+Answers and spike (round 11): N25 reworded; F2's literals an allowed difference (M13); spike-dcgit: devcontainer up fails on a service whose build: is a git context (reads the Dockerfile as a local path): F2d′ out; F2 leading again.
+A-5 decided by the user: F2.

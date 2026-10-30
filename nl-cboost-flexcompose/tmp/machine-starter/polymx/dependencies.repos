@@ -1,0 +1,46 @@
+# The repositories the PolyMX QC machine builds from source, for cdr (nl-cboost-ros-tools, deps-resolve): the
+# top-level file. The application's own dependencies.repos brings in its ROS dependencies; only this file may settle a
+# conflict (override: true). After a change: bash src/bootstrap.sh --update in the dev box, ./lock.sh before a release.
+repositories:
+  nl-polymx-automated-qc-application:
+    type: git
+    url: git@github.com:Cboostbv/nl-polymx-automated-qc-application.git
+    version: main
+  # The application pins dev/heartbeat-recovery, the state manager feature/packml-2022: this machine runs the former.
+  packml_ros2:
+    type: git
+    url: git@github.com:cboostjvisser/packml_ros2.git
+    version: dev/heartbeat-recovery
+    override: true
+  # TEMPORARY until the application's dependencies.repos is fixed: the branches it names for these two no longer
+  # exist; main has what the application needs (polymx_cell.dip, SEGMENT_FORM).
+  nl-cboost-orchestrator-ros2:
+    type: git
+    url: git@github.com:Cboostbv/nl-cboost-orchestrator-ros2.git
+    version: main
+    override: true
+  nl-polymx-robot:
+    type: git
+    url: git@github.com:Cboostbv/nl-polymx-robot.git
+    version: main
+    override: true
+  # TEMPORARY until they are ROS packages: the application's four Python libraries (docs/BUILD_AND_RUN.md). They have
+  # no package.xml, so colcon skips them; bootstrap.sh and image/Dockerfile install them with pip. Pinned here so the
+  # lock holds them too. The URLs of yaskawa_hse_driver and nl-polymx-datastore are to be confirmed.
+  nl-cboost-orchestrator:
+    type: git
+    url: git@github.com:Cboostbv/nl-cboost-orchestrator.git
+    version: main
+  yaskawa_hse_driver:
+    type: git
+    url: git@github.com:Cboostbv/yaskawa_hse_driver.git
+    version: main
+  nl-polymx-datastore:
+    type: git
+    url: git@github.com:Cboostbv/nl-polymx-datastore.git
+    version: main
+  # The application pins the EtherCAT client by commit in requirements-ethercat.txt; keep the two the same.
+  nl-polymx-ethercat:
+    type: git
+    url: git@github.com:Cboostbv/nl-polymx-ethercat.git
+    version: c966d7eb001a7262c9239bdb4e144473939d422c

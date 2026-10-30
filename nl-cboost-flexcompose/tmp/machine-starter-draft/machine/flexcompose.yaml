@@ -1,0 +1,34 @@
+# FlexCompose template of one machine's integration repo (FLEXCOMPOSE_DESIGN.md §13). The app is the dev box's
+# workspace service, built in the box and, for a release, by image/Dockerfile from lock.repos; the others run as
+# images built from their own repo at a tag.
+#   flexcompose generate --target devbox:host-src     then Reopen in Container and bash src/bootstrap.sh --update
+# Release: ./lock.sh, commit lock.repos, git tag -a v1.3.0 -m v1.3.0, ./release.sh
+flexcompose_options:
+  targets: [devbox:host-src, devbox:host, devbox:volume, release:build, release]
+
+services:
+  app:
+    # Its code: the repositories of dependencies.repos (the app, nl-polymx-automated-qc-application, and what it
+    # pulls in), cloned into src/ by bash src/bootstrap.sh --update and built in the box; the release builds them
+    # from lock.repos.
+    flexcompose_options:
+      workspace: true
+      enable_shared_memory: true
+      enable_logging: true
+      enable_gui: true
+      enable_gpu: true
+    # The dev box's image. The release builds on the base flexcompose.release.yaml names (BASE_IMAGE): bump both.
+    image: cboost-c-nas:5100/cboost-ros2-jazzy:0.2.0
+    restart: always
+    network_mode: host
+    command: dev
+  inference:
+    flexcompose_options:
+      enable_gpu: true
+    # Its version, written twice: the image tag and the build's git tag (v1.4.0 builds polymx-serve:1.4.0). Bump
+    # both. Compose builds it only while that image is missing, so an open needs no network once it is built.
+    image: cboost-c-nas:5100/polymx-serve:1.4.0
+    build:
+      context: git@github.com:Cboostbv/nl-polymx-ai-suite-inference.git#v1.4.0
+      dockerfile: Dockerfile.serve
+    ports: ["127.0.0.1:8080:8080"]

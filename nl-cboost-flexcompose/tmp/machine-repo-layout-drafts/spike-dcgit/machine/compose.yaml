@@ -1,0 +1,8 @@
+name: spikedcgit
+services:
+  app:
+    image: spike-app-dev:v1
+    build:
+      context: git://127.0.0.1:9418/app.git#v1
+      target: dev
+    command: sleep infinity

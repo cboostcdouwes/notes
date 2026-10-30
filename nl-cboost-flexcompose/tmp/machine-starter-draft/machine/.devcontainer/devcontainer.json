@@ -1,0 +1,10 @@
+// As today's integration starter: the app's container; postAttachCommand runs src/bootstrap.sh on every open.
+{
+  "dockerComposeFile": "../compose.generated.yaml",
+  "service": "app",
+  "workspaceFolder": "/home/cboost-user/workspaces",
+  "initializeCommand": "flexcompose regenerate",
+  "overrideCommand": false,
+  "shutdownAction": "none",
+  "postAttachCommand": "for f in /home/cboost-user/workspaces/src/bootstrap.sh /home/cboost-user/workspaces/bootstrap.sh; do [ ! -f $f ] || bash $f || exit 1; done"
+}

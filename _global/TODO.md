@@ -4,23 +4,38 @@ Topics outside any repo. Most important first.
 
 ## design-research skill
 
+- **Decide how the skills are packaged** (`design-research/skill-packaging.md`, stub, 2026-10-30): one shareable
+  collection with files shared between skills (likely a plugin). Next up: it blocks the problem-formulation split.
+- **Split problem formulation out of design-research** (`design-research/problem-understanding.md`, decision
+  drafted, paused 2026-10-30 until packaging is decided). Then replay the recumbent-rack benchmark and check that the
+  first question call comes before any option; add a hook only if the confirmation gets skipped.
 - **Improve design-research from the recumbent-rack benchmark** (`design-research/benchmarks/recumbent-luggage-rack/`,
-  scored 2026-10-25): the five replay targets in `runs/2026-10-25-fd1de14/score.md` (ask about the current setup
-  early, reusable parts, time horizons, rejections within a requirement's wording, values beyond the stated load);
-  then replay it as `benchmarks/README.md` describes.
-- **Watch the next design-research run** after the skill-and-log-size changes (all four steps done 2026-10-24): do
-  the checks stay independent with the extract files, do round entries land in `<topic>.rounds.md`, does the core stay
-  under the gate's 4,800-token warning.
-- **Watch the next run for drafts** (option-discovery, installed 2026-10-25): is the leader (and a close runner-up)
-  drafted and put through its real use each round, given to the user, and does an option change the leader in a
-  round rather than at the review? That run is the only clean test of the change.
-- **Watch the next run for discovery** (model-side-discovery, installed 2026-10-25): does the researcher run blind
-  generators before listing options and place them on a map, do they search the web, what does it cost, and do their
-  options change the leader before the user names one? Then ask the user what it showed (the decision's plan step 2).
-- **Requirement relaxation in a check** (child of model-side discovery, open): one option per requirement that breaks
-  or relaxes it, in the bias or requirement check (user, 2026-10-25). Low urgency.
+  replayed 2026-10-28: match, 0 of 3, leads in round 5 instead of 10): the replay targets in
+  `runs/2026-10-28-c8c33da/score.md`. Most urgent: review objections handled as amendments with no round, checks or
+  gate (six in a row); still never asks about the current setup, owned parts, time horizons or long-term values.
+  Then replay it as `benchmarks/README.md` describes.
+- ~~Put the skill under version control~~: done, `~/.claude/skills` is a git repo (commit `e2c7998`,
+  2026-10-29); benchmark runs can name that commit.
+- **Discovery didn't run** (model-side-discovery, installed 2026-10-25; checked on the 2026-10-28 benchmark run): no
+  blind generator agents and no design-space map; the options came from the researcher's own web searches (20, $0.34
+  via Haiku). The round checklist has no discovery item, so the gate can't catch the skip. Medium urgency: decide
+  whether to add a checklist item, then watch the next run again and ask the user what it showed (the decision's
+  plan step 2).
+- **Drafts only partly work** (option-discovery, installed 2026-10-25; checked 2026-10-28): one evolving draft of the
+  leader per round, named in the report; no runner-up drafted; the paper stress test missed the seat-bracket strut
+  problem the user then raised. The leader did change within rounds (1-5), driven by answers. Watch again after the
+  review-amendment fix.
+- **Core size is at the limit**: SKILL.md is ~4,723 tokens by the gate's estimate, 77 under the 4,800 warning
+  (checked 2026-10-28). Any addition, such as a discovery checklist item, needs a trim elsewhere. The other
+  skill-and-log-size checks held: independent checks with extract files, all round and review entries in
+  `<topic>.rounds.md`.
 - **Fact-check the claims rejections rest on** (child of model-side discovery, open): one line in
-  `checks/rejection.md`; caught a false fact in its first try. Low urgency.
+  `checks/rejection.md`; caught a false fact in its first try. The 2026-10-28 run's false fact (the manual shows a
+  Baron rack) held up the *leader*, not a rejection: consider checking the claims the leader rests on too. Low
+  urgency.
+- **Requirement relaxation in a check** (child of model-side discovery, open): one option per requirement that breaks
+  or relaxes it, in the bias or requirement check (user, 2026-10-25). The 2026-10-28 run gave no evidence either way.
+  Low urgency.
 - **Edit research logs by heading, not by substring**: twice in the skill-and-log-size run an insert matched a
-  backticked heading name inside a sentence and split it. Low urgency; consider a rule or a helper with step 3's
-  section script.
+  backticked heading name inside a sentence and split it. Not seen on 2026-10-28 (the researcher wrote a Python edit
+  script per round, replacing whole rows). Low urgency; consider a rule or a helper with step 3's section script.

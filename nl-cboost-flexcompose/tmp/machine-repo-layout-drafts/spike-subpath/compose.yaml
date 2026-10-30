@@ -1,0 +1,16 @@
+name: spikesub
+services:
+  app:
+    image: busybox:1.36
+    command: sh -c "echo app > /ws/marker; sleep 600"
+    volumes: [source_workspace:/ws]
+  inference:
+    image: busybox:1.36
+    command: sh -c "echo inf > /ws/marker; sleep 600"
+    volumes:
+      - type: volume
+        source: source_workspace
+        target: /ws
+        volume: {subpath: inference}
+volumes:
+  source_workspace: {}

@@ -2,29 +2,26 @@
 
 Most important first. `§n` = FLEXCOMPOSE_DESIGN.md section.
 
-## Test refactor (done 2026-10-26)
-
-- **Run `go test ./...` once on a Windows checkout**: the property tests (`folderProject` folder names, CRLF) were
-  only vetted with `GOOS=windows`. Low urgency; do it with the VS Code Windows check below.
-- **Optional `.gitignore` entry for `flexcompose-cli/testdata/rapid/`** (a failing rapid run writes it). Small,
-  separate commit if wanted. Context: `test-refactor.md`.
-
 ## Release targets: open points
 
 Release targets, the integration starter and `tests/e2e.sh` are done (design §13). The prototype's documents are in
 git history: `git show 88758e0:prototypes/release/<file>` (`release-target.md`: constraints, questions and decisions,
 C/A/P/D/Q codes; `release-options.md`: the four layouts compared; `concept-1/`: the polymx reference).
 
-- **Programs with their own build recipe** (e.g. `nl-polymx-ai-suite-inference`): the starter can't build them;
-  `release:build` forces `target: release`, and `release.sh` never pulls image-only services. Research paused after
-  round 4 (2026-10-26): `machine-release-programs.md` (leader: the override clears the target, FlexCompose unchanged;
-  three questions open). Resume there.
+- **Machine starter with `cdr`** (supersedes "programs with their own recipe" and "where a machine's services
+  live"): researched and drafted 2026-10-29 (`machine-starter-template.md`, *Decision* Draft); the full starter, the
+  PolyMX integration repo and the plan in `tmp/machine-starter/`. Paused before the review closed. Resume from
+  `tmp/machine-starter/PLAN.md`: close the review, step 0 (Decision sections of the parent logs; tell the colleague
+  `cdr --verify` is withdrawn), step A (`cdr` + vcs2l in the base image), step 1 (FlexCompose `feat!`: `build:` as
+  written).
 - **Machines may pull** (REQUIREMENTS.md `release-offline`, `release-registry-pull`): the release file sets
   `pull_policy: never`, which fits today: pulling from an online registry is a Won't. Waits for a request for an
   online update process; then update §13, the `release` target and the README. Until then only §13's wording is
   too strict: it says the machine *has* no registry access, where `release-offline` says it *can* run without one.
 - **Polymx Python dependencies**: proposal in `python-dependencies.md` (pip convention now, a private
-  package index later). Waits for the colleague reorganising the branches and dependencies.
+  package index later). Waits for the colleague reorganising the branches and dependencies. The machine starter's
+  plan (step 6) has a temporary pip step in PolyMX's integration repo until they are ROS packages (user,
+  2026-10-29).
 - **Polymx fit** (`release-target.md` D1-D13): the release build stops at rosdep (2026-10-22, base 0.2.0):
   `yaskawa_hse_ros` needs `python3-yaskawa-hse-driver` (no rosdep key; see the Python dependencies item) and
   `nl_cboost_machine_state_manager` lists `ament_python` as a dependency (not a key; it belongs in `<build_type>`).

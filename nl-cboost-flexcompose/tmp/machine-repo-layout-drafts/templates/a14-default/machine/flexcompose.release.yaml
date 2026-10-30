@@ -1,0 +1,10 @@
+services:
+  app:
+    image: "cboost-c-nas:5100/polymx-qc:${RELEASE_VERSION:?}"
+    build:
+      context: git@github.com:Cboostbv/nl-polymx-automated-qc-application.git#${APP_REF:?from the lock}
+      target: release
+      ssh: [default]
+      additional_contexts: {lock: "variants/${CUSTOMER:?}"}
+      args: {BASE_IMAGE: cboost-c-nas:5100/cboost-ros2-jazzy:0.2.0}   # open point 3 (M13 vs N22 vs N25)
+    command: ros2 launch polymx_qc_app polymx_stack.launch.py

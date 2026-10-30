@@ -1,0 +1,3 @@
+# Not written yet: run ./lock.sh (it needs cdr, vcs2l and SSH access to the repositories), review and commit the
+# result. release.sh refuses this file, because this first line names no dependencies.repos.
+repositories: {}

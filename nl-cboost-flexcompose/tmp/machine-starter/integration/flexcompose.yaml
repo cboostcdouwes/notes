@@ -1,0 +1,39 @@
+# FlexCompose template of one machine's integration repo: the starter from nl-cboost-flexcompose/templates/integration
+# (FLEXCOMPOSE_DESIGN.md §13). The source-built service (app) is the dev box's workspace: its code is the repositories
+# of dependencies.repos, cloned into src/ and built in the box; a release builds them from lock.repos with
+# image/Dockerfile. A service with its own recipe runs as an image built from its repo at a tag.
+# docker compose cannot run this file: flexcompose_options is not a Compose key, so Compose rejects it.
+# Generate a runnable Compose file from it (compose.generated.yaml, next to this file), then run that:
+#   flexcompose generate --target devbox:host-src
+#   docker compose -f compose.generated.yaml up -d      (or Reopen in Container)
+#   (in the box) bash src/bootstrap.sh --update          (clones the repositories; again to take in new commits)
+# Release: ./lock.sh, commit lock.repos, git tag -a v1.1.0 -m v1.1.0, ./release.sh
+flexcompose_options:
+  # devbox:host-src mounts this repo at src/, with the repositories of dependencies.repos next to each other in it.
+  # devbox:host and devbox:volume work too, with an empty src/: clone this repo into it in the box (see README.md).
+  # release:build and release are for release.sh.
+  targets: [devbox:host-src, devbox:host, devbox:volume, release:build, release]
+
+services:
+  app:
+    flexcompose_options:
+      workspace: true
+      # The machine's release gets these features too.
+      enable_shared_memory: true
+      enable_logging: true
+      enable_gui: true
+      # enable_gpu needs an NVIDIA GPU and driver on the host; set it to false otherwise.
+      enable_gpu: true
+    # The dev box's image. The release builds on the base flexcompose.release.yaml names (BASE_IMAGE): bump both.
+    image: cboost-c-nas:5100/cboost-ros2-jazzy:0.3.0
+    restart: always
+    network_mode: host
+    command: dev
+  # A service with its own recipe (FLEXCOMPOSE_DESIGN.md §13): its repo has a Dockerfile and release tags. Its
+  # version is written twice, the image tag and the git tag: bump both. Compose builds it only while that image is
+  # missing, so an open needs no network once it is built; the release builds it from the same lines.
+  # example_program:
+  #   image: cboost-c-nas:5100/example-program:1.0.0
+  #   build:
+  #     context: git@github.com:Cboostbv/example_program.git#v1.0.0
+  #   network_mode: host

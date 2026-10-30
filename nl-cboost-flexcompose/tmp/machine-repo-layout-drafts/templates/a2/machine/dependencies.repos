@@ -1,0 +1,6 @@
+# Top level for cdr: what the machine uses directly. The app's own dependencies.repos brings the rest.
+repositories:
+  nl-polymx-automated-qc-application:
+    type: git
+    url: git@github.com:Cboostbv/nl-polymx-automated-qc-application.git
+    version: main

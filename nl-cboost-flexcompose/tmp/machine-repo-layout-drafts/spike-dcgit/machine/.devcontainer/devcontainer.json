@@ -1,0 +1,1 @@
+{ "dockerComposeFile": "../compose.yaml", "service": "app", "workspaceFolder": "/", "shutdownAction": "none", "updateRemoteUserUID": false }

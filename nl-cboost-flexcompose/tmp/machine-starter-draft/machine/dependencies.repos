@@ -1,0 +1,14 @@
+# The repositories this machine builds from source, for cdr (nl-cboost-ros-tools): the top-level file. Each
+# repository's own dependencies.repos brings in the rest. Only this file may settle a conflict (override: true).
+# A customer branch pins its own versions here (version: release/2.3), then runs ./lock.sh.
+repositories:
+  nl-polymx-automated-qc-application:
+    type: git
+    url: git@github.com:Cboostbv/nl-polymx-automated-qc-application.git
+    version: main
+  packml_ros2:
+    # The state manager pins feature/packml-2022, the app dev/heartbeat-recovery: this machine runs the latter.
+    type: git
+    url: git@github.com:cboostjvisser/packml_ros2.git
+    version: dev/heartbeat-recovery
+    override: true

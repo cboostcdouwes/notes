@@ -1,0 +1,5 @@
+# This repository's direct source dependencies (cdr convention): nothing about machines or customers.
+repositories:
+  nl-cboost-orchestrator-ros2: {type: git, url: git@github.com:Cboostbv/nl-cboost-orchestrator-ros2.git, version: main}
+  nl-cboost-machine-state-manager: {type: git, url: git@github.com:Cboostbv/nl-cboost-machine-state-manager.git, version: main}
+  packml_ros2: {type: git, url: git@github.com:cboostjvisser/packml_ros2.git, version: dev/heartbeat-recovery}

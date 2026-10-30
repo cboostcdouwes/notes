@@ -1,0 +1,17 @@
+# How the machine's release differs from the dev box, in plain Compose (FLEXCOMPOSE_DESIGN.md §13): FlexCompose
+# merges it last, per service, for both release targets, and adds nothing to build:. release.sh sets
+# RELEASE_VERSION from the git tag (v1.1.0 gives 1.1.0, v1.1.0+acme gives 1.1.0_acme) and RELEASE_SRC to the
+# repositories of lock.repos, checked out; the bundle's .env sets RELEASE_VERSION on the machine.
+services:
+  app:
+    image: "cboost-c-nas:5100/example-machine:${RELEASE_VERSION:?is set by release.sh from the git tag, and on the machine by the bundle's .env}"
+    build:
+      # This repo's generic recipe; its source is every repository of lock.repos.
+      context: image
+      target: release
+      additional_contexts:
+        workspace: ${RELEASE_SRC:?is set by release.sh}
+      args:
+        # The release's base; the dev box runs the template's image:. They may differ, but usually match: bump both.
+        BASE_IMAGE: cboost-c-nas:5100/cboost-ros2-jazzy:0.3.0
+    command: ros2 launch example_bringup robot.launch.py

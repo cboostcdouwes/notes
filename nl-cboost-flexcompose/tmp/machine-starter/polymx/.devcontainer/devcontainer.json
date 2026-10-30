@@ -1,0 +1,25 @@
+// VS Code Dev Containers config for this integration repo's dev box (FLEXCOMPOSE_DESIGN.md §13). Choose once,
+// in the folder above: flexcompose generate --target devbox:host-src
+// After that, initializeCommand repeats that choice on every open. src/ is this checkout on the host;
+// build/, install/ and log/ are in the Docker volume <project>_source_workspace, so keep all your work
+// under src/. Dev Containers forwards your SSH agent and copies your git identity: clone, commit and push
+// in the box. On every open, postAttachCommand runs src/bootstrap.sh (the system dependencies of src/; it
+// never clones or moves a checkout: bash src/bootstrap.sh --update does), then your own
+// /home/cboost-user/workspaces/bootstrap.sh, each if present.
+{
+  "dockerComposeFile": "../compose.generated.yaml",
+  "service": "app",
+  "workspaceFolder": "/home/cboost-user/workspaces",
+  "initializeCommand": "flexcompose regenerate",
+  "overrideCommand": false,
+  "shutdownAction": "none",
+  "postAttachCommand": "for f in /home/cboost-user/workspaces/src/bootstrap.sh /home/cboost-user/workspaces/bootstrap.sh; do [ ! -f $f ] || bash $f || exit 1; done",
+  "customizations": {
+    "vscode": {
+      // The ROS 2 extension replaces the deprecated ms-iot.vscode-ros, which also pulled in Python and C++ support.
+      "extensions": ["Ranch-Hand-Robotics.rde-ros-2", "ms-python.python", "ms-vscode.cpptools"],
+      // Show the checkouts under src/ in Source Control (depth 2 reaches src/<repo>).
+      "settings": { "git.repositoryScanMaxDepth": 2 }
+    }
+  }
+}

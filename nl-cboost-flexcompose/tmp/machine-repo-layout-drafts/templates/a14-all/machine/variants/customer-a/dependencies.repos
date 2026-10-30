@@ -1,0 +1,7 @@
+# Only customer-a's differences; merged onto ../../dependencies.repos by release.sh.
+repositories:
+  nl-polymx-automated-qc-application:
+    type: git
+    url: git@github.com:Cboostbv/nl-polymx-automated-qc-application.git
+    version: release/2.3
+    override: true

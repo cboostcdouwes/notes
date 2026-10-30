@@ -1,0 +1,4 @@
+# customer-a's run differences, merged into the release only (plain Compose).
+services:
+  app:
+    volumes: ["./config/customer-a:/opt/app/config:ro"]

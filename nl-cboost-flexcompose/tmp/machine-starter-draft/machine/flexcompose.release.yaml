@@ -1,0 +1,17 @@
+# How the machine's release differs from the dev box (FLEXCOMPOSE_DESIGN.md §13); FlexCompose merges it last and
+# adds nothing to build:. release.sh sets RELEASE_VERSION from the tag and RELEASE_SRC to lock.repos checked out.
+services:
+  app:
+    image: "cboost-c-nas:5100/polymx-qc:${RELEASE_VERSION:?is set by release.sh from the git tag, and on the machine by the bundle's .env}"
+    build:
+      # This repo's generic recipe; the source is every repository of lock.repos, checked out by release.sh.
+      context: image
+      target: release
+      additional_contexts:
+        workspace: ${RELEASE_SRC:?is set by release.sh}
+      args:
+        # The release's base; the dev box runs the template's image:. They may differ, but usually match: bump both.
+        BASE_IMAGE: cboost-c-nas:5100/cboost-ros2-jazzy:0.2.0
+    command: ros2 launch polymx_qc_app polymx_stack.launch.py
+  # inference: nothing; the release builds it from the template's build: and image:. Needs FlexCompose to pass build:
+  # on as written (sibling plan step 1): today release:build adds target: release, which Dockerfile.serve lacks.

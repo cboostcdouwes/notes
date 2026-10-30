@@ -1,0 +1,11 @@
+# dependencies.repos sha256: 5e1c...   (written by lock.sh; release.sh refuses a lock whose line doesn't match)
+repositories:
+  nl-polymx-automated-qc-application:
+    type: git
+    url: git@github.com:Cboostbv/nl-polymx-automated-qc-application.git
+    version: 9a1b2c3d...
+  nl-cboost-machine-state-manager:
+    type: git
+    url: git@github.com:Cboostbv/nl-cboost-machine-state-manager.git
+    version: 4c5d6e7f...
+  # ... every repository cdr resolved, at its commit hash

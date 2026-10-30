@@ -1,0 +1,4 @@
+# Only customer-a's differences: configuration first, versions or base where needed (M8).
+services:
+  app:
+    volumes: ["./config:/opt/app/config:ro"]

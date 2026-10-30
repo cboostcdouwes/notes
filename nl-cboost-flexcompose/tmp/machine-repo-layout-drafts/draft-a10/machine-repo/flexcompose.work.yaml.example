@@ -1,0 +1,2 @@
+# Untracked (git-ignored), per developer: services to run from local checkouts. Root-only: no service repo can say this.
+app: ../nl-polymx-automated-qc-application

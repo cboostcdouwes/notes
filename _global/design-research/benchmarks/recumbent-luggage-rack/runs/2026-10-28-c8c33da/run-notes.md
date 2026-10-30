@@ -1,0 +1,12 @@
+# Run notes (for score.md)
+- Round 1 Q2 (Load): answered Other "Two bags, under 15 kg"; per the user (2026-10-28) the answer should have been the option "Light: commute/shopping, under ~10 kg" (G17m added). Not replayed.
+- Round 1 Q3 (Mounts): answered "Yes, holes or a maker rack"; per the user there is no maker's rack for the Baron (G4c added); the holes part holds (G4b). Not replayed.
+- Round 2 Q2 (Your bags): "Panniers with hooks" picked though one bag is a laptop shoulder bag (G17i); acceptable as the nearest option.
+- Round 3 Q2 (Time frame): answered only with the premise correction (G4c); timing left unsaid by the user's choice.
+- Round 4 Q3 (Decision): the answerer gave G19b (refitting after a seat-angle change), which contradicts G8c; replaced by the user's choice with G8d before sending.
+- Round 4 Q1 (Budget/wait): answered "don't know" (budget was then listed as not known); G31 (under 50 euros) added after round 5.
+- Round 7: the researcher took the budget objection as an amendment, not a round; no independent checks run; asked for a free-text review again.
+- Round 8: amendment again, no round or checks; the researcher admits it should have asked about owned parts in round 1.
+- Round 9: amendment; buy Tubus struts. U-tube (G16) not asked; two checks put to the user in free text.
+- Round 9 review: the answerer offered G16; the user withheld it (the user wouldn't think of reusing the U-tube unprompted; G16 now says so). Only the two checks sent (G15c, G15d added).
+- Round 11: amendment; two free-text questions (strut length; own struts flat or round). Still no question-tool call since round 5.
