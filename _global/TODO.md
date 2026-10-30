@@ -9,10 +9,17 @@ Resume from `design-research/handoff.md` (2026-10-30).
 - ~~Package the skills as the `claude-skills` marketplace~~: done 2026-10-30 (`~/Cboost/claude-skills`, plugin
   `research`, skill `research:design`; plan steps 1-2). Left: step 3, install on a second machine or a clean `$HOME`
   with `claude plugin install research --marketplace cboostcdouwes/claude-skills`.
-- **Resume the problem-formulation split** (`design-research/problem-understanding.md`, paused): now unblocked; it
-  goes into the `research` plugin, with the log format in `research/shared/`. Its draft names `design-research`
-  paths; adapt them to `research/skills/design/`. Then replay the recumbent-rack benchmark and check that the first
+- **Problem-formulation split** (`design-research/problem-understanding.md`, Reviewed 2026-10-30): step 1 committed
+  (`349b2f5`); success criteria removed (`56605cf`); READMEs (`1803c0b`); pushed. Later, when the user chooses (not to be proposed as next): replay the
+  recumbent-rack benchmark and check that the first
   question call comes before any option; add a hook only if the confirmation gets skipped.
+- **Check every skill's flow control** (user, 2026-10-30): steps whose jumps, skips or loops say something other
+  than the rules around them. Found while drawing problem-formulation's README flowchart: step 4's "go straight to
+  step 6" skips step 5 (the requirements inventory), while the batching rule says the one call still holds the
+  deciding requirements; fix: "straight to step 5 without questions, then 6", and the README's edge with it.
+  Check `research:design` the same way (phase jumps, round loop, the decision's way back into a round), e.g. by
+  drawing each skill's flow from its text alone and comparing it with its README. Medium urgency: a wrong jump
+  skips a step silently. After the benchmark replay, so its result reflects the current text.
 - **The skill-packaging benchmark can't run in the harness yet**: `bench.py setup` takes only the first line of the
   prompt quote, and the README has a *Files and repos at the start* section the setup doesn't recreate. Part of
   confirming the draft.

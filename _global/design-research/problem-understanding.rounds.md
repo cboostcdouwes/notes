@@ -71,3 +71,8 @@ called by design-research; wording independent of design-research, dependency on
 shared dependency. Applied to the draft as amendments (they keep the choice). Found while applying: `requirements.md`
 uses design-research terms (rounds file, *Phase 6*, matrix, checks) in its sections on dropped and replaced
 requirements; those parts stay in design-research. Asked where the shared log format lives.
+
+## Review, resumed (2026-10-30)
+`skill-packaging.md` decided (shared files in `research/shared/`). Answers: name `research:problem-formulation`;
+shared files split (base log template and generic requirement rules in `shared/`, design's extensions in its own
+folder); asked for the whole overview before step 1.

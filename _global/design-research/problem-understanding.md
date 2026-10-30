@@ -1,8 +1,8 @@
 # Problem understanding
 
-**Status (2026-10-30): decision drafted and reviewed in part; paused by the user ("plugin first") until
-`skill-packaging.md` decides how the skills are packaged and where shared files live. Resume at plan step 1, with the
-log format at the shared location that decision picks.**
+**Status (2026-10-30): Reviewed. Plan step 1 committed (`349b2f5`); success criteria removed (`56605cf`); READMEs (plan
+step 2, `1803c0b`). Plan step 3, the benchmark replay, waits until the user chooses to run it. Design's core: 4,724 estimated tokens before, ~4,032 after both steps. Plan steps 1-4 name
+the old `~/.claude/skills` paths; the files are in *Changes from the review*.**
 
 ## Problem
 A design-research run starts judging solutions before it knows the user's situation. The researcher frames the
@@ -14,7 +14,7 @@ user, before it explores solutions.
 ## Related decisions
 - Siblings (decided): `skill-and-log-size.md` (core size limit, ~4,800 estimated tokens of SKILL.md body),
   `skill-rule-following.md` (round checklist and gate), `model-side-discovery.md` (generators), `option-discovery.md`.
-- Waits on: `skill-packaging.md` (open; the shared log format's location).
+- Depended on: `skill-packaging.md` (Reviewed 2026-10-30: plugin `research`, shared files in `research/shared/`).
 - Evidence: benchmark `benchmarks/recumbent-luggage-rack/runs/2026-10-28-c8c33da/score.md`, replay targets 1, 3, 4.
 
 ## Known so far
@@ -205,9 +205,11 @@ Checklist:
    decision drafted.
 5. Review: amendments (no "what you own", stricter use, one-way dependency, shared log format outside both
    skills); paused for `skill-packaging.md` (user: plugin first).
+6. Resumed review: name `research:problem-formulation`; shared files split, the full requirements definition in
+   `research/shared/requirements.md`. Reviewed; plan step 1 started.
 
 ## Decision
-Draft
+Reviewed (2026-10-30)
 
 **Choice.** A separate `problem-formulation` skill (O1) that design-research runs first, with fixed situation
 questions (O5), a write-back for the user to correct (O6), questions scaled by what reading left open (O11), and a
@@ -253,7 +255,35 @@ hook (U7). Draft: `problem-understanding-draft/` (copied from the session scratc
   frontmatter hooks work in plugin skills, and whether a folder without `SKILL.md` in `~/.claude/skills` is ignored:
   unverified. Proposed: packaging as a plugin is a separate decision (its own research, after this split); for now
   the format goes to `~/.claude/skills/research-log/`, referenced as `${CLAUDE_SKILL_DIR}/../research-log/`, one
-  line per skill to change when packaged.
+  line per skill to change when packaged. Superseded by `skill-packaging.md` (Reviewed): shared files go in
+  `research/shared/`.
+- Resumed (2026-10-30, user): the skill is `research:problem-formulation` (`research/skills/problem-formulation/`).
+  Shared files are split: `research/shared/log-template.md` holds the base log (*Problem* with the confirmation
+  line, *Situation*, *Related decisions*, *Success criteria*, *Requirements*, *Open questions*, *Sources*), and
+  design's `log-template.md` adds its own sections and the round entries. Both skills reach the shared files as
+  `${CLAUDE_PLUGIN_ROOT}/shared/...`.
+- Full requirements definition in one place (user, 2026-10-30): `research/shared/requirements.md` holds all of it,
+  including what a requirement is (design's Phase 2 text: need not mechanism; reason, source, priority, verified)
+  and replaced and dropped requirements, since problem-formulation's correction loop can replace or drop one too.
+  Design's `requirements.md` goes away. The shared template defines `<topic>.rounds.md` with the *Replaced* and
+  *Dropped requirements* tables; design adds its round entries to that file. Design terms in those rules are
+  reworded generically ("Phase 6" → "the decision"; "matrix column" → "whatever was judged against the old
+  meaning").
+- Log location moved (user, 2026-10-30, part of step 1): where the log lives, its name and resuming a matching
+  log go from design's *The research log* to `research/shared/log-template.md` (*Where it lives*), since
+  problem-formulation creates or resumes the log before design runs. Design keeps one paragraph: update it each
+  round, the rounds file.
+- Full log in the shared template (user, 2026-10-30, part of step 1): `research/shared/log-template.md` holds every
+  section and the rounds file; design's `log-template.md` goes. A skill writes only the sections its steps fill, no
+  empty headings (an empty *Rounds* would make the round gate treat problem-formulation's log as open). The user's
+  proposed solution goes into *Options* as theirs, verdict "not judged yet", not under *Problem*.
+- Success criteria removed (user, 2026-10-30; a separate step after step 1). In practice the section held checks
+  on listed requirements, requirements that skipped the inventory (no reason, priority or verification), and rules
+  for testing options. Options: keep it; fold it into a "Checked by" column on requirements; remove it with nothing
+  in its place. User chose removal: who judges is obvious (nearly always the user after first use, which every
+  plan's "after first use" step covers). A criterion that is really a requirement goes into *Requirements*. The
+  rule "test against failures the options weren't built from" is dropped too: the stress test's "put the draft
+  through its real use" covers it (user).
 
 **Open child decisions.** None split off.
 
@@ -269,10 +299,10 @@ hook (U7). Draft: `problem-understanding-draft/` (copied from the session scratc
 
 Decision checklist:
 - [x] Stop condition: no ranking change in round 4; nothing deciding left unverified; U7 new but changes no verdict
-- [ ] Why and Rejected: each on a requirement the user confirmed; confirmed by the user
+- [x] Why and Rejected: each on a requirement the user confirmed; confirmed by the user (2026-10-30)
 - [x] Known gaps and open child decisions: listed in *Decision*
 - [ ] Documentation: updated where the rule takes effect; overstated requirements corrected; commit message proposed
 - [x] Success criteria: carried over only as project rules (none: the benchmark replay is plan step 3)
-- [ ] Out of scope: noted where open work is kept
+- [x] Out of scope: noted where open work is kept (`_global/TODO.md`)
 - [x] Overview: choice, pros and cons, rejected, gaps, plan, files
-- [ ] Review: in open chat; nothing implemented before it
+- [x] Review: in open chat; nothing implemented before it (2026-10-30)
