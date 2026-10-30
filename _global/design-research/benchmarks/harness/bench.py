@@ -31,7 +31,7 @@ from datetime import date
 from pathlib import Path
 
 BENCHMARKS = Path(__file__).resolve().parent.parent
-SKILL_DIR = Path.home() / ".claude" / "skills" / "design-research"
+SKILL_DIR = Path.home() / "Cboost" / "claude-skills" / "research" / "skills" / "design"
 VAULT = BENCHMARKS.parents[2]
 # Tools the researcher may use without a prompt; anything else is denied in headless mode.
 ALLOWED_TOOLS = [

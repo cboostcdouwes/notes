@@ -93,3 +93,10 @@ current ground truth into a draft benchmark. I would place the local marketplace
 Correction recorded: it did come up in search (round 3 generator, option 3) and was lost at the merge into O1b.
 Hypotheses H1-H6 and replay targets: `benchmarks/skill-packaging/runs/2026-10-30-8bfbbb8/score.md`. Benchmark draft:
 `benchmarks/skill-packaging/README.md`. Decision redrafted for O12.
+
+## After the review (2026-10-30)
+Plan step 1 committed by the user (`4816b25`). The GitHub repo already existed as `cboostcdouwes/claude-skills`
+(origin set by the user); the local folder moved from `~/Cboost/cboost-skills` to `~/Cboost/claude-skills`, the
+local marketplace was removed and re-added from the new path, `research@cboost-skills` reinstalled (0.1.0, read
+from the checkout).
+Then the marketplace was renamed `claude-skills` (user); re-registered, `research@claude-skills` installed.

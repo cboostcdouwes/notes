@@ -2,24 +2,39 @@
 
 Topics outside any repo. Most important first.
 
-## design-research skill
+## research:design skill (formerly design-research)
 
-- **Package the skills as the `cboost-skills` marketplace** (`design-research/skill-packaging.md`, decision drafted
-  2026-10-30: a local marketplace repo at `~/Cboost/cboost-skills`, plugin `research`). Next up after the review:
-  plan step 1. It blocks the problem-formulation split.
+Resume from `design-research/handoff.md` (2026-10-30).
+
+- ~~Package the skills as the `claude-skills` marketplace~~: done 2026-10-30 (`~/Cboost/claude-skills`, plugin
+  `research`, skill `research:design`; plan steps 1-2). Left: step 3, install on a second machine or a clean `$HOME`
+  with `claude plugin install research --marketplace cboostcdouwes/claude-skills`.
+- **Resume the problem-formulation split** (`design-research/problem-understanding.md`, paused): now unblocked; it
+  goes into the `research` plugin, with the log format in `research/shared/`. Its draft names `design-research`
+  paths; adapt them to `research/skills/design/`. Then replay the recumbent-rack benchmark and check that the first
+  question call comes before any option; add a hook only if the confirmation gets skipped.
+- **The skill-packaging benchmark can't run in the harness yet**: `bench.py setup` takes only the first line of the
+  prompt quote, and the README has a *Files and repos at the start* section the setup doesn't recreate. Part of
+  confirming the draft.
 - **Discovery options get lost at the merge** (skill-packaging run, 2026-10-30): the best option was in the round-3
   generator report and was folded into another option's costs; it surfaced only when the user asked. Hypotheses
   H1-H6 and replay targets in `design-research/benchmarks/skill-packaging/runs/2026-10-30-8bfbbb8/score.md`. Medium
   urgency: decide on a rule (every generator option a row, a named merge or a recorded drop) and giving the
   rejection check the generator reports.
+- **design-research ends with an overview of the leading options, not a forced decision** (user, 2026-10-30):
+  the skill (now `research:design`) shows the leading options with their caveats and leaves the choice open.
+  Likely split into `explore` and `compare` skills, with `design` as the orchestrator. Future work; research it as a
+  design change of its own.
+- **Discovery must search for the vendor's recommended solution, and show each solution with its caveats** (user,
+  2026-10-30): in the skill-packaging run the documented route (a local marketplace) wasn't searched for as such,
+  and options reached the user without their caveats side by side. Medium urgency: a discovery step that asks "what
+  does the platform's documentation recommend for this?", and a report rule that each option shown to the user
+  carries its caveats.
 - **Confirm the skill-packaging benchmark draft** (`design-research/benchmarks/skill-packaging/README.md`): prompt,
   setup (how the researcher sees a `~/.claude/skills` repo) and rubric are proposals. Low urgency.
 - **Round gate finds logs only by absolute path, and paused logs stay open** (2026-10-30): a log written through a
   relative path in a script was invisible to the gate, which checked the paused `problem-understanding.md` instead.
   Low urgency.
-- **Split problem formulation out of design-research** (`design-research/problem-understanding.md`, decision
-  drafted, paused 2026-10-30 until packaging is decided). Then replay the recumbent-rack benchmark and check that the
-  first question call comes before any option; add a hook only if the confirmation gets skipped.
 - **Improve design-research from the recumbent-rack benchmark** (`design-research/benchmarks/recumbent-luggage-rack/`,
   replayed 2026-10-28: match, 0 of 3, leads in round 5 instead of 10): the replay targets in
   `runs/2026-10-28-c8c33da/score.md`. Most urgent: review objections handled as amendments with no round, checks or

@@ -226,13 +226,13 @@ Checklist:
    chose it, at `~/Cboost/cboost-skills`. Decision redrafted; benchmark draft recorded.
 
 ## Decision
-Draft (round 7)
+Reviewed (2026-10-30: the user agreed with the choice, Why, Rejected and the plan)
 
-**Choice (O12).** A git repo at `~/Cboost/cboost-skills` is the marketplace `cboost-skills`:
+**Choice (O12).** A git repo at `~/Cboost/claude-skills` is the marketplace `claude-skills` (renamed from `cboost-skills`, 2026-10-30):
 `.claude-plugin/marketplace.json` at its root lists each plugin by relative path. The first plugin is `research/`
 (`.claude-plugin/plugin.json`, `skills/design-research/`, later `skills/problem-formulation/`, `shared/`, README).
 The user's machine registers the folder once as a local marketplace (`claude plugin marketplace add
-~/Cboost/cboost-skills`) and installs each plugin (`claude plugin install research@cboost-skills`); it loads in
+~/Cboost/claude-skills`) and installs each plugin (`claude plugin install research@claude-skills`); it loads in
 place, edits apply after `/reload-plugins`. Colleagues and other machines: `claude plugin install research
 --marketplace <repo>`, with updates. Shared files: `${CLAUDE_PLUGIN_ROOT}/shared/...`, within a plugin. Round gate:
 `${CLAUDE_PLUGIN_ROOT}/skills/design-research/scripts/round-gate.py`. `~/.claude/skills` keeps only plain skills
@@ -257,33 +257,45 @@ and `synced/`.
 - O0, O2, O4-O9: see *Evaluation*.
 
 **Known gaps.**
+- `version` set in `plugin.json` (user, after step 1): colleagues get an update only when the version is bumped.
 - K3 and K4 for a locally installed plugin: docs and related spikes; step 1 checks them.
-- `version` in `plugin.json`: set, it pins colleagues until changed; left out, they follow the commit. Decide in
-  step 1 (docs).
 - Managed settings at Cboost could restrict marketplaces (unknown).
 
 **Open child decisions.** None split off. `problem-understanding.md` resumes after step 1, inside `research/`.
 
 **Plan.**
 1. `refactor!: package design-research as the research plugin in the cboost-skills marketplace`, in a new clone
-   `git clone ~/.claude/skills ~/Cboost/cboost-skills` (history kept): `design-research/` →
+   `git clone ~/.claude/skills ~/Cboost/claude-skills` (history kept): `design-research/` →
    `research/skills/design-research/`; `research/.claude-plugin/plugin.json`; `.claude-plugin/marketplace.json`; the
    hook and the gate's fallback path use `${CLAUDE_PLUGIN_ROOT}`; a README with both install routes. Then register
-   and install locally; check `claude plugin validate`, `claude plugin list` (`research@cboost-skills` loaded), an
+   and install locally; check `claude plugin validate`, `claude plugin list` (`research@claude-skills` loaded), an
    edit applied by `/reload-plugins`, and a design-research question call passing the gate. The user then removes
    `~/.claude/skills/design-research` and `~/.claude/skills/.git`.
-2. Outside the repo (no commit): the global `CLAUDE.md` rule (`research:design-research`), the benchmark harness
+   Done 2026-10-30 (uncommitted, for the user): validate passes (warning: no `version`, on purpose); `claude plugin
+   list` shows `research@claude-skills`, read from the checkout; a skill added after the install loaded in a new
+   session (in place); the hook saw `CLAUDE_PLUGIN_ROOT` = `~/Cboost/claude-skills/research` and the gate's path; the
+   gate script runs from its new place. Not checked: `/reload-plugins` inside a running session.
+   Changed after step 1 at the user's request (2026-10-30): `plugin.json` gets `"version": "0.1.0"` (colleagues get
+   updates only when it is bumped; replaces "`version` left out"); the skill is renamed `design` (`research:design`);
+   `.gitignore` keeps only `__pycache__`.
+   The repo already existed on GitHub as `cboostcdouwes/claude-skills`; the local folder was renamed to
+   `~/Cboost/claude-skills` and the local marketplace re-registered from it (2026-10-30). The marketplace was then
+   renamed `claude-skills` too (user); the plugin id is `research@claude-skills`.
+2. Outside the repo (no commit): the global `CLAUDE.md` rule (`research:design`), the benchmark harness
    path and fingerprint, `_global/TODO.md`.
+   Done 2026-10-30: the global `CLAUDE.md` rule names `research:design`; `bench.py`'s `SKILL_DIR` points at
+   `~/Cboost/claude-skills/research/skills/design` (fingerprint, last change and round gate follow it); the
+   benchmarks README and `_global/TODO.md` name the new skill.
 3. Push to the user's company account; install on a second machine or a clean `$HOME` with the marketplace command.
 4. Resume `problem-understanding.md` at its plan step 1, with the log format in `research/shared/`.
 5. After first use: ask what it showed; amend or reopen.
 
 Decision checklist:
 - [x] Stop condition: round 7 brought no new requirement; the ranking change came from the user's choice between equals
-- [ ] Why and Rejected: each on a requirement the user confirmed; confirmed by the user
+- [x] Why and Rejected: each on a requirement the user confirmed; confirmed by the user (2026-10-30)
 - [x] Known gaps and open child decisions: listed in *Decision*
-- [ ] Documentation: updated where the rule takes effect; overstated requirements corrected; commit message proposed
+- [ ] Documentation: updated where the rule takes effect (plan steps 1-2); commit message proposed in step 1
 - [x] Success criteria: carried over only as project rules (none; step 3 checks them)
 - [x] Out of scope: noted where open work is kept (`_global/TODO.md`, the benchmark draft)
 - [x] Overview: choice, pros and cons, rejected, gaps, plan, files
-- [ ] Review: in open chat; nothing implemented before it
+- [x] Review: in open chat (2026-10-30); nothing implemented before it

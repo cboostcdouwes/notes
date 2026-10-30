@@ -1,7 +1,7 @@
 # design-research benchmarks
 
-Design questions whose best answer the user knows, used to measure the design-research skill
-(`~/.claude/skills/design-research/`): does a run reach that answer, how early, and by asking the right questions?
+Design questions whose best answer the user knows, used to measure the `research:design` skill
+(`~/Cboost/claude-skills/research/skills/design/`): does a run reach that answer, how early, and by asking the right questions?
 A benchmark is replayed after each change to the skill and scored against the same ground truth.
 
 ## Benchmarks
@@ -151,7 +151,7 @@ Compare runs on the same benchmark only when the ground truth was the same. Note
 run's section.
 
 ## Turning results into skill changes
-Replay targets go into the vault's `_global/TODO.md` under the design-research skill. A skill change is researched
+Replay targets go into the vault's `_global/TODO.md` under the `research:design` skill. A skill change is researched
 like any design change. It is accepted when a replay of the benchmarks scores at least as well, on match, points,
 timing and cost, as the run before it. One benchmark run is a single sample, so treat a change in score as a hint,
 not proof.
