@@ -8,6 +8,7 @@ A benchmark is replayed after each change to the skill and scored against the sa
 | Benchmark | Kind | Runs (skill commit: match, points) |
 |---|---|---|
 | [recumbent-luggage-rack](recumbent-luggage-rack/) | physical product, no code | [2026-10-25](recumbent-luggage-rack/runs/2026-10-25-fd1de14/score.md) (`fd1de14`: short term, 0 of 2, rubric then of 2); [2026-10-28](recumbent-luggage-rack/runs/2026-10-28-c8c33da/score.md) (skill `17dcd49`, not in git: short term, 0 of 3) |
+| [skill-packaging](skill-packaging/) (draft) | software tooling | [2026-10-30](skill-packaging/runs/2026-10-30-8bfbbb8/score.md) (`e2c7998`, live, not the harness: match after review, 0 of 3) |
 
 ## Layout
 ```

@@ -4,8 +4,19 @@ Topics outside any repo. Most important first.
 
 ## design-research skill
 
-- **Decide how the skills are packaged** (`design-research/skill-packaging.md`, stub, 2026-10-30): one shareable
-  collection with files shared between skills (likely a plugin). Next up: it blocks the problem-formulation split.
+- **Package the skills as the `cboost-skills` marketplace** (`design-research/skill-packaging.md`, decision drafted
+  2026-10-30: a local marketplace repo at `~/Cboost/cboost-skills`, plugin `research`). Next up after the review:
+  plan step 1. It blocks the problem-formulation split.
+- **Discovery options get lost at the merge** (skill-packaging run, 2026-10-30): the best option was in the round-3
+  generator report and was folded into another option's costs; it surfaced only when the user asked. Hypotheses
+  H1-H6 and replay targets in `design-research/benchmarks/skill-packaging/runs/2026-10-30-8bfbbb8/score.md`. Medium
+  urgency: decide on a rule (every generator option a row, a named merge or a recorded drop) and giving the
+  rejection check the generator reports.
+- **Confirm the skill-packaging benchmark draft** (`design-research/benchmarks/skill-packaging/README.md`): prompt,
+  setup (how the researcher sees a `~/.claude/skills` repo) and rubric are proposals. Low urgency.
+- **Round gate finds logs only by absolute path, and paused logs stay open** (2026-10-30): a log written through a
+  relative path in a script was invisible to the gate, which checked the paused `problem-understanding.md` instead.
+  Low urgency.
 - **Split problem formulation out of design-research** (`design-research/problem-understanding.md`, decision
   drafted, paused 2026-10-30 until packaging is decided). Then replay the recumbent-rack benchmark and check that the
   first question call comes before any option; add a hook only if the confirmation gets skipped.
