@@ -145,7 +145,7 @@ a missing one only at design-research's first question call, after the costly wo
 All options are text and a hook: cheap. The confirmation line adds one line to logs; removing it later costs nothing.
 
 ### Stress test (draft, held-out case)
-Draft: `problem-understanding-draft/` (copied from the session scratchpad, 2026-10-30) (`problem-formulation/SKILL.md`, `design-research-changes.md`).
+Draft: `problem-understanding-draft/` (removed 2026-10-30; the implemented skill is commit `349b2f5` in `~/Cboost/claude-skills`) (`problem-formulation/SKILL.md`, `design-research-changes.md`).
 Walked flexcompose's `machine-release-programs` run (held out; read only now) through the draft:
 - Round 1 framed the wrong problem (several programs, conflicting dependencies, versioning); the user wrote the
   problem statement themselves (`integration-problem.md`). Draft step 4 "what is wrong with it" asks for exactly
@@ -214,7 +214,7 @@ Reviewed (2026-10-30)
 **Choice.** A separate `problem-formulation` skill (O1) that design-research runs first, with fixed situation
 questions (O5), a write-back for the user to correct (O6), questions scaled by what reading left open (O11), and a
 `Confirmed by the user: <date>` line under *Problem*, checked as a round-checklist item by the existing gate. No new
-hook (U7). Draft: `problem-understanding-draft/` (copied from the session scratchpad, 2026-10-30).
+hook (U7). Draft: `problem-understanding-draft/` (removed 2026-10-30; implemented in `349b2f5`).
 
 **Why.**
 - U1 (should, verified): the situation is asked and the framing confirmed before any option exists; the draft's

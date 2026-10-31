@@ -53,8 +53,6 @@ Pick by the user's choice; in TODO order:
   into `explore` and `compare` skills with `design` as the orchestrator (user, 2026-10-30).
 
 ## Things to know
-- `problem-understanding-draft/` next to this note is stale (the implemented skill differs); ask the user before
-  removing it.
 - The round gate finds research logs only by absolute paths in the session's tool calls. Write logs by absolute path.
 - Don't also register the GitHub marketplace on this machine: `research` would load twice.
 - `benchmarks/harness/__pycache__/bench.cpython-314.pyc` is tracked in the vault's git; it changes on every harness
