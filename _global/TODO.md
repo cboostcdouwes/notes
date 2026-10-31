@@ -24,9 +24,9 @@ Resume from `design-research/handoff.md` (2026-10-30).
   prompt quote, and the README has a *Files and repos at the start* section the setup doesn't recreate. Part of
   confirming the draft.
 - **Discovery options get lost at the merge** and **the documented route** (`design-research/discovery-merge-losses.md`,
-  decision drafted 2026-10-31, P3: a row per generator option by `add-candidates.py`, the documented-route category,
-  rejection-check questions; draft in that session's scratchpad). Waiting for the review in open chat, then plan
-  step 1 (install, one commit).
+  reviewed 2026-10-31, P3: a row per generator option by `add-candidates.py`, the documented-route category,
+  check questions on merges and the leader's reasons). Plan step 1 installed in `~/Cboost/claude-skills`; after
+  the next real run, ask the user what it showed (plan step 2).
 - **The Verdict column out of `shared/log-template.md`** (user, 2026-10-31, from `discovery-merge-losses.md`): verdicts
   stay in the rejection records and the Matrix. Low urgency; after the merge-loss change.
 - **A problem-diagnosis section in problem-formulation** (user, 2026-10-31: "there could probably be a diagnoses

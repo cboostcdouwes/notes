@@ -253,6 +253,7 @@ Checklist:
 - [x] Pushback: if the user picked a worse option, asked what makes it better (O13's L1 reach vs O1a/O2: asked)
 
 ## Rounds
+4. Review: confirmed (2026-10-31); plan step 1 installed, uncommitted.
 3. Answers: L1b (worked-out options only; reworded), the Verdict column to the template as a separate change; no
    ranking change: P3 leads; decision drafted.
 2b. Checks (round 2): script clash and format errors (fixed: fails loudly), merges moved to the summary (the bias
@@ -266,7 +267,8 @@ Checklist:
    explore / compare split (L6 won't).
 
 ## Decision
-Draft
+Reviewed by the user, 2026-10-31 ("Confirm the review"; *Why* and *Rejected* confirmed as drafted, after a walkthrough
+of the skill-packaging case through P3). Plan step 1 installed in `~/Cboost/claude-skills`, uncommitted.
 
 **Choice: P3** (draft: `/tmp/claude-1000/-home-cboost-Cboost-claude-skills/e35bf7b0-0e9c-4be5-99c9-c5783bc29d77/scratchpad/dml-draft/design/`):
 1. SKILL.md Phase 3: save each generator report in `<topic>.discovery/` and run `scripts/add-candidates.py <log>
@@ -323,9 +325,9 @@ section in problem-formulation (U3, user, round 1).
 
 Decision checklist:
 - [x] Stop condition: no new requirements, no ranking change, nothing deciding left unverified (round 2's L1b narrows L1, verified by the user; no ranking change)
-- [ ] Why and Rejected: each on a requirement the user confirmed; confirmed by the user
+- [x] Why and Rejected: each on a requirement the user confirmed; confirmed by the user (2026-10-31)
 - [x] Known gaps and open child decisions: listed in *Decision*
 - [x] Documentation: updated where the rule takes effect; overstated requirements corrected; commit message proposed (the rule takes effect in the skill itself; README drafted)
 - [x] Out of scope: noted where open work is kept (`../TODO.md`)
 - [x] Overview: choice, pros and cons, rejected, gaps, plan, files
-- [ ] Review: in open chat; nothing implemented before it
+- [x] Review: in open chat; nothing implemented before it
