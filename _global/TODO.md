@@ -23,20 +23,21 @@ Resume from `design-research/handoff.md` (2026-10-30).
 - **The skill-packaging benchmark can't run in the harness yet**: `bench.py setup` takes only the first line of the
   prompt quote, and the README has a *Files and repos at the start* section the setup doesn't recreate. Part of
   confirming the draft.
-- **Discovery options get lost at the merge** (skill-packaging run, 2026-10-30): the best option was in the round-3
-  generator report and was folded into another option's costs; it surfaced only when the user asked. Hypotheses
-  H1-H6 and replay targets in `design-research/benchmarks/skill-packaging/runs/2026-10-30-8bfbbb8/score.md`. Medium
-  urgency: decide on a rule (every generator option a row, a named merge or a recorded drop) and giving the
-  rejection check the generator reports.
+- **Discovery options get lost at the merge** and **the documented route** (`design-research/discovery-merge-losses.md`,
+  decision drafted 2026-10-31, P3: a row per generator option by `add-candidates.py`, the documented-route category,
+  rejection-check questions; draft in that session's scratchpad). Waiting for the review in open chat, then plan
+  step 1 (install, one commit).
+- **The Verdict column out of `shared/log-template.md`** (user, 2026-10-31, from `discovery-merge-losses.md`): verdicts
+  stay in the rejection records and the Matrix. Low urgency; after the merge-loss change.
+- **A problem-diagnosis section in problem-formulation** (user, 2026-10-31: "there could probably be a diagnoses
+  section"; its meaning: diagnosing the problem's causes before options). Low urgency; ask what it holds first.
 - **design-research ends with an overview of the leading options, not a forced decision** (user, 2026-10-30):
   the skill (now `research:design`) shows the leading options with their caveats and leaves the choice open.
   Likely split into `explore` and `compare` skills, with `design` as the orchestrator. Future work; research it as a
   design change of its own.
-- **Discovery must search for the vendor's recommended solution, and show each solution with its caveats** (user,
-  2026-10-30): in the skill-packaging run the documented route (a local marketplace) wasn't searched for as such,
-  and options reached the user without their caveats side by side. Medium urgency: a discovery step that asks "what
-  does the platform's documentation recommend for this?", and a report rule that each option shown to the user
-  carries its caveats.
+- **Each option shown to the user carries its caveats side by side** (user, 2026-10-30; the documented-route half is
+  in `discovery-merge-losses.md`): goes to the explore / compare split, with all costs shown in the comparison (user,
+  2026-10-31).
 - **Confirm the skill-packaging benchmark draft** (`design-research/benchmarks/skill-packaging/README.md`): prompt,
   setup (how the researcher sees a `~/.claude/skills` repo) and rubric are proposals. Low urgency.
 - **Round gate finds logs only by absolute path, and paused logs stay open** (2026-10-30): a log written through a

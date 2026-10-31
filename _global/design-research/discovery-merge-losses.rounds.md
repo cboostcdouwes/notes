@@ -58,3 +58,42 @@ tie-break); O2 not tied with O1s on L1 (any source; now O1a, W1 whole); W1's any
 (added); O9 cited L6 (now the user's scope decision); eight titles unaccounted for (they were in the register, which
 its extract didn't hold: H2 reproduced; the draft gives the reader the register).
 Ranking: P → P2.
+
+## Replaced requirements (round 2)
+| # | Requirement | Reason | Source | Replaced by (round) |
+|---|---|---|---|---|
+| L4 | The skill's core stays within its size budget | larger core, rules followed less | design doc, decided | L4b (round 2: "keep the skill light") |
+
+## Round 2
+Answers (round 1's questions): U3 is a problem diagnosis (for problem-formulation; out of scope, to the TODO); L2
+should; L3 could, "only the rejection-check questions, no new Phase 4 rules"; remarks: "Remove the leader column
+from the options table. O13 seems best; keep the skill light."
+L4 replaced by L4b (few new rules or parts anywhere). Rescored: O13 ties P2's L1 part on L1 and leads on L4b. P3 =
+O13 + O3 + O5. Redrafted; `add-candidates.py` run on a copy of this log (16 rows, +3.5 KB).
+Pushback raised in the report: O13's log growth (rows and rejection records each round).
+
+Searches: none this round (no new options category opened; Problem unchanged).
+Bias check (round 2): the script skipped clashing IDs silently (any `| X |` row, also L1, O3) and took any line
+starting with a letter and a digit: fixed, it now exits with an error on both. Merges sat in the Verdict column,
+hidden from the bias check: moved to the summary, and the merged-row question from rejection.md to bias.md. Many
+unscored rows may recreate H3 (harm). O3's lookup: once, in round 1 and when *Problem* changes (draft). New: O3c
+(generator brief line; trails: this run's generators didn't find the vendor guide), O17 (equal evidence budget), O18
+(simulated user review, merged into O11). L1's escape clause lets a raw list meet it (asked). L2 rests on one
+incident that is really L1 (kept: the user's answer, round 1). Mechanism wording in L4b, L5 (kept: the user's words).
+Rejection check (round 2): stale records against P2 (O13, O2, O16, O6 twice, O1a-O14 combined): rewritten against
+P3, one per option. O2b's anchoring also hit P3's merged-row question (moved to the bias check). O10's L4b ✓ wrong
+(✗); O9 out of scope by no requirement (L7 won't added); O6 rejected on L5 (now L4b); O4's Pugh variant (merged into
+O3b); P3's L1 ✓ contradicted its harm (now ~); O5+O7+O8 L4b ✓ (now ~); O15's record cited *Problem* (now L1).
+
+## Replaced requirements (round 3)
+| # | Requirement | Reason | Source | Replaced by (round) |
+|---|---|---|---|---|
+| L1 | An option the research found reaches the user's comparison, or the user can see why it didn't | the user rediscovers an option the research had | TODO, user round 0 | L1b (round 3: worked-out options only; "or the user can see why" let a raw list meet it) |
+
+## Round 3
+Answers: L1 reach "worked-out options only"; reword L1 (L1b); "remove the leader column" means the Verdict column in
+the shared template (a separate change, for the TODO); no remarks. Rescored: P3's L1b ✓; O1a and O2 exceed L1b's
+reach and trail on L4b. No ranking change; decision drafted. README flowchart drafted and rendered (`mmdc`, no syntax
+error).
+
+Searches: none.
