@@ -24,7 +24,7 @@ services:
       enable_gui: true
       # enable_gpu needs an NVIDIA GPU and driver on the host; set it to false otherwise.
       enable_gpu: true
-    # The dev box's image. The release builds on the base flexcompose.release.yaml names (BASE_IMAGE): bump both.
+    # The dev box's image. The release builds on BASE_IMAGE in flexcompose.release.yaml; bump both together.
     image: cboost-c-nas:5100/cboost-ros2-jazzy:0.3.0
     restart: always
     network_mode: host

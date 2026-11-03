@@ -8,8 +8,8 @@
 # an SSH agent holding a key for the repositories. On Windows, run it in Git Bash.
 set -euo pipefail
 cd "$(dirname "$0")"
-if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
-  echo "Commit your changes first: a release is built from a commit." >&2
+if [ -n "$(git status --porcelain)" ]; then
+  echo "Commit or remove your changes first: a release is built from a commit." >&2
   exit 1
 fi
 tag=$(git describe --exact-match --tags --match 'v*' HEAD 2>/dev/null || true)

@@ -7,12 +7,11 @@ From the decision in `../../machine-starter-template.md` (*Decision*), which bui
 One step is one commit; each leaves `go vet ./...`, `go test ./...` and, for starter steps, `tests/e2e.sh` passing.
 The user commits each step; the next starts after that.
 
-## Status and how to resume (paused 2026-10-29)
+## Status and how to resume (2026-11-02)
 
-**Where it stands.** The research is done; the *Decision* in `../../machine-starter-template.md` is **Draft**, its
-*Why* and *Rejected* confirmed by the user, the review of this plan and the templates not yet closed (the user
-paused before marking it "Reviewed"). Nothing is implemented; no repo has changes. The full target state is here:
-`integration/` (the starter) and `polymx/` (the PolyMX integration repo).
+**Where it stands.** The *Decision* in `../../machine-starter-template.md` is **Reviewed** (review round 7,
+2026-11-02). Nothing is implemented; no repo has changes. The full target state is here: `integration/` (the
+starter) and `polymx/` (the PolyMX integration repo).
 
 **Decided** (details and reasons in the log's *Decision*):
 - Dev box: an open never clones or moves a checkout (S9b, W15); `bash src/bootstrap.sh --update` is the one sync
@@ -32,11 +31,13 @@ paused before marking it "Reviewed"). Nothing is implemented; no repo has change
 - The colleague knows `cdr --verify` is withdrawn (step 0); the optional `cdr` items (tracked-only changes,
   `cdr --lock` writing the fingerprint) are their call.
 
-**Next:** ask the user to close the review (mark *Decision* "Reviewed"), then step 0, then step 1.
+**Next:** step 0, then step A, then step 1.
 
 **Open questions (not blocking step 1):**
 - The URLs of `yaskawa_hse_driver` and `nl-polymx-datastore` (guessed in `polymx/dependencies.repos`).
-- pip in the base image and the wheel build of hatchling packages (PolyMX's temporary step): verify with step A.
+- The wheel build of hatchling packages in the image (PolyMX's temporary step): verify with step A. pip is in the base
+  (`cboost-ros2-jazzy:0.2.0`, pip 24.0; spike 2026-11-02, which also showed a repeated `pip install -e` fails offline:
+  `polymx/bootstrap.sh` now runs pip on an open only when a library is missing).
 - Unverified: Ubuntu's `pip install --prefix` layout (no longer used by the drafts); a failing `postAttachCommand`
   leaves the container usable (the TODO's Linux check says it does).
 - Comprehension: the user was asked for a 1-5 rating of the walkthrough (round on the draft, 2026-10-29) and gave
@@ -118,7 +119,7 @@ refuses two).
   in the bundle); move `Dockerfile` to `image/Dockerfile` (generic, no SSH, no `vcs import`); `.gitignore`:
   `!/image/`; `flexcompose.release.yaml` as in `integration/`; remove `release.repos`;
 - `README.md`: the rest of `integration/README.md` (release, workflows, second diagram);
-- `tests/e2e.sh`: needs `cdr` and `vcs2l` on the host; checks: `release.sh` refuses without a lock and after a
+- `tests/e2e.sh`: needs `cdr` and `vcs2l` on the host; checks: `release.sh` refuses without a lock, with an untracked `lock.repos`, and after a
   `dependencies.repos` change without `./lock.sh`; a locked, tagged release builds and its bundle holds `lock.repos`
   and passes `sha256sum -c`; a customer tag `v1.0.0+acme` gives images tagged `1.0.0_acme`; the machine part as
   today (update, rollback, image removal).

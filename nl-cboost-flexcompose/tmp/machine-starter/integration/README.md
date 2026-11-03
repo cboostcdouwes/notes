@@ -66,9 +66,9 @@ that copy's `bootstrap.sh` on every open. Generate the box from the host copy; w
 | Fix for all customers (this repo) | fix on `main`, tag, release; per customer: `git merge v1.1.1`, on a `lock.repos` conflict take either side and `./lock.sh`, commit, tag `v1.1.1+acme`, release | One merge per customer branch |
 | Fix for all customers (a service repo) | fix on the line each customer follows; per branch `./lock.sh`, commit, tag, release | Re-locks, no merges |
 
-`release.sh` refuses: uncommitted changes, a commit without a version tag, and a `lock.repos` written for another
-`dependencies.repos` (a pin changed without `./lock.sh`). It builds from the committed lock only, never from your
-checkouts: push and lock a fix before you release it.
+`release.sh` refuses: uncommitted changes or untracked files (ignored ones aside), a commit without a version tag,
+and a `lock.repos` written for another `dependencies.repos` (a pin changed without `./lock.sh`). It builds from the
+committed lock only, never from your checkouts: push and lock a fix before you release it.
 
 More: the root [README](../../README.md#releases) and design §13.
 

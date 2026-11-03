@@ -1,8 +1,8 @@
 # Machine starter template and its workflow with cdr
 
-**Status (2026-10-29): paused by the user before the review closed. Research done; *Decision* Draft (Why and
-Rejected confirmed). Full target state and plan: `tmp/machine-starter/` (`PLAN.md` has the resume notes,
-`integration/`, `polymx/`). Earlier drafts: `tmp/machine-starter-draft/`, `tmp/machine-starter-draft-d4/`.**
+**Status (2026-11-02): *Decision* Reviewed; implementation next (step 0). Full target state and plan:
+`tmp/machine-starter/` (`PLAN.md` has the status and steps, `integration/`, `polymx/`). Earlier drafts:
+`tmp/machine-starter-draft/`, `tmp/machine-starter-draft-d4/`.**
 
 ## Problem
 The parent decision (A-1..A-5) fixed where a machine's services are defined, pinned and built. What is left is how
@@ -55,6 +55,7 @@ project builds from a committed lock file).
 | W16 | A build step that belongs to a service (it changes with the service's code, e.g. the QC app's pip packages) lives with that service's code; a step that is a machine's choice lives with the machine | "Depends on the step" (user, review round 4); the QC app's docs ask to keep its middleware patch with its release recipe | user, review round 4 (2026-10-29); `-application` docs/fastdds-shm-deployment.md | should (claimed) | need yes ("depends on the step"), priority not asked |
 | W17 | A service repo doesn't hold how a machine assembles its whole service image (the locked tree, colcon, the release stage) (bias check: mostly M11; scored together, not twice) | The app repo would mix "build my packages" with "assemble the service for a machine" (user's remark, review round 4) | user, review round 4 (2026-10-29) | should (claimed) | need yes, priority not asked |
 | W18 | The starter and the services' build stay as simple as the needs allow: no hook interfaces, extra images or tools that a plainer shape avoids | The user's condition on confirming *Why*/*Rejected* ("as long as it doesn't cause the complexity to get unnecessarily out of hand") and the label removal | user, review (2026-10-29) | should | yes (2026-10-29) |
+| W19 | A machine sometimes gets a pre-release bundle (`v1.1.0-rc1`); keeping the newest releases' images must order it before its final release | The user (review round 7): machines get pre-releases "sometimes" | user, review round 7 (2026-11-02) | priority not asked | need yes, priority not asked |
 
 Won't: W6b (a machine of customer A never installs customer B's release; distinct release names suffice): user, round 4: "W6b is not really a requirement; mark it as won't"; comes back if a machine installs a wrong customer's bundle. The T6 guard would serve it.
 
@@ -469,7 +470,7 @@ Checklist (review round 5b, 2026-10-29: axis D decided):
   Checks: lock in the bundle, revision label, no `pull_policy: build` (offline opens), off-pin warning in bootstrap, I9b and T6 added, preconditions listed.
 
 ## Decision
-Draft (2026-10-29): *Why* and *Rejected* confirmed by the user, on the condition that complexity stays in check; a walkthrough given; then the overview review.
+Reviewed (2026-11-02, review round 7): *Why* and *Rejected* confirmed by the user (2026-10-29), on the condition that complexity stays in check; the full target state in `tmp/machine-starter/` reviewed.
 
 **Choice.** The starter as in `tmp/machine-starter/integration/` (full; generic `example_` names; the plan in
 `tmp/machine-starter/PLAN.md`; the earlier PolyMX-named draft in `tmp/machine-starter-draft/`):

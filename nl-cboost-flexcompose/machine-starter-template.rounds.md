@@ -189,3 +189,20 @@ The user asked for the entire plan and template in full: written to tmp/machine-
 Then: the complete PolyMX integration repo in tmp/machine-starter/polymx/ (from nl-polymx-automated-qc feat/flexcompose-integration 055c731): app + inference by tag, packml and two temporary branch overrides, the four Python libraries as temporary repos in dependencies.repos installed with pip (bootstrap editable; image wheels), lock.repos placeholder. Checked: bash -n, generate devbox/release/release:build, config --images, Mermaid.
 
 Paused by the user (2026-10-29): "This will be resumed later, save all other progress in the plan." Resume notes in tmp/machine-starter/PLAN.md.
+
+## Review round 7 (2026-11-02)
+Resumed; the review of `tmp/machine-starter/` continued in three parts (dev box, release, machine side).
+Dev box: fixed the unclear `BASE_IMAGE` comment in `flexcompose.yaml` (both copies); left as they are: the first open
+skips the personal bootstrap.sh, the rosdep hint on any install failure.
+Release: found that `release.sh`'s clean check (`--untracked-files=no`) passes a never-committed `lock.repos`, so a
+release could ship from a lock its tag doesn't hold (W4b). Proposed reading both files with `git show HEAD:`; the
+user asked whether the check could refuse untracked, non-ignored files instead: applied (both copies, README); it
+also covers untracked files in the `image/` build context; cost: a stray root file blocks a release. Step 4's e2e
+gets "an untracked lock.repos is refused".
+Machine side and PolyMX: spike `spike-pip-offline` (scratchpad; cboost-ros2-jazzy:0.2.0, pip 24.0): a second
+`pip install -e` of a hatchling package fails without network (build isolation fetches hatchling), so PolyMX's
+bootstrap.sh would fail every offline open (W2); fixed: pip on an open only when a module is missing
+(`importlib.util.find_spec`), always with `--update`; verified offline. The user: machines get pre-release bundles
+"sometimes" → W19; `update.sh`'s `sort -V` orders `v1.1.0-rc1` after `v1.1.0`; a `~` sort key orders it before
+(verified with GNU sort); fix proposed. The user marked *Decision* Reviewed (2026-11-02).
+The user chose the `~` sort key: applied to both `update.sh` copies; checked with five release folders (the two oldest by semver are the ones cleaned).

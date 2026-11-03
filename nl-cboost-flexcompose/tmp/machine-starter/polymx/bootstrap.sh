@@ -18,7 +18,11 @@ if ! rosdep check --from-paths src --ignore-src >/dev/null 2>&1; then
   rosdep install -y --from-paths src --ignore-src ||
     { echo "A package rosdep can't find may be one of ours not checked out yet: bash src/bootstrap.sh --update" >&2; exit 1; }
 fi
-# TEMPORARY until the application's Python libraries are ROS packages: install them editable from their checkouts
-# (a recreate loses them, so on every open; pip skips what is installed already).
-python3 -m pip install --user --break-system-packages --quiet \
-  -e src/nl-cboost-orchestrator -e src/yaskawa_hse_driver -e src/nl-polymx-datastore -e src/nl-polymx-ethercat/client
+# TEMPORARY until the application's Python libraries are ROS packages: install them editable from their checkouts.
+# A recreate loses them, so an open checks for them; it runs pip only when one is missing, because pip rebuilds a
+# local package every time and fetches its build backend from PyPI, which fails offline. --update always reinstalls.
+installed() { python3 -c 'import importlib.util, sys; sys.exit(any(importlib.util.find_spec(m) is None for m in sys.argv[1:]))' "$@"; }
+if [ "${1:-}" = --update ] || ! installed orchestrator hse polymx_datastore ethercat_client; then
+  python3 -m pip install --user --break-system-packages --quiet \
+    -e src/nl-cboost-orchestrator -e src/yaskawa_hse_driver -e src/nl-polymx-datastore -e src/nl-polymx-ethercat/client
+fi
