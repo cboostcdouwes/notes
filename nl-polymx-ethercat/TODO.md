@@ -9,6 +9,14 @@
       fault history scale)
 - [ ] P1: move into `generic/` and `polymx/` with no behavior change
 
+## Versioning (`decisions.md`)
+
+- [ ] Give client and server one version source per part, so lockstep can't drift: today `server/Cargo.toml`,
+      `server/lib/Cargo.toml` and `client/pyproject.toml` each set `0.0.5` separately. Low urgency; fits naturally
+      into P1, where each part gets its own version.
+- [ ] Before protocol 1.0: decide what a major protocol bump means for older read-only clients (reads are open to
+      every version today).
+
 ## Small fixes
 
 - [ ] Stale `SLED_AXIS_CONFIG` references: README *Sled travel limits* says the limits live in

@@ -1,7 +1,7 @@
 # Proposal: a layered EtherCAT server with a generic/machine split
 
 **Status (2026-11-03): proposal.** It gives the structure for the split decided in `generic-polymx-split.md`
-(requirements M1–M5) and replaces that document's three-crate sketch.
+(requirements M1–M5) and replaces that document's three-crate sketch. Reviewed the same day; see *Review findings*.
 
 ## The architecture in one page
 
@@ -459,6 +459,89 @@ sequenceDiagram
 
 A command reaches the wire at the next exchange, as today. Its reply can name the cycle that carries it.
 
+## Interfaces between the layers
+
+What each layer offers and who uses it. *Not specified* marks an interface this proposal describes only in prose or
+not at all.
+
+| Offered by | Interface | Used by | Specified |
+|---|---|---|---|
+| L0 Bus | `Bus { exchange, image, mailbox }`; types `Slot`, `Stamp`, `Image`, `Mailbox`, `ExchangeError` | L1, runtime, diagnostics service | yes |
+| L0 Bus | `Plant`, for simulated devices in `SimBus` | `SimBus` | not specified |
+| L0 Bus | open, topology check, walk to OP | runtime, at startup | not specified |
+| L1 Devices | `Driver { configure, write_outputs, read_inputs, capabilities }` | runtime, L2 | yes |
+| L1 Devices | driver registration (model → driver) | runtime, machine binary | not specified |
+| L1 Devices | status fields: STO, alarm code, fault bit | L4 | not specified: through `Capabilities` or separately |
+| L2 Machine model | load and validate; handles `Signal<bool>`, `Signal<PerMille>`, `AxisHandle`, `SensorHandle` in machine units | L3, guards (through `Binder`) | types only; no methods |
+| L2 Machine model | metadata: groups, units, limits | L5 (`Describe`) | not specified |
+| L3 Control | guard API: `Binder`, `View`, `Actions`, `Guard::new().evaluate(..).admit(..)`, `Admission` | guards | sketched |
+| L3 Control | `Command` and its reply: session, signal and axis commands | runtime (from L5 through the queue) | not specified; depends on the session model |
+| L3 Control | lease losses, guard actions | L4 | not specified |
+| L4 Observation | `Status`, event ring, `WatchEvents(from_seq)` with `missed` | L5 | proto only; the cycle-to-ring handover is prose |
+| Runtime | `Server::from_args().guard(..).run()`, service registration | machine binary | sketched |
+| Runtime | bounded command queue with reply slot; published snapshot | L5 | not specified |
+| L5 Service | `Session`, `Machine`, `Signal`, `Axis`, `Distance`, `Telemetry`; semver handshake | C0 over gRPC | services and RPC names |
+| C0–C2 | see *Client* | C3, QC app, debug panel | names only |
+
+An arrow means "calls or reads the interface of"; each box is a crate.
+
+```mermaid
+flowchart BT
+  subgraph client["Client (Python)"]
+    C3[C3 polymx_ethercat] --> C2[C2 Domain API] --> C1[C1 Session] --> C0[C0 Transport]
+    C2 --> C0
+  end
+  subgraph server["ethercat-server"]
+    L5[L5 Service]
+    Diag[Diagnostics service]
+  end
+  subgraph runtime["ethercat-runtime"]
+    RT[Runtime: builder, cycle, command queue]
+  end
+  subgraph control["ethercat-control"]
+    L4[L4 Observation]
+    L3[L3 Control]
+    L2[L2 Machine model]
+  end
+  subgraph devices["ethercat-devices"]
+    L1[L1 Devices]
+  end
+  subgraph bus["ethercat-bus"]
+    L0[L0 Bus]
+  end
+  subgraph polymx["polymx"]
+    PS[polymx-server binary]
+    PG[polymx-guards]
+  end
+  C0 -. gRPC .-> L5
+  PS -->|"Server builder: .guard()"| L5
+  PS --> PG
+  PG -->|"Binder, View, Actions, Admission"| L3
+  L5 -->|"Command + reply slot"| RT
+  L5 -->|"Status, event ring"| L4
+  L5 -->|"Describe metadata"| L2
+  Diag -->|Mailbox| L0
+  RT -->|"tick steps 1-3"| L3
+  RT -->|"write_outputs, read_inputs"| L1
+  RT -->|exchange| L0
+  RT -->|"publish snapshot, events, cycle counters"| L4
+  L4 -->|"lease losses, guard actions"| L3
+  L4 -->|"status fields: STO, alarm, fault"| L1
+  L3 -->|"typed handles"| L2
+  L2 -->|Capabilities| L1
+  L1 -->|"Image, Mailbox, Stamp"| L0
+```
+
+What the graph shows:
+
+- **Only L0 → L1 → L2 → L3 is a strict stack.** The runtime calls four layers directly, L5 uses L2, L4 and the
+  runtime, and L4 reads both L1 and L3. L4 is a sibling of the cycle core, not a layer above L3.
+- **The least specified interfaces carry the most weight.** `Command`, `View`, `Actions` and the snapshot handle sit
+  around L3 and the runtime; only `Bus` and `Driver`, at the bottom, are written out.
+- **The guard API is the only Rust surface the machine part uses.** Everything else on the PolyMX side goes through
+  the builder or over gRPC, so `Binder`, `View`, `Actions` and `Admission` are what must stay stable after the repo
+  split.
+
 ## Where every feature lives
 
 All 35 features beyond the bare core, by home.
@@ -532,6 +615,50 @@ The repo-split rules from `generic-polymx-split.md` apply:
 - path dependencies also carry a version, so each becomes a git or registry dependency by changing one line
 - generic tests use generic test machines
 
+## Preparing the repo split
+
+The rules above hold only once nothing in the repo ties the two parts together. Today these do (paths relative to
+the repo root):
+
+| Tie | Where | Why it blocks the split |
+|---|---|---|
+| Generic tests read PolyMX config | `server/lib/src/machine.rs`, `drivers/ix7nh.rs`, `diagnostic_request.rs`, `server/src/signal_impl.rs`, `server/src/main.rs` (`include_str!` and `read_to_string` of `config/*.toml`) | breaks the one-way rule after the move; doesn't compile after the split |
+| PolyMX ring in generic tests | `polymx_ring()` and `polymx_declared()` in `server/lib/src/ethercat.rs` | PolyMX layout as generic test data |
+| Binary defaults to PolyMX config | `--machine` and `--axis-config` defaults in `server/src/main.rs` | the generic binary assumes a `config/` only PolyMX has |
+| Client build reaches into the server | `client/setup.py`: protos from `../server/proto`; source identity hashes `config/*.toml`, `server/**`, `rust-toolchain.toml` | the generic client's identity includes PolyMX config, and the paths disappear |
+| Python end-to-end tests use shipped config | 7 files in `client/tests/`; `simulation_soak.py`, `client_contract_check.py`, `status_consumer_check.py` | as for the Rust tests |
+| One version for everything | `0.0.5` in both `Cargo.toml` files, `pyproject.toml`, image tag and compose file | the parts can't be released apart |
+| One check script, CI job and Dockerfile | `scripts/check_release.sh`, `.github/workflows/stability.yml`, `docker/server/Dockerfile` (copies `config/` into the image) | neither part builds or tests alone |
+| Tooling at the root | `rust-toolchain.toml`, `.vscode/settings.json` (`linkedProjects`), devcontainer `pip install -e client` | each future repo needs its own |
+| Mixed docs | `docs/guide/` (generic reference) next to `DEPLOYMENT.md`, `STABILITY_REPORT.md`, `validation/*.json` (PolyMX rig evidence) | to be sorted per part |
+| `submodules/cbt` | referenced only in `.gitmodules` | unused; drop it or assign it to a part |
+
+Proposed steps, each one commit with checks passing. Steps 1–4 don't depend on the layered refactor and can come
+first; together they are what step 1 of *Order of work* needs.
+
+1. **Generic test machines.** Small `tests/machines/*.toml` files for the unit tests. Tests that check the *shipped*
+   config (it parses, the ring matches) are PolyMX tests; mark them now, move them in step 5.
+2. **Explicit config paths.** The generic binary requires `--machine` and `--axis-config`; the defaults live in the
+   compose file, later in `polymx-server`.
+3. **A self-contained client build.** The proto location comes from one place (the bundled copy or one configured
+   path), not `ROOT.parent/server`. The client's source identity covers the client and the protos only; the config
+   hash belongs to the server image.
+4. **A check entry point per part:** `generic/scripts/check.sh` and `polymx/scripts/check.sh`, two CI jobs with
+   their own `working-directory`. The root check script only calls both.
+5. **Move without editing.** One commit of `git mv` only, a second that fixes paths, so rename detection,
+   `git log --follow` and `filter-repo` keep each file's history. The CI boundary check lands with it.
+6. **Rehearse the split, repeatedly.** A script that runs `git filter-repo` for each part into a scratch directory,
+   rewrites the path dependencies to git dependencies, and builds and tests both. It catches what a path grep can't
+   (a `../` in a build script, a file left at the root, a test that needs the other part) and keeps M4 true over
+   time. Run it in CI or before each release.
+
+Two rules to add once decided:
+
+- **Where the parts are published** after the split: Cargo git tags or a private registry; Python from a git URL with
+  a subdirectory or a private index. This decides how PolyMX CI fetches generic, and whether version ranges such as
+  `>=0.1,<0.2` mean anything (a git dependency pins one tag).
+- **Generic owns the protos.** PolyMX gets them only through `ethercat_client` and `ethercat-server`, never as files.
+
 ## Where today's code goes
 
 | Today | Goes to | Notes |
@@ -576,6 +703,46 @@ Each step leaves the tests passing.
 Steps 1 and 2 deliver the generic/machine boundary early and don't depend on the rest. Steps 3 and 4 come before the
 guard engine, because guards rely on one thread owning the state they read and act on.
 
+## Review findings (2026-11-03)
+
+A review of this proposal. Nothing here is decided; each finding names the change it suggests.
+
+What holds up: the cycle thread owning all state (it removes today's 46 lock sites, the lock-order rules and the
+driver edge latches); the core-or-extension rule; fallback as data with guards for the dynamic cases; name
+resolution at bind time; built-ins exercising the guard API from the start; crates enforcing the direction; the
+written trade-offs.
+
+1. **Interlock admission sees a stale View (correctness).** Step 2 of the tick admits every command in a batch
+   against the last View. Two commands in one tick, A raising X and B raising Y with X and Y `mutually_exclusive`,
+   both pass. `admit` needs a View with the outputs of the commands already applied this tick overlaid. Also state
+   that forces asserted in step 1 are known to step 2, which the "refused against a forced output" rule relies on.
+2. **The layer picture doesn't match the tick.** See *Interfaces between the layers*: the runtime calls four layers,
+   L4 reads L1 and L3, L5 uses L2, L4 and the runtime. Suggested: draw a cycle core (L0–L3, run in order by the
+   runtime) with observation and gRPC as adapters on it, and drop "each layer knows only the layer below".
+3. **Step 1 of the order of work is probably not behavior-free.** `ethercat.rs` (L0) holds `with_sessions` and
+   `with_diagnostics`, so the bus already depends on L3 and L4; an `ethercat-bus` crate first needs the cycle loop
+   out, which is step 4's work. Suggested: modules in the current crates in step 1, one crate per layer group after
+   step 4. See also *Preparing the repo split*.
+4. **Two open choices block steps that come before them.** The session model shapes L3, the protocol, `View` and
+   C1, and should be settled before step 2, which already breaks the API. The L4 scope (full telemetry or the
+   minimal problems list) differs by several hundred lines and a proto, and should be settled before step 4. Both
+   depend on the requirements pass in *Open points*, which is the step most likely to shrink the work.
+5. **One guard form instead of two.** Closures plus a struct adapter are two representations to document and test,
+   and the `Cell` caveat shows the closure form's sharp edge. Suggested: one trait,
+   `evaluate(&mut self, &View, &mut Actions)` and `admit(&self, &View, &Command) -> Admission`, both with defaults;
+   a latch is a field. Small rules can still be closures through a helper such as `Guard::admit_fn`.
+6. **Two extension points break the proposal's own rule** ("an extension point with one implementation costs more
+   than it saves"). The client interceptor and session events carry only generic features; service registration
+   carries only generic services. Unless a machine is expected to add its own RPCs, both are core code, leaving three
+   extension points (guard, driver, bus and plant), each with more than one implementation.
+7. **A guard API crate (Could).** After the split, `polymx-guards` depends on all of `ethercat-control`, so any change
+   in L2–L4 bumps the version guards depend on. A small `ethercat-guard` crate with `View`, `Actions`, `Binder` and
+   `Admission` would make the guard surface the stable contract, at the cost of one more crate. Worth it if more
+   machines are expected.
+8. **Smaller points.** What happens when a guard overruns its time budget (log, count, stop) belongs with the panic
+   policy. Step 2 bundles a breaking protocol change with the client package split; as two steps, the QC app
+   migration deals with one change at a time.
+
 ## Open points
 
 - **Session model:** a single control lease or per-output ownership (`generic-polymx-split.md`, question 4). It is
@@ -584,3 +751,7 @@ guard engine, because guards rely on one thread owning the state they read and a
   fault reporting and lease expiry during a bus stall are likely Musts but unverified. The proposal keeps every
   feature until one is explicitly dropped.
 - The guard questions in `generic-polymx-split.md` (guard list, latch and reset, panic policy) apply unchanged.
+- **L4 scope:** the full telemetry design or the minimal problems list (see *L4 Observation*), before step 4.
+- **Machine services:** will a machine add its own RPCs? If not, service registration is core (review finding 6).
+- **Publishing:** where the Rust crates and Python packages live after the split (see *Preparing the repo split*).
+- **`submodules/cbt`:** nothing references it; drop it or assign it to a part.
