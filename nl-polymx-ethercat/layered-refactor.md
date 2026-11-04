@@ -178,6 +178,14 @@ trait Driver {
   the snapshot. L4 turns them into conditions, not driver code. The cycle sees every tick, so drivers need no edge
   latches.
 - **Must not know:** names, machines, sessions. No locks: the cycle thread owns every driver.
+- **Later: ESI device descriptions (Should; a strong want, user, 2026-11-04; not in this refactor).** Take identity
+  (vendor ID, product code, revision) and the PDO layout from the vendor's ESI XML instead of hand-written profiles
+  and driver code; this is what a data-driven generic terminal driver needs. ESI doesn't cover device alarm codes,
+  severity, our own SDO choices or IO-Link sensors (the ILR1040 has an IODD), so profiles keep those and sit on top
+  of ESI. Use a small own reader (`quick-xml` + serde, identity and PDOs only), not `ethercat-esi`: released last in
+  2020, fails on some vendors' files (issue #1, fix PRs unmerged since 2023), pins `serde-xml-rs` 0.4. Open: check
+  the real EL2008 and iX7NH ESI files for error texts, extract at build time or at runtime, revision handling, and
+  the vendors' licence terms for keeping their XML in the repo.
 
 ### L2 Machine model
 
