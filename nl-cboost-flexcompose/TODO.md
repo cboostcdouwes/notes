@@ -74,6 +74,13 @@ C/A/P/D/Q codes; `release-options.md`: the four layouts compared; `concept-1/`: 
 Done and tested with `v1.1.0`: `.github/workflows/release.yml` (on a `v*` tag: test, build with the version stamped,
 release with one zip per OS: `flexcompose(.exe)` + `install.sh/.cmd` from `flexcompose-cli/install/`; release notes
 from `cliff.toml` via git-cliff, plus the annotated tag's message). Left:
+- **Move the release to cargo-dist, with a static `-musl` Linux binary** (user, 2026-11-03; next commit after the
+  Rust migration). Wanted from dist: its generated workflow, its shell/PowerShell installers, checksums and
+  attestations. Decided: dist's installers replace `install/install.sh`/`.cmd` (drop them); the version is bumped in
+  `Cargo.toml` before tagging, so `FLEXCOMPOSE_VERSION` stamping goes; release notes stay git-cliff. Keep the
+  fmt/clippy/test/deny checks. A plain `x86_64-unknown-linux-musl` build works without musl-gcc (checked
+  2026-11-03: static-pie, 2.2 MB). Update design §8, README install and `release-*` docs to match. Makes the
+  `install.cmd`/SmartScreen item below moot.
 - Test the Windows zip's `install.cmd` from a release (the Linux `install.sh` from `v1.1.0` works); also whether a
   double-clicked `.cmd` from a downloaded zip gets a SmartScreen prompt.
 - The template folders should not be included in the flexcompose changelog, as they do not affect the CLI functionality.
