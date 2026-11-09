@@ -1,0 +1,60 @@
+diff --git a/config/machine-simulated.toml b/config/machine-simulated.toml
+index 4cc34c1..5165f3f 100644
+--- a/config/machine-simulated.toml
++++ b/config/machine-simulated.toml
+@@ -34,6 +34,10 @@ sensors = 3
+ index = 6
+ model = "iX7NH"
+ 
++[[subdevice]]
++index = 7
++model = "ECOMODUL"
++
+ # -- inputs, on channels 0-7 of the simulated terminal --
+ 
+ [input.Start]
+diff --git a/config/machine.toml b/config/machine.toml
+index 9de903f..d6df00d 100644
+--- a/config/machine.toml
++++ b/config/machine.toml
+@@ -47,6 +47,12 @@ index = 8
+ model = "iX7NH"
+ # Calibration and travel limits live in config/axis.toml.
+ 
++[[subdevice]]
++index = 9
++model = "ECOMODUL"
++# JAT 2-axis servo amplifier, cabled from the iX7NH's OUT port. Read-only for now: the driver
++# reports both axes' state and never enables a power stage.
++
+ # -- inputs --
+ #
+ # Only Stop is normally-closed: a cut cable or a failed switch reads as pressed, so the
+diff --git a/server/lib/src/machine.rs b/server/lib/src/machine.rs
+index fff84af..f0a4a0d 100644
+--- a/server/lib/src/machine.rs
++++ b/server/lib/src/machine.rs
+@@ -597,7 +597,7 @@ mod tests {
+             panic!("the shipped machine file does not validate: {problems:#?}")
+         });
+         assert_eq!(machine.machine, "polymx");
+-        assert_eq!(machine.subdevices.len(), 8);
++        assert_eq!(machine.subdevices.len(), 9);
+         assert_eq!(machine.input.len(), 8);
+         assert_eq!(machine.output.len(), 14);
+         assert_eq!(machine.health.as_ref().unwrap().signal, "MachineHealthy");
+diff --git a/server/src/main.rs b/server/src/main.rs
+index cb63d03..d70a0ff 100644
+--- a/server/src/main.rs
++++ b/server/src/main.rs
+@@ -904,6 +904,10 @@ mod tests {
+         assert!(devices.analog_out(6).is_some(), "EL4002 at 6");
+         assert!(devices.distance_sensor_master().is_some(), "EL6224");
+         assert!(devices.axis().is_some(), "iX7NH");
++        assert!(
++            devices.get(9).and_then(|driver| driver.as_ecomodul()).is_some(),
++            "ECOMODUL at 9"
++        );
+     }
+ 
+     #[test]
