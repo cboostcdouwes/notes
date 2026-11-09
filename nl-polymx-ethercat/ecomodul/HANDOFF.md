@@ -102,8 +102,22 @@ Steps:
    state and height readouts, Home, Enable, Disable, Move (height in µm), Stop. No handling for a machine
    without a light lift (user: it would be dead code once the ECOMODUL is in the ring), so until step 9 its
    stream ends with NOT_FOUND and the panel shows DEGRADED (12/13 streams).
-9. Integration: apply `step2-ring-entry.patch` (with the README ring table row and `topology.svg`), fill in `light-lift.toml`, pass `--light-lift-config` in
-   `docker-compose.yml`, declare the ECOMODUL in `machine-simulated.toml`.
+9. Integration, in three commits (2026-11-09):
+   - 9a (`65ad61d`): the ECOMODUL at ring index 9 in `config/machine.toml` (by hand, not
+     `step2-ring-entry.patch`, whose comment called the driver read-only and which also touched the
+     simulated machine); server tests that build the shipped machine get a light lift config (`TEST_CONFIG`,
+     `io_impl` the shipped file); `--light-lift-config /app/config/light-lift.toml` in `docker-compose.yml`
+     (fixed path, user 2026-11-09). `--check-config` passes on the shipped files. On the first rig start,
+     check the log's `Group PDI length` stays within the 128 B `PDI_LEN`.
+   - 9b (`04fffce`): the ECOMODUL at index 7 in `config/machine-simulated.toml`, with the
+     shipped `light-lift.toml`; `client/tests/test_light_lift_end_to_end.py` (state, Home claims, Stop
+     aborts homing, refusals; one server per test, since a Home would carry over). `test_handshake.py` and
+     `test_io_end_to_end.py` start the server outside the repo root and now name `--light-lift-config`, as
+     they already named `--axis-config`.
+   - 9c (written, uncommitted): README ring table row 9 and the config files it loads;
+     `topology.dot`/`.svg` with the ECOMODUL at 9; `communication.dot`/`.svg` "Terminals + drives" (it names
+     no services, so no LightLift entry); the topology alt text in `configuration.md`. SVGs rendered with
+     graphviz 16.1 (the old ones were 2.43), so their diffs are whole-file.
 
 ## Testing the lights without the homing sensor (user, 2026-11-09: testing only)
 
@@ -128,6 +142,16 @@ file is measured. What follows explains the values.
   20 mm above the bottom overruns the top by 20 mm at `max_height_um`, and with no encoder nothing detects
   the stall. Keep `max_height_um` well below the travel (e.g. 50 of the ~90 mm) while testing.
 - Each axis references itself: lights at different heights at Home stay that far apart.
+
+## Shipped light lift values (user, 2026-11-09)
+
+`config/light-lift.toml` has no TODOs any more (written, uncommitted): `speed_um_s = 5000` (5 mm/s, the
+fastest that worked on the bench at the present stepper currents), acceleration 50 mm/s², homing
+`switch_speed_um_s` and `zero_speed_um_s` 2000 (2 mm/s; the user named 2 mm/s for homing, and method 18
+needs both, so both got it), `min_height_um = 0`, `max_height_um = 80000` (80 mm stroke of the ~90 mm),
+`home_below_sled_base_um = 0` until measured on the machine, so heights count from the homing reference
+meanwhile. Method 18 has never run (sensor not mounted): the homing speeds are untested. The server now
+starts with an ECOMODUL declared, which unblocks step 9.
 
 ## Step 1: what was built
 
@@ -182,8 +206,9 @@ Travel measurement by hand (written 2026-11-09, not yet run):
 Waits for Enter before every step: enable and home (method 34: put the carriage at the bottom end first,
 its position becomes 0), move `distance_mm` up and hold powered for measuring the gap left at the top and
 the distance actually moved, disable, enable (watch the shaft; the counter must not jump), move back to 0,
-disable. Try 5 mm first to check the direction, then 80 mm (travel ~90 mm). The bench moves at 2 mm/s (120 rpm) since
-2026-11-09: at 10 mm/s the motor on the light lift lacked the torque. `config/light-lift.toml` still says
+disable. Try 5 mm first to check the direction, then 80 mm (travel ~90 mm). Speed trials on the light lift (bench 2026-11-09): 10 mm/s at
+50 mm/s² lacked torque; 2 mm/s at 50 mm/s² moved 80 mm; 10 mm/s at 10 mm/s² stalled near the end of the
+acceleration, so the limit is speed, not the ramp. 5 mm/s at 50 mm/s² works. `config/light-lift.toml` still says
 10 mm/s.
 
 **Travel measured** (bench `travel`, 2026-11-09, method 34 from the bottom end): 80 mm up passed with
@@ -194,7 +219,8 @@ disable. Try 5 mm first to check the direction, then 80 mm (travel ~90 mm). The 
 currents `0x2702:02` hold 724 (0.88 A), `:03` travel offset 1448 (+1.77 A, 2.65 A moving), `:04` accel.
 offset 724 (+0.88 A, 3.54 A accelerating): the manual's defaults scaled to sum to the max current, so not
 set for this motor. `0x2702:07` full step switch 128,000,000 inc/64 s = 15,000 rpm, effectively never.
-`0x6410:05/06` motor currents 0 (not configured). Open: the motor's rated phase current from its data
+`0x6410:05/06` motor currents 0 (not configured). No per-axis stepper currents: `0x2F02` (`0x2702` + the axis
+offset) does not exist in the object directory, so the one `0x2702` set most likely serves both axes. Open: the motor's rated phase current from its data
 sheet; if above ~2.5 A, raise `0x6073` and the stepper currents within its rating and retest 10 mm/s,
 otherwise lower `speed_um_s`. Ctrl-C at a prompt leaves the
 power stage as it is (`0x6007 = 0`).

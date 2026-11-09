@@ -23,13 +23,11 @@
       reverted 2026-11-05), fill in the `"TODO"` values in `config/light-lift.toml`, pass `--light-lift-config` in
       `docker-compose.yml`. On the first rig start, check the log's `Group PDI length` stays within the 128 B
       `PDI_LEN` (estimate ~111-119 B with step 3's 14 B of outputs)
-- [ ] Integration, once the homing sensor is mounted: measure the lights limits (about 90 mm: 190 mm rail, 100 mm carriage) and
-      fill in `home_below_sled_base_um`, `min_height_um`, `max_height_um` in `config/light-lift.toml`; find
-      and set the homing speeds and acceleration (`switch_speed_um_s`, `zero_speed_um_s`, `acceleration_um_s2`)
+- [ ] Light lift values still provisional in `config/light-lift.toml` (2026-11-09): measure
+      `home_below_sled_base_um` on the machine (0 for now); check the homing speeds (2 mm/s) and method 18
+      once the sensor is mounted. Stroke 0-80 mm of the ~90 mm measured on the bench
 - [ ] Bench: both axes keep software limits [-40000, 0] from the driver's setup, so manual moves to + targets are
       refused with "internal limit" (statusword bit 11)
-- [ ] Docs, at integration (step 9): the README ring table and `docs/guide/diagrams/topology.svg` don't show
-      the ECOMODUL at index 9 yet; `communication.svg` doesn't show the `LightLift` service
 - [ ] Motion test passed on axis 1 (bench, 2026-11-09, with the deadlock fix) and on axis 2 (after dropping the
       `0x608F:02 == 1` check; 8000 inc = 1 turn measured, same timings as axis 1): enable, home (method 34), moves to
       -5 mm and back, stop mid-move with the power stage kept on, disable with the reference kept. The stop braked over 1.8 mm in 365 ms
@@ -51,7 +49,7 @@
 - [ ] One "lights" axis over both ECOMODUL axes, built like the sled; decisions and steps 4-8 in the handoff
       (2026-11-05). Steps 4, 5, 6a committed; 6b (gRPC service) committed (`c7145d3`); 6c (supervision loss
       policy) committed (`df46f95`); 7 (Python `*_light_lift` methods) committed; 8 (docs) committed; 8b (debug panel) committed; next: step 9 (integration)
-- [ ] Light lift motor lacks torque at 10 mm/s (bench 2026-11-09; 2 mm/s works). Drive runs stepper mode at
+- [ ] Light lift motor lacks torque at 10 mm/s (bench 2026-11-09; 5 mm/s works and is shipped). Drive runs stepper mode at
       3.54 A peak max, 2.65 A while moving, defaults never set for this motor (handoff). Get the motor's rated
       phase current from its data sheet, then raise the currents or lower `speed_um_s` in
       `config/light-lift.toml`

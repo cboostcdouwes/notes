@@ -22,11 +22,11 @@ home_below_sled_base_um = 0
 min_height_um = 0
 max_height_um = 50000
 
-speed_um_s = 10000
+speed_um_s = 5000
 acceleration_um_s2 = 50000
 
 [homing]
 method = 34
 # Required by the config, unused by method 34. No zero_speed_um_s: method 34 refuses it.
-switch_speed_um_s = 1000
+switch_speed_um_s = 2000
 acceleration_um_s2 = 50000

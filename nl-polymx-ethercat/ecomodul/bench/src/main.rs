@@ -45,9 +45,9 @@ const INCREMENTS_PER_MM: f64 = 8000.0;
 /// Homing on the actual position, because the homing sensor is not mounted yet.
 const HOMING_METHOD: i8 = 34;
 
-/// 2 mm/s (120 rpm), because the motor on the light lift lacked the torque at the 10 mm/s first
-/// tested (stepper mode, 2.65 A peak while moving). 50 mm/s² acceleration.
-const SPEED: u32 = 16_000;
+/// 5 mm/s at 50 mm/s²: the motor on the light lift stalls on its way to 10 mm/s even at
+/// 10 mm/s², so the torque (stepper mode, 2.65 A peak while moving) runs out below 10 mm/s.
+const SPEED: u32 = 40_000;
 const ACCELERATION: u32 = 400_000;
 
 /// How far a reported position may lie from the target: the 10 µm precision estimate.

@@ -69,8 +69,8 @@ def main():
             show(slave, "nodeguarding guard time ms", 0x100C, 0, "<H")
             show(slave, "nodeguarding life time factor", 0x100D, 0, "<B")
             show_list(slave, "consumer heartbeat", 0x1016, "<I")
-            # Stepper mode currents (manual 5.21.6). The manual names no per-axis copy of this
-            # manufacturer object, so it may hold axis 1 only.
+            # Stepper mode currents (manual 5.21.6). One set for the module: the axis 2 copy at
+            # 0x2F02 does not exist (bench 2026-11-09).
             show(slave, "stepper control (1,3 = stepper)", 0x2702, 1, "<H")
             show(slave, "stepper hold current", 0x2702, 2, "<h")
             show(slave, "stepper travel current offset", 0x2702, 3, "<h")
