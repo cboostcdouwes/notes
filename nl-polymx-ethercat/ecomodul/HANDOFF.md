@@ -2,7 +2,7 @@
 
 **State (2026-11-09):** branch `feature/jat-ecomodul`. Committed: step 1 (read-only driver, passed on the bench)
 `b75cca0`, step 3 (motion in the driver) `e733d5a`, step 4 (lights config) `b070d76`, step 5 (simulated driver)
-`7a23765`. Step 6a `eac93ad`, 6b `c7145d3`, 6c `df46f95`, rename `953682b`, 7 `34bda2f`, 8 `6548c58`; 8b (debug panel) written, uncommitted. Step 2 (ring entry) is postponed until integration and reverted from
+`7a23765`. Step 6a `eac93ad`, 6b `c7145d3`, 6c `df46f95`, rename `953682b`, 7 `34bda2f`, 8 `6548c58`, 8b `0475466` (debug panel); next: step 9. Step 2 (ring entry) is postponed until integration and reverted from
 the working tree; its diff is saved in `step2-ring-entry.patch`.
 
 ## Goal
@@ -98,7 +98,7 @@ Steps:
    the `LightLift` service in `communication.md` (its `communication.svg` diagram is not updated);
    guide index; a light lift section in `client/README.md`. The README ring table row and the
    `topology.svg` diagram wait for step 9, when the ECOMODUL joins the ring.
-8b. Debug panel (written, uncommitted; user, 2026-11-09): a Light Lift panel in `client/debug_panel.py`,
+8b. Debug panel (`0475466`; user, 2026-11-09): a Light Lift panel in `client/debug_panel.py`,
    state and height readouts, Home, Enable, Disable, Move (height in µm), Stop. No handling for a machine
    without a light lift (user: it would be dead code once the ECOMODUL is in the ring), so until step 9 its
    stream ends with NOT_FOUND and the panel shows DEGRADED (12/13 streams).
@@ -108,8 +108,14 @@ Steps:
 ## Testing the lights without the homing sensor (user, 2026-11-09: testing only)
 
 Until the sensor is mounted, the lights can home with method 34 (the actual position becomes the reference,
-no movement), as the bench program does. Config-only, no code change; revert to method 18 and the measured
-values once the sensor is mounted. Not for the rig.
+no movement), as the bench program does. Not for the rig in use.
+
+**`ecomodul/light-lift-test.toml` in this notes folder** (user, 2026-11-09: not committed to the repo): a
+separate file, selected with `--light-lift-config` and its full path, so the shipped `light-lift.toml` keeps
+its TODOs and refuses. Values (user, 2026-11-09): method 34, `home_below_sled_base_um = 0` (heights count from the bottom
+end), `min_height_um = 0`, `max_height_um = 50000` (half the travel), `switch_speed_um_s = 1000` (unused),
+no `zero_speed_um_s`. Not covered by a test. Delete it once the sensor is mounted and the shipped
+file is measured. What follows explains the values.
 
 - `config/light-lift.toml`: `method = 34`; delete `zero_speed_um_s` (the driver refuses it for 34);
   `switch_speed_um_s` stays required but unused by the drive. `home_below_sled_base_um`, `min_height_um`,
@@ -144,8 +150,11 @@ What the driver does:
 
 ## Running the bench (needs sudo)
 
-The server binary can't run a ring with only the ECOMODUL: it requires every PolyMX input signal, and a simulated
-input terminal turns the bus off. A standalone bench program drives the repo's driver instead:
+The server cannot run with only the ECOMODUL (checked 2026-11-09): `Signals::resolve` requires every
+PolyMX input and output wired to a present terminal, and a `Simulated` device turns the whole server
+simulated, so no EtherCAT opens. The bench tests the driver only; the LightLift service, client and debug
+panel need the rig (step 9), or a server that accepts a partial machine (part of the generic/PolyMX split).
+A standalone bench program drives the repo's driver instead:
 
 ```fish
 cd ~/Cboost/Notes/nl-polymx-ethercat/ecomodul/bench
@@ -167,6 +176,28 @@ the power stage still on), then disable where it stopped and stay unpowered for 
 hold), enable again (counter unchanged, still homed), move back without a re-home, disable (reference kept). Prints `ok` per step, then `PASS`, or `FAIL` with the
 reason, disabling the axis. It answers the open bench questions: a refused `0x608F:01` or a refused `0x605A = 5` shows as `SetupUnverified` at the home step, with the log naming which. Needs the drive set
 up for the encoderless motor (`0x6410:29`) first; otherwise the first step fails on the `0x7305` fault.
+
+Travel measurement by hand (written 2026-11-09, not yet run):
+`sudo RUST_LOG=info /tmp/ecomodul-bench/release/ecomodul-bench enp66s0 travel <axis 1|2> <distance_mm>`.
+Waits for Enter before every step: enable and home (method 34: put the carriage at the bottom end first,
+its position becomes 0), move `distance_mm` up and hold powered for measuring the gap left at the top and
+the distance actually moved, disable, enable (watch the shaft; the counter must not jump), move back to 0,
+disable. Try 5 mm first to check the direction, then 80 mm (travel ~90 mm). The bench moves at 2 mm/s (120 rpm) since
+2026-11-09: at 10 mm/s the motor on the light lift lacked the torque. `config/light-lift.toml` still says
+10 mm/s.
+
+**Travel measured** (bench `travel`, 2026-11-09, method 34 from the bottom end): 80 mm up passed with
+10 mm left at the top, so ~90 mm of travel, as the rail (190 mm) minus carriage (100 mm) predicts.
+
+**Drive current settings** (scan 2026-11-09, both axes the same; scale 16383 = 20 A peak / 14 A RMS):
+`0x6073`/`0x6873` max current 2896 = 3.54 A peak (2.47 A RMS). Stepper mode (`0x2702:01` = 0x83). Stepper
+currents `0x2702:02` hold 724 (0.88 A), `:03` travel offset 1448 (+1.77 A, 2.65 A moving), `:04` accel.
+offset 724 (+0.88 A, 3.54 A accelerating): the manual's defaults scaled to sum to the max current, so not
+set for this motor. `0x2702:07` full step switch 128,000,000 inc/64 s = 15,000 rpm, effectively never.
+`0x6410:05/06` motor currents 0 (not configured). Open: the motor's rated phase current from its data
+sheet; if above ~2.5 A, raise `0x6073` and the stepper currents within its rating and retest 10 mm/s,
+otherwise lower `speed_um_s`. Ctrl-C at a prompt leaves the
+power stage as it is (`0x6007 = 0`).
 
 `scan_ecomodul.py` (pysoem, read-only) re-reads identity, PDO setup and axis state; `reset_fault.py --axis N` clears
 an axis fault over SDO (power stage stays off):

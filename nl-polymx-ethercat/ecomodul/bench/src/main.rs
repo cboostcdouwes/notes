@@ -9,12 +9,19 @@
 //! only moves into negative positions, which on the lights is upwards, away from the bottom.
 //! It also leaves the axis unpowered away from home for `idle_s` seconds and checks that the
 //! drive keeps its position counter, so Enable brings it back without a re-home.
-//! Before running it, configure the drive for the encoderless motor (0x6410:29), or the axis
-//! faults with 0x7305 and the test stops at its first step.
+//!
+//! `travel`: for measuring by hand, waiting for Enter before every step. Homes on the actual
+//! position (method 34), moves `distance_mm` up and holds there to measure the gap left at the
+//! top, then disables, enables (watch the shaft), moves back to 0 and disables. Put the
+//! carriage at the bottom end first: wherever it stands becomes 0.
+//!
+//! Before running either, configure the drive for the encoderless motor (0x6410:29), or the
+//! axis faults with 0x7305 and the test stops at its first step.
 //!
 //! Usage:
 //!   sudo RUST_LOG=info <binary> <interface> status [seconds]
 //!   sudo RUST_LOG=info <binary> <interface> motion <axis 1|2> [distance_mm] [idle_s]
+//!   sudo RUST_LOG=info <binary> <interface> travel <axis 1|2> <distance_mm>
 
 use ethercat_lib::bus_status::BusStatus;
 use ethercat_lib::devices::Devices;
@@ -24,12 +31,13 @@ use ethercat_lib::drivers::ecomodul::{
 };
 use ethercat_lib::ethercat::Ethercat;
 use ethercat_lib::subdevice::SubdeviceDriver;
+use std::io::Write;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
 
 const CYCLE: Duration = Duration::from_millis(10);
 
-/// The lights' mechanics, as in `config/lights.toml`: 8000 increments per revolution on a
+/// The lights' mechanics, as in `config/light-lift.toml`: 8000 increments per revolution on a
 /// spindle of 1 mm per revolution.
 const INCREMENTS_PER_REVOLUTION: u32 = 8000;
 const INCREMENTS_PER_MM: f64 = 8000.0;
@@ -37,8 +45,9 @@ const INCREMENTS_PER_MM: f64 = 8000.0;
 /// Homing on the actual position, because the homing sensor is not mounted yet.
 const HOMING_METHOD: i8 = 34;
 
-/// 10 mm/s and 50 mm/s², the move speed and acceleration tested on the axis.
-const SPEED: u32 = 80_000;
+/// 2 mm/s (120 rpm), because the motor on the light lift lacked the torque at the 10 mm/s first
+/// tested (stepper mode, 2.65 A peak while moving). 50 mm/s² acceleration.
+const SPEED: u32 = 16_000;
 const ACCELERATION: u32 = 400_000;
 
 /// How far a reported position may lie from the target: the 10 µm precision estimate.
@@ -67,10 +76,18 @@ fn main() {
                 Duration::from_secs(idle_s),
             )
         }
+        [interface, "travel", axis, distance_mm] => {
+            let axis: usize = axis.parse().expect("axis 1 or 2");
+            assert!((1..=AXES).contains(&axis), "axis must be 1..={AXES}");
+            let distance_mm: f64 = distance_mm.parse().expect("distance_mm");
+            assert!(distance_mm > 0.0, "distance_mm must be above 0");
+            travel(interface, axis - 1, (distance_mm * INCREMENTS_PER_MM).round() as i32)
+        }
         _ => {
             eprintln!(
                 "usage: <interface> status [seconds] | \
-                 <interface> motion <axis 1|2> [distance_mm] [idle_s]"
+                 <interface> motion <axis 1|2> [distance_mm] [idle_s] | \
+                 <interface> travel <axis 1|2> <distance_mm>"
             );
             std::process::exit(2);
         }
@@ -145,12 +162,26 @@ fn axis_config(distance: i32) -> AxisConfig {
 }
 
 fn motion(interface: &str, axis: usize, distance: i32, idle: Duration) -> Result<(), String> {
+    run_on_bench(interface, axis, distance, |bench| bench.run(distance, idle))
+}
+
+fn travel(interface: &str, axis: usize, distance: i32) -> Result<(), String> {
+    run_on_bench(interface, axis, distance, |bench| bench.travel(distance))
+}
+
+/// Run `test` on `axis`, with travel from `-distance` to 0, disabling the axis if it fails.
+fn run_on_bench(
+    interface: &str,
+    axis: usize,
+    distance: i32,
+    test: impl FnOnce(&Bench) -> Result<(), String>,
+) -> Result<(), String> {
     let driver = Ecomodul::with_axes([axis_config(distance); AXES])?;
     let bench = Bench {
         driver: start_bus(interface, driver),
         axis,
     };
-    let outcome = bench.run(distance, idle);
+    let outcome = test(&bench);
     if outcome.is_err() {
         let _ = bench.driver.disable(axis);
         // Give the cycle time to send the disable before the process exits.
@@ -176,6 +207,38 @@ impl Bench {
         self.idle_unpowered(idle)?;
         self.move_to(0)?;
         self.disable()
+    }
+
+    /// Move up `distance` and hold there for measuring, then disable, enable and return to 0,
+    /// each step only after Enter.
+    fn travel(&self, distance: i32) -> Result<(), String> {
+        self.process_data_without_fault()?;
+        self.after_enter("enable and home: the carriage must be at the bottom end, which becomes 0")?;
+        self.enable()?;
+        self.home()?;
+        self.after_enter(&format!("move {} up", mm(distance)))?;
+        self.move_to(-distance)?;
+        println!("     measure the gap left at the top, and how far the carriage moved");
+        self.after_enter("disable")?;
+        let before = self.position();
+        self.disable()?;
+        self.after_enter("enable: watch the shaft")?;
+        self.enable_at(before)?;
+        self.after_enter("move back to 0")?;
+        self.move_to(0)?;
+        self.after_enter("disable")?;
+        self.disable()
+    }
+
+    /// Wait for Enter before `next`. The axis keeps whatever power state it is in meanwhile.
+    fn after_enter(&self, next: &str) -> Result<(), String> {
+        print!("     press Enter to {next} ");
+        std::io::stdout().flush().map_err(|error| format!("stdout: {error}"))?;
+        let mut line = String::new();
+        std::io::stdin()
+            .read_line(&mut line)
+            .map_err(|error| format!("waiting for Enter: {error}"))?;
+        Ok(())
     }
 
     fn process_data_without_fault(&self) -> Result<(), String> {
@@ -307,6 +370,14 @@ impl Bench {
             mm(before)
         ));
         self.watch_the_shaft("enabling");
+        self.enable_at(before)?;
+        self.watch_the_shaft("moving");
+        Ok(())
+    }
+
+    /// Power the axis again after it was disabled at `before`: the drive's position counter
+    /// must not have jumped, and the axis must still be homed.
+    fn enable_at(&self, before: i32) -> Result<(), String> {
         self.enable()?;
         let after = self.position();
         if (after - before).abs() > POSITION_TOLERANCE {
@@ -316,12 +387,14 @@ impl Bench {
                 mm(after)
             ));
         }
+        if !self.motion().homed {
+            return Err("re-enable: the axis lost its reference".to_owned());
+        }
         self.passed(&format!(
             "re-enabled at {}, {} increments from before",
             mm(after),
             after - before
         ));
-        self.watch_the_shaft("moving");
         Ok(())
     }
 

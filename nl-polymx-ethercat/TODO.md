@@ -50,7 +50,11 @@
       and a measured angle
 - [ ] One "lights" axis over both ECOMODUL axes, built like the sled; decisions and steps 4-8 in the handoff
       (2026-11-05). Steps 4, 5, 6a committed; 6b (gRPC service) committed (`c7145d3`); 6c (supervision loss
-      policy) committed (`df46f95`); 7 (Python `*_light_lift` methods) committed; 8 (docs) committed; 8b (debug panel) written; next: step 9 (integration)
+      policy) committed (`df46f95`); 7 (Python `*_light_lift` methods) committed; 8 (docs) committed; 8b (debug panel) committed; next: step 9 (integration)
+- [ ] Light lift motor lacks torque at 10 mm/s (bench 2026-11-09; 2 mm/s works). Drive runs stepper mode at
+      3.54 A peak max, 2.65 A while moving, defaults never set for this motor (handoff). Get the motor's rated
+      phase current from its data sheet, then raise the currents or lower `speed_um_s` in
+      `config/light-lift.toml`
 - [ ] At merge/release: bump `server/proto/API_VERSION` for the new `LightLift` service (`lightlift.proto`). Left to the
       release on purpose (user, 2026-11-09), so no two branches each call their API 0.0.6
 - [ ] Fault codes in `ecomodul.toml` (manual §5.24.3) and drive faults on the fault channel

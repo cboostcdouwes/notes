@@ -69,6 +69,14 @@ def main():
             show(slave, "nodeguarding guard time ms", 0x100C, 0, "<H")
             show(slave, "nodeguarding life time factor", 0x100D, 0, "<B")
             show_list(slave, "consumer heartbeat", 0x1016, "<I")
+            # Stepper mode currents (manual 5.21.6). The manual names no per-axis copy of this
+            # manufacturer object, so it may hold axis 1 only.
+            show(slave, "stepper control (1,3 = stepper)", 0x2702, 1, "<H")
+            show(slave, "stepper hold current", 0x2702, 2, "<h")
+            show(slave, "stepper travel current offset", 0x2702, 3, "<h")
+            show(slave, "stepper accel. current offset", 0x2702, 4, "<h")
+            show(slave, "stepper current ramp time", 0x2702, 5, "<H")
+            show(slave, "stepper full step velocity", 0x2702, 7, "<i")
             try:
                 axes = slave.sdo_read(0x3000, 0)[0]
             except Exception:
@@ -93,6 +101,11 @@ def main():
                 show(slave, "quick stop option", 0x605A + offset, 0, "<h")
                 show(slave, "fault reaction option", 0x605E + offset, 0, "<h")
                 show(slave, "abort connection option", 0x6007 + offset, 0, "<h")
+                # 16383 = 20 A peak / 14 A RMS (manual 5.9.1).
+                show(slave, "max current [20 A/16383]", 0x6073 + offset, 0, "<H")
+                show(slave, "current actual", 0x6078 + offset, 0, "<h")
+                show(slave, "motor rated current [cA RMS]", 0x6410 + offset, 5, "<H")
+                show(slave, "motor max current [cA RMS]", 0x6410 + offset, 6, "<H")
     finally:
         master.close()
 
