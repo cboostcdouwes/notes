@@ -14,6 +14,11 @@ C/A/P/D/Q codes; `release-options.md`: the four layouts compared; `concept-1/`: 
   `tmp/machine-starter/PLAN.md`: close the review, step 0 (Decision sections of the parent logs; tell the colleague
   `cdr --verify` is withdrawn), step A (`cdr` + vcs2l in the base image), step 1 (FlexCompose `feat!`: `build:` as
   written).
+  - **Open (2026-11-10): the recipe back in the service repo?** The user wants a service's build instructions in
+    its own repo, several service repos per machine and a dev container per service. A working example is in
+    `tmp/machine-starter-services/` (its README lists what it changes in the plan: A-2, step 2, step 1's
+    `BASE_IMAGE`, and the open points). Not reviewed; decide before step 0, then update the log and PLAN.md.
+  - PLAN.md steps 1-2 and the vault's `CLAUDE.md` still name the Go files; the CLI is Rust since `c88283f`.
 - **Machines may pull** (REQUIREMENTS.md `release-offline`, `release-registry-pull`): the release file sets
   `pull_policy: never`, which fits today: pulling from an online registry is a Won't. Waits for a request for an
   online update process; then update §13, the `release` target and the README. Until then only §13's wording is

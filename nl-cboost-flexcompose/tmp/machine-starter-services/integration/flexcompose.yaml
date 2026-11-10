@@ -1,0 +1,37 @@
+# FlexCompose template of one machine's integration repo (FLEXCOMPOSE_DESIGN.md §13). Every service is a repository
+# of dependencies.repos with a Dockerfile of its own, and a container here under the same name. In the dev box each
+# service's container builds that service from the shared checkouts in src/; a release builds each service's image
+# with its own Dockerfile from lock.repos.
+# docker compose cannot run this file: flexcompose_options is not a Compose key, so Compose rejects it.
+# Generate a runnable Compose file from it (compose.generated.yaml, next to this file), then run that:
+#   flexcompose generate --target devbox:host-src
+#   docker compose -f compose.generated.yaml up -d        (or Reopen in Container, and pick a service)
+#   (in a box) bash src/bootstrap.sh <service> --update   (clones the repositories; again to take in new commits)
+# Release: ./lock.sh, commit lock.repos, git tag -a v1.1.0 -m v1.1.0, ./release.sh
+flexcompose_options:
+  # devbox:host-src mounts this repo at src/, with the repositories of dependencies.repos next to each other in it.
+  # release:build and release are for release.sh.
+  targets: [devbox:host-src, release:build, release]
+
+services:
+  # A service: its name is its key in dependencies.repos. To add one, see README.md.
+  example_app:
+    flexcompose_options:
+      workspace: true
+      # The machine's release gets these features too.
+      enable_shared_memory: true
+      enable_logging: true
+    # The dev box's image, and the BASE_IMAGE the release builds the service's Dockerfile on.
+    image: cboost-c-nas:5100/cboost-ros2-jazzy:0.3.0
+    restart: always
+    network_mode: host
+    command: dev
+  example_driver:
+    flexcompose_options:
+      workspace: true
+      enable_shared_memory: true
+      enable_logging: true
+    image: cboost-c-nas:5100/cboost-ros2-jazzy:0.3.0
+    restart: always
+    network_mode: host
+    command: dev

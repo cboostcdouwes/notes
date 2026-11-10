@@ -1,0 +1,5 @@
+# Not part of the service: git's data (it differs per clone, so builds would miss the cache) and colcon's outputs.
+.git
+build
+install
+log
