@@ -33,6 +33,13 @@ C/A/P/D/Q codes; `release-options.md`: the four layouts compared; `concept-1/`: 
     ignore imported workspaces; `devbox:host` is refused for imported workspace services; nested imports are
     refused; no per-developer choice between source and image.
     `tmp/machine-starter-services/` is the earlier variant without imports: superseded, delete when decided.
+  - **Parked (user, 2026-11-10): Windows speed and `devbox:volume`**, until the dev box and release process works
+    as a whole. Decided: recommend keeping the checkout in the WSL filesystem with `devbox:host-src` (untested;
+    which GUI/GPU fragments fit a box started from WSL is unknown); for Docker Desktop users who want
+    `devbox:volume`, seed the box's empty `src/` from a read-only mount of the host checkout. An inline
+    `post_start` hook for that was tried (it worked in a spike) and reverted: the user prefers the repo's
+    `bootstrap.sh` to do the clone, with FlexCompose adding only the mount. Today `devbox:volume` with imports
+    generates, but the example doesn't offer the target and `src/` starts empty.
   - PLAN.md steps 1-2 and the vault's `CLAUDE.md` still name the Go files; the CLI is Rust since `c88283f`.
 - **Machines may pull** (REQUIREMENTS.md `release-offline`, `release-registry-pull`): the release file sets
   `pull_policy: never`, which fits today: pulling from an online registry is a Won't. Waits for a request for an
