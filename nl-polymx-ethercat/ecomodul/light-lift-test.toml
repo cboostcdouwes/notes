@@ -2,8 +2,7 @@
 # Kept in the notes vault, not the repo. Select it with its full path:
 # `--light-lift-config ~/Cboost/Notes/nl-polymx-ethercat/ecomodul/light-lift-test.toml`;
 # never on a rig in use.
-# The shipped light-lift.toml keeps its "TODO"s and refuses to start, so the rig cannot run
-# on these values by accident.
+# The shipped light-lift.toml homes on the sensor (method 18), which isn't mounted yet.
 #
 # Homing method 34 takes each light's position at Home as its reference, without moving.
 # Home does NOT bring the lights to the bottom; it declares wherever they stand to be the
@@ -11,16 +10,17 @@
 # above it overruns the top by the same distance, and with no encoder nothing detects it.
 # Each light references itself, so two lights at different heights stay that far apart.
 #
-# Heights here count from the bottom end, not the sled base: home_below_sled_base_um = 0.
-# Field meanings are in light-lift.toml and docs/guide/light-lift-toml.md.
+# The reference is the bottom end; the sled base plate sits 4 mm above it (measured on the
+# machine, 2026-11-10). Field meanings are in light-lift.toml and docs/guide/light-lift-toml.md.
 
 increments_per_revolution = 8000
 um_per_revolution = 1000
-home_below_sled_base_um = 0
+home_below_sled_base_um = 4000
 
-# Half the ~90 mm travel, so a reference a few cm off cannot reach the top end.
-min_height_um = 0
-max_height_um = 50000
+# 2 mm above the bottom end to 84 mm above the base plate, 2 mm under the top end (~90 mm
+# travel). Only that 2 mm margin protects the top end from a reference homed off the bottom.
+min_height_um = -2000
+max_height_um = 84000
 
 speed_um_s = 5000
 acceleration_um_s2 = 50000

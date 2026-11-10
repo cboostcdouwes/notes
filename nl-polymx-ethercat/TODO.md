@@ -25,7 +25,9 @@
       `PDI_LEN` (estimate ~111-119 B with step 3's 14 B of outputs)
 - [ ] Light lift values still provisional in `config/light-lift.toml` (2026-11-09): measure
       `home_below_sled_base_um` on the machine (0 for now); check the homing speeds (2 mm/s) and method 18
-      once the sensor is mounted. Stroke 0-80 mm of the ~90 mm measured on the bench
+      once the sensor is mounted. Stroke 0-80 mm of the ~90 mm measured on the bench. Known: the base plate is
+      4 mm above the bottom end (machine, 2026-11-10; in `ecomodul/light-lift-test.toml`), so with the sensor
+      `home_below_sled_base_um` = 4000 minus the sensor's switch point above the bottom end
 - [ ] Bench: both axes keep software limits [-40000, 0] from the driver's setup, so manual moves to + targets are
       refused with "internal limit" (statusword bit 11)
 - [ ] Motion test passed on axis 1 (bench, 2026-11-09, with the deadlock fix) and on axis 2 (after dropping the

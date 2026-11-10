@@ -125,10 +125,11 @@ Until the sensor is mounted, the lights can home with method 34 (the actual posi
 no movement), as the bench program does. Not for the rig in use.
 
 **`ecomodul/light-lift-test.toml` in this notes folder** (user, 2026-11-09: not committed to the repo): a
-separate file, selected with `--light-lift-config` and its full path, so the shipped `light-lift.toml` keeps
-its TODOs and refuses. Values (user, 2026-11-09): method 34, `home_below_sled_base_um = 0` (heights count from the bottom
-end), `min_height_um = 0`, `max_height_um = 50000` (half the travel), `switch_speed_um_s = 1000` (unused),
-no `zero_speed_um_s`. Not covered by a test. Delete it once the sensor is mounted and the shipped
+separate file, selected with `--light-lift-config` and its full path. Values: method 34, no `zero_speed_um_s`,
+`switch_speed_um_s` unused; `home_below_sled_base_um = 4000`, `min_height_um = -2000`, `max_height_um = 84000`
+(user, 2026-11-10: the base plate is 4 mm above the travel's bottom end, measured on the machine; limits 2 mm
+above the bottom end to 2 mm under the top end). Method 34 integration-tested on the machine (2026-11-10,
+with 0 / 0 / 50000 in the repo file, reverted since). Not covered by a test. Delete it once the sensor is mounted and the shipped
 file is measured. What follows explains the values.
 
 - `config/light-lift.toml`: `method = 34`; delete `zero_speed_um_s` (the driver refuses it for 34);
@@ -140,7 +141,8 @@ file is measured. What follows explains the values.
   spindle by hand: Move is refused before Home and there is no jog).
 - An offset at Home shifts every limit, including the drive's software limits (`0x607D`): a light homed
   20 mm above the bottom overruns the top by 20 mm at `max_height_um`, and with no encoder nothing detects
-  the stall. Keep `max_height_um` well below the travel (e.g. 50 of the ~90 mm) while testing.
+  the stall. The 84 mm limit leaves only 2 mm, so a light homed more than 2 mm off the bottom can hit
+  the top end.
 - Each axis references itself: lights at different heights at Home stay that far apart.
 
 ## Shipped light lift values (user, 2026-11-09)
