@@ -1,0 +1,21 @@
+# FlexCompose template of the service example_driver, which runs as the image its Dockerfile builds, also in the dev
+# box of a machine's integration repo that imports this file (flexcompose_options.imports). Compose builds the image
+# while it is missing; after a change here: docker compose -f compose.generated.yaml build example_driver.
+# docker compose cannot run this file: flexcompose_options is not a Compose key, so Compose rejects it.
+flexcompose_options:
+  targets: [release:build, release]
+
+services:
+  example_driver:
+    flexcompose_options:
+      enable_shared_memory: true
+      enable_logging: true
+    image: cboost-c-nas:5100/example-driver:dev
+    build:
+      context: .
+      args:
+        # Written out: FlexCompose passes image: as BASE_IMAGE otherwise, which here is the service's own image.
+        BASE_IMAGE: cboost-c-nas:5100/cboost-ros2-jazzy:0.3.0
+    restart: always
+    network_mode: host
+    command: ros2 launch example_driver_bringup driver.launch.py

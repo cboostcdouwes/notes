@@ -18,6 +18,21 @@ C/A/P/D/Q codes; `release-options.md`: the four layouts compared; `concept-1/`: 
     its own repo, several service repos per machine and a dev container per service. A working example is in
     `tmp/machine-starter-services/` (its README lists what it changes in the plan: A-2, step 2, step 1's
     `BASE_IMAGE`, and the open points). Not reviewed; decide before step 0, then update the log and PLAN.md.
+  - **Prototype (2026-11-10): FlexCompose imports, complete and tested, not reviewed.** A service repo keeps its
+    own `flexcompose.yaml`, release override, Dockerfile and dev box; the integration template only imports
+    (`flexcompose_options.imports: [<folder>]`). An imported workspace service gets its own checkout as `src/` and
+    its own volume; its dependencies are cloned into `deps/` in its checkout. The code is uncommitted in the
+    FlexCompose repo (check `git status`/`git log` there); the example and its test are in
+    `tmp/machine-starter-imports/` (README: how it fits, costs, what is not verified). If the user accepts it:
+    split into steps (the import; imported release overrides; the starters `templates/` and `tests/e2e.sh`;
+    design, README and REQUIREMENTS.md), record the decision in `machine-starter-template.md` (A-2 back in the
+    service repo; PLAN steps 2 and 4 replaced), and rewrite PLAN.md.
+    Limits of the prototype: only build context, bind mounts and env files of an imported service are rebased;
+    an importing template's own workspace service mounts `.`, which holds the imported folders (no warning);
+    top-level keys of imports are merged, so equal volume names are shared; the switch and shared-folder notes
+    ignore imported workspaces; `devbox:host` is refused for imported workspace services; nested imports are
+    refused; no per-developer choice between source and image.
+    `tmp/machine-starter-services/` is the earlier variant without imports: superseded, delete when decided.
   - PLAN.md steps 1-2 and the vault's `CLAUDE.md` still name the Go files; the CLI is Rust since `c88283f`.
 - **Machines may pull** (REQUIREMENTS.md `release-offline`, `release-registry-pull`): the release file sets
   `pull_policy: never`, which fits today: pulling from an online registry is a Won't. Waits for a request for an

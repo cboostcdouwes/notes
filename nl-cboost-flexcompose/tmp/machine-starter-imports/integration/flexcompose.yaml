@@ -1,0 +1,14 @@
+# FlexCompose template of one machine's integration repo (FLEXCOMPOSE_DESIGN.md §13). The machine's services are the
+# repositories of dependencies.repos, checked out next to this file; each brings its own flexcompose.yaml, which
+# this file imports. A service whose template says workspace: true runs from source in a box of its own (its checkout
+# is that box's src/); the others run as the image their repository builds.
+# docker compose cannot run this file: flexcompose_options is not a Compose key, so Compose rejects it.
+#   vcs import --skip-existing --input dependencies.repos .     (once, and after a service was added)
+#   flexcompose generate --target devbox:host-src
+#   docker compose -f compose.generated.yaml up -d              (or Reopen in Container, and pick a service)
+# Release: ./lock.sh, commit lock.repos, git tag -a v1.1.0 -m v1.1.0, ./release.sh
+flexcompose_options:
+  # release:build and release are for release.sh.
+  targets: [devbox:host-src, release:build, release]
+  # The folders of the services: their keys in dependencies.repos.
+  imports: [example_app, example_driver]

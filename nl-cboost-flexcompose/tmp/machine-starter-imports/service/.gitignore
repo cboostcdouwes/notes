@@ -1,0 +1,6 @@
+# The repositories of dependencies.repos, cloned by bootstrap.sh --update.
+/deps/
+# Generated per developer (FLEXCOMPOSE_DESIGN.md §2): never commit these.
+compose.generated.yaml
+compose.release-build.yaml
+compose.release.yaml

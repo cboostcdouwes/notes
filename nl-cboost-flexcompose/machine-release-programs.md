@@ -465,6 +465,7 @@ injection actually removed.
 | A build `FROM` a base whose registry is unreachable works if the base is in the local image store (default `docker` builder); `pull_policy: build` passes FlexCompose to the dev box and `release:build`, the machine's file gets `never` | spikes `spike-nasdown`, `spike-pullbuild2` | 2026-10-27 | high on Linux; a fresh PC without the base still needs the NAS (known gap for N24) |
 | `docker compose config` prints `args` as a map for the map, list and quoted list forms; Compose reads the `.env` next to the compose file from any working folder (also `.devcontainer/`); a CRLF `.env` leaves no `\r` in the value | spikes `spike-argforms`, `spike-envbase` (redone round 9) | 2026-10-27 | high on Linux (the bias check's `sed` concern was wrong) |
 | BuildKit clones a private GitHub build context at a commit SHA with the developer's SSH agent, without `ssh:` in the build or `--ssh` | spike `spike-gitssh` (`buildx build --call=outline`) | 2026-10-27 | high on Linux (buildx; Compose uses it) |
+| On Windows, `ssh: [default]` / `--ssh default` takes the agent from `SSH_AUTH_SOCK`, or else from the Windows OpenSSH agent's pipe `\\.\pipe\openssh-ssh-agent` if that service runs (off by default; Git Bash's own `ssh-agent` socket does not work). BuildKit has done so since 2021 | BuildKit `session/sshforward/sshprovider/agentprovider.go`, `agentprovider_windows.go` (read in the cbt2-test session); not run on Windows | 2026-11-10 | medium (code only); that the git build context uses the same agent path is likely but unchecked |
 | FlexCompose already merges a per-service `build:` from the override, `release:build` adds `target: release`, `ssh`, `BASE_IMAGE` (the service's own template `image:`) to every service with `build:` | `flexcompose-cli/release.go` (`mergesInto`, `addBaseImage`) | 2026-10-26 | high (code) |
 
 ## Round checklist
@@ -561,7 +562,11 @@ A program's service has `image:`, `pull_policy: build` and `build:` from its git
 **Known gaps:**
 - `release-same-definition` partly: a base bump in the template without the override goes unnoticed; the release
   compiles against other libraries than the dev box tested. Accepted by the user (round 10).
-- N14: the git SSH build context and the starter's `release.sh` are untested on Windows/Docker Desktop.
+- N14: the git SSH build context and the starter's `release.sh` are untested on Windows/Docker Desktop. BuildKit's
+  code supports the Windows OpenSSH agent (Sources, 2026-11-10), so the likely setup is: start the `ssh-agent`
+  service (`Set-Service ssh-agent -StartupType Automatic; Start-Service ssh-agent; ssh-add`) and leave
+  `SSH_AUTH_SOCK` unset. Still to test on a Windows PC: a build with `ssh: [default]`, a git build context, and
+  `release.sh` (bash).
 - N24: a fresh PC needs the NAS once for the base image.
 - `pull_policy: build` fetches the program's git context on every dev box `up` (accepted, round 9).
 

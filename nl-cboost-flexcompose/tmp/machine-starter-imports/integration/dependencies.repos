@@ -1,0 +1,14 @@
+# The machine's services, in the vcstool format: the top-level file for cdr (nl-cboost-ros-tools, deps-resolve). A
+# service's key is its folder here, which flexcompose.yaml imports. Each service's own dependencies.repos brings in
+# what it needs: in its dev box into its own deps/, and for a release lock.sh resolves all of it at once. Only this
+# file may settle a conflict between two pins (override: true). A customer branch pins its own versions here.
+# After a change: vcs import --skip-existing --input dependencies.repos . and ./lock.sh before the next release.
+repositories:
+  example_app:
+    type: git
+    url: git@github.com:Cboostbv/example_app.git
+    version: main
+  example_driver:
+    type: git
+    url: git@github.com:Cboostbv/example_driver.git
+    version: main

@@ -1,0 +1,12 @@
+# What this machine changes in its services' releases, in plain Compose (FLEXCOMPOSE_DESIGN.md §13): FlexCompose
+# merges it last, over each service's own flexcompose.release.yaml. release.sh generates the release in a checkout
+# of lock.repos, so . is the locked tree: every service builds its packages from it, not from its own resolution.
+services:
+  example_app:
+    build:
+      additional_contexts:
+        workspace: .
+  example_driver:
+    build:
+      additional_contexts:
+        workspace: .

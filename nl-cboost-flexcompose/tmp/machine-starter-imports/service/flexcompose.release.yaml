@@ -1,0 +1,10 @@
+# How this service's release differs from its dev box, in plain Compose (FLEXCOMPOSE_DESIGN.md §13). A machine's
+# integration repo takes it in with the template, and may change it in its own flexcompose.release.yaml.
+# RELEASE_VERSION is the release's version: a machine's release.sh sets it from the git tag.
+services:
+  example_app:
+    image: "cboost-c-nas:5100/example-app:${RELEASE_VERSION:?is set by release.sh from the git tag, and on the machine by the bundle's .env}"
+    build:
+      # This repo's Dockerfile. Built here, it resolves dependencies.repos itself; a machine passes its locked tree.
+      context: .
+    command: ros2 launch example_app_bringup app.launch.py

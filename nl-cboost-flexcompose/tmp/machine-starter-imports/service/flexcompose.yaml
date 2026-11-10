@@ -1,0 +1,22 @@
+# FlexCompose template of the service example_app: its dev box, and what a release runs. It works in two places:
+# - in this repo alone:      flexcompose generate --target devbox:host-src, then Reopen in Container;
+# - in a machine's integration repo, which imports this file (flexcompose_options.imports) next to its other services.
+# Either way this repo is the box's src/, and the repositories of dependencies.repos are cloned into deps/ in it:
+#   (in the box) bash src/bootstrap.sh --update
+# docker compose cannot run this file: flexcompose_options is not a Compose key, so Compose rejects it.
+flexcompose_options:
+  targets: [devbox:host-src, release:build, release]
+
+services:
+  example_app:
+    flexcompose_options:
+      # In a dev box this service runs from source: the box is its colcon workspace.
+      workspace: true
+      # A release gets these features too.
+      enable_shared_memory: true
+      enable_logging: true
+    # The dev box's image, and the BASE_IMAGE a release builds the Dockerfile on.
+    image: cboost-c-nas:5100/cboost-ros2-jazzy:0.3.0
+    restart: always
+    network_mode: host
+    command: dev

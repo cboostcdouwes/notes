@@ -1,0 +1,5 @@
+# How this service's release differs from its dev image, in plain Compose (FLEXCOMPOSE_DESIGN.md §13). A machine's
+# integration repo takes it in with the template. RELEASE_VERSION is the release's version.
+services:
+  example_driver:
+    image: "cboost-c-nas:5100/example-driver:${RELEASE_VERSION:?is set by release.sh from the git tag, and on the machine by the bundle's .env}"

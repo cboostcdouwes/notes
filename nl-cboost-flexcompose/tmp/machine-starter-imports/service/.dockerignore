@@ -1,0 +1,7 @@
+# Not part of the service: git's data (it differs per clone, so builds would miss the cache), the dev box's clones
+# of its dependencies (a build gets them as the context named workspace) and colcon's outputs.
+.git
+deps
+build
+install
+log
