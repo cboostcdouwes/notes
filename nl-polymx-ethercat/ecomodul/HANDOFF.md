@@ -294,7 +294,9 @@ Sources: manual `~/Cboost/ethercat_testing/Handbuch Objektverzeichnis_EN (1).pdf
    back-drivable). Motors have no encoder and home on torque. `stop` uses Quick Stop with 0x605A = 5 (power stays
    on), because every Halt option (0x605D) switches the power stage off. Next: config source and gRPC exposure,
    built the same way as the sled (user, 2026-11-05, no `research:design` run).
-4. Fault codes in `ecomodul.toml` (`[[fault]]` rows from manual §5.24.3) and drive faults on the fault channel.
+4. Fault codes in `ecomodul.toml` (`[[fault]]` rows from manual §5.24.3) and drive faults on the fault channel:
+   written 2026-11-10, one row per DS402 code (0x603F, cyclic), see `TODO.md`. The exact display code from 0x2600
+   over SDO is dropped (user, 2026-11-10): no mechanism reads SDOs off the cycle, and building one is not worth it.
 5. Topology check by vendor/product code, not name only: the 2/4/8-axis ECOMODULs presumably share one name. Low
    urgency while `init` checks the axis count. Outside the ECOMODUL steps.
 6. Check the rig PC's NIC for the same coalescing. On this PC it's fixed: the user added

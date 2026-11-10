@@ -57,7 +57,13 @@
       `config/light-lift.toml`
 - [ ] At merge/release: bump `server/proto/API_VERSION` for the new `LightLift` service (`lightlift.proto`). Left to the
       release on purpose (user, 2026-11-09), so no two branches each call their API 0.0.6
-- [ ] Fault codes in `ecomodul.toml` (manual §5.24.3) and drive faults on the fault channel
+- [ ] Fault codes in `ecomodul.toml` (manual §5.24.3) and drive faults on the fault channel. Option C chosen
+      (user, 2026-11-10): 0x603F cyclic, one profile row per DS402 code; the display code (A00 ... E25) read
+      from 0x2600 over SDO only while an axis is faulted (the front panel shows no code); D06/D07 `inoperable`
+      like the rest. Step 1 written (2026-11-10): rows, 0x603F/0x683F in the TxPDO (13 B per axis), per-axis
+      DriveFault records. Untested on hardware: does the module accept 0x603F in its TxPDO (init panics if
+      not), and does the PDI stay within 128 B. Step 2 (the 0x2600 display-code read) dropped (user,
+      2026-11-10): it needs a new mechanism, a mailbox task off the cycle, so the record names the code family only
 - [ ] Topology check by vendor/product code, not name only (the 2/4/8-axis ECOMODULs presumably share a name).
       Low urgency while the driver checks the axis count.
 
