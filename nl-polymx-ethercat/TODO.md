@@ -11,8 +11,15 @@
 - [ ] Answer the six open questions in `generic-api-proposals.md` (rule language, transport, "Applied", commanding
       clients, open/closed capabilities, runtime mailbox access); confirm or loosen the R9 wording
 - [ ] Review the split architecture proposal (realtime part, port, gRPC part over any `AsyncRead + AsyncWrite`;
-      Claude doc, 2026-11-10: https://claude.ai/artifact/3m9uzE7XYWmtnhfNRaKVYF) and answer its open questions 1-3
-      (what the split is for / one or two processes, which sockets, stop the server when the front end fails)
+      Claude doc, 2026-11-10: https://claude.ai/artifact/3m9uzE7XYWmtnhfNRaKVYF; the vault copy is newer since
+      2026-11-11) and answer its open questions 1-2 (which sockets, stop the server when the front end fails).
+      Answered 2026-11-11: the split is for timing isolation, testing, other front ends and separation of concerns
+- [ ] Decide on the four safety gaps from the review of the split proposal (2026-11-11): group write for
+      interlocked outputs, watchdog reaction checked per device at startup, a defined safe-stop action, active
+      faults in `State`; plus the outcome of a command a rule overrides. Their tests are listed in the proposal's
+      *Planned tests*; the design text doesn't contain the fixes yet
+- [ ] ECOMODUL runs with `0x6007 = 0`: check on the rig what its outputs do when the server is killed. Applies to
+      today's server too, so not tied to the redesign
 
 ## JAT ECOMODUL axis (`ecomodul/HANDOFF.md`)
 
