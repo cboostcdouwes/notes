@@ -8,6 +8,11 @@
 - [ ] Answer the open questions (PolyMX guard list, latch/reset, panic policy, control model, session stream, names,
       fault history scale)
 - [ ] P1: move into `generic/` and `polymx/` with no behavior change
+- [ ] Answer the six open questions in `generic-api-proposals.md` (rule language, transport, "Applied", commanding
+      clients, open/closed capabilities, runtime mailbox access); confirm or loosen the R9 wording
+- [ ] Review the split architecture proposal (realtime part, port, gRPC part over any `AsyncRead + AsyncWrite`;
+      Claude doc, 2026-11-10: https://claude.ai/artifact/3m9uzE7XYWmtnhfNRaKVYF) and answer its open questions 1-3
+      (what the split is for / one or two processes, which sockets, stop the server when the front end fails)
 
 ## JAT ECOMODUL axis (`ecomodul/HANDOFF.md`)
 

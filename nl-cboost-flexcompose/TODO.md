@@ -2,6 +2,14 @@
 
 Most important first. `§n` = FLEXCOMPOSE_DESIGN.md section.
 
+## Next: service repos with their own template, imported by the machine
+
+**Implement `tmp/machine-starter-imports/PLAN.md`** (written 2026-11-10, to be implemented 2026-11-11). Start with
+its *Status* and *Before starting* sections. Steps, one commit each, each with a test: 1 the base image with `cdr`;
+2 FlexCompose imports (the code is uncommitted in the working tree; add the docs); 3 the service starter; 4 the
+integration starter and the rewritten `tests/e2e.sh`; 5 the notes; 6 PolyMX. What it builds and why:
+`tmp/machine-starter-imports/README.md`. The items under "Machine starter with `cdr`" below are its history.
+
 ## Release targets: open points
 
 Release targets, the integration starter and `tests/e2e.sh` are done (design §13). The prototype's documents are in

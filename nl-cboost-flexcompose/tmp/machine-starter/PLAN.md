@@ -1,5 +1,9 @@
 # Plan: machine starter with cdr
 
+**Replaced on 2026-11-10 by `../machine-starter-imports/PLAN.md`** (the recipe and the FlexCompose settings in each
+service's repo, imported by the integration repo). Kept for its decisions on the lock, the release, tags and the
+explicit sync, which the new plan keeps; its steps 1, 2 and 4 no longer apply.
+
 From the decision in `../../machine-starter-template.md` (*Decision*), which builds on `../../machine-repo-layout.md`
 (A-1..A-5, A-2 changed for colcon services) and `../../machine-release-programs.md` (F2). The finished starter is in
 `integration/` next to this file: the target state of `templates/integration/`.
