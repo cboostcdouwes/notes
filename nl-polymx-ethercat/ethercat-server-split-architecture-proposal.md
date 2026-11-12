@@ -45,13 +45,14 @@ Only the rows marked *verified* are settled. The rest are taken from the request
 | C1 | Servo motion and distance sensors can be simulated | Could | Priority confirmed by the user (2026-11-11) | The iX7NH, ECOMODUL and EL6224 simulated devices come later; the `SimDevice` contract must allow them |
 | R1 | Fixed period per machine; missed periods are visible | Should | Proposed | Overruns are counted in the published state |
 | Q4 | A machine keeps one period. If it is too slow for a device, the period is adjusted | Requested | From the user (2026-11-11) | One `period` in `Description`; no second cycle rate or bus group |
-| Q5 | Only one front end is attached at a time | Requested | From the user (2026-11-11) | `Port` has one owner; command ids and arbitration stay in the front end |
+| Q5 | Only one front end is attached at a time | Requested | From the user (2026-11-11) | `Port` has one owner; command ids and client identity stay in the front end |
 | Q6 | SDO access at runtime has a write path | Requested | From the user (2026-11-11), in reply to the recovery snag | The mailbox channel writes as well as reads; see *Mailbox channel* |
+| Q7 | Several clients may command at the same time. What they may do is limited by the protection rules, not by a single-commander rule | Requested | From the user (2026-11-12); replaces the earlier assumption of one commanding client | No arbitration in the gRPC part. The ledger keys command ids per client |
+| Q8 | A client can apply a client-held guard: a protection rule that acts from then until that client releases it. Applying succeeds only when the guard's apply condition is already met. The gRPC part enforces that only the holder releases | Requested | From the user (2026-11-12). Example given: the flipper stays put while the robot approaches. The server can't see the robot | *Client-held guards*; rules can refuse a command before it reaches a driver |
 | R6 | A command never takes effect twice; an unknown outcome is reported as unknown | Should | Proposed | Command ids and the ledger in the gRPC part |
 | R7 | Every value carries its age; absent data is never shown as a value | Should | Proposed | Per-device freshness in the state |
 | R8 | A client built against an incompatible version can't change outputs | Should | Proposed | The handshake in the gRPC part |
 | A1 | The two parts run in one process | Assumption | Mine; fits Q1, which doesn't require crash isolation. See *Alternatives* | Port is in-memory. Only owned, plain data crosses it |
-| A2 | One client commands at a time; any number read | Assumption | Open question 4 in the notes | Arbitration lives in the gRPC part |
 | Q3 | Linux in deployment; the server also runs on Windows for testing | Requested | From the user (2026-11-11) | The port uses nothing Linux-only. Realtime thread setup and Unix sockets are Linux-only extras |
 
 ## Architecture
@@ -141,7 +142,7 @@ Every period the cycle thread runs the order all six earlier designs converged o
 
 1. **Exchange** process data with the ring.
 2. **Decode** the inputs into driver state. A failed exchange marks the affected devices as not fresh.
-3. **Apply commands**: pop at most a fixed number from the port and hand each to its driver. A command is popped only when an event slot is free for its outcome.
+3. **Apply commands**: pop at most a fixed number from the port. Each command is first put to the rules (`admit`). A refused command gets `Rejected` naming the rule and never reaches a driver. An admitted command is handed to its driver. A command is popped only when an event slot is free for its outcome.
 4. **Run the protection rules.** They see the decoded inputs and can force outputs or stop axes. They run after the commands, so a rule has the last word, and they run when the exchange failed too.
 5. **Encode** the outputs for the next exchange.
 6. **Publish** the state and this period's events to the port.
@@ -350,7 +351,7 @@ Every operation on the cycle thread's end is wait-free and allocation-free. That
 
 ### What the port leaves out
 
-Client identity, protocol versions, command de-duplication and who may command are communication concerns. They live in the gRPC part.
+Client identity, protocol versions, command de-duplication, who may command and which client holds a client-held guard are communication concerns. They live in the gRPC part.
 
 ### Mailbox channel
 
@@ -405,7 +406,8 @@ Recommended default for deployment: a Unix socket on a path both processes can r
 | --- | --- | --- |
 | Pump | One thread that calls `updates.wait()`. Republishes the state to a tokio watch channel, routes each outcome to the handler waiting for it, forwards conditions | `updates` |
 | Gate | `Hello` compares the client's protocol version and machine fingerprint. Only a compatible client may command. Reads stay open to all (decision of 2026-11-03) | `description` |
-| Ledger | Remembers each client command id and its outcome for this boot id. A repeated id gets the recorded outcome and isn't submitted again | `commands`, outcomes |
+| Ledger | Remembers each command id, per client, and its outcome for this boot id. A repeated id gets the recorded outcome and isn't submitted again | `commands`, outcomes |
+| Holders | Remembers which client holds each client-held guard. Refuses a release from any other client before it reaches the port (see *Client-held guards*) | `commands`, outcomes |
 | Services | Translate protobuf to and from port types. Resolve names to target ids | all |
 
 A command call runs gate, ledger, name lookup, `submit`, then waits for the outcome event. Its results map to the client as follows.
@@ -420,6 +422,92 @@ A command call runs gate, ledger, name lookup, `submit`, then waits for the outc
 A read is answered from the latest state. Its age is the time since `State::at` plus the periods since `fresh_at`. A reading with `fresh_at = None` is sent as absent, never as a value (R7).
 
 The service list itself (`Machine`, `Signal`, `Axis`, `Distance`, `Telemetry`, and `Diagnostics` on the mailbox channel) is the one in `layered-refactor.md` without `Session`, which GA1 removes. This proposal doesn't change it.
+
+## Client-held guards
+
+Status: proposed (2026-11-12), from Q7 and Q8. It has not been through a design run.
+
+A client-held guard (below: held guard) is a protection rule that does nothing until a client applies it, and then acts until that client releases it. The rule can be any protection rule: it is not limited to keeping something still. Example: the QC application applies a rule that keeps the flipper down while the robot approaches it. The server can't see the robot, so no rule can derive this from an input.
+
+The machine's rules declare each held guard:
+
+| Part of a held guard | Example |
+| --- | --- |
+| Name. It is a target of kind *held guard* in `Description`, written like a digital output | `FlipperDownGuard` |
+| Apply condition: what must be true for the guard to be applied | `FlipperDown` commanded on, `FlipperUp` commanded off, `FlipperAtDown` true and fresh |
+| What the rule does while applied: refuse commands in `admit`, force outputs or stop axes in step 4 | Refuses every command to `FlipperUp` and `FlipperDown` |
+
+### Behaviour
+
+- **Apply:** a client writes `true` to the held guard. In step 3 the rule checks its apply condition. If it is met, the latch is set and the outcome is `Applied`. If not, the outcome is `Rejected`, nothing changes, and the client asks again later. There is no pending state.
+- **While applied:** the rule acts like any other protection rule, on every client including the holder. A rejection names the guard.
+- **Release:** the holder writes `false` and the latch is cleared. For a rule that only refuses commands, no output changes at release: it forces nothing, and no refused command reached a driver.
+- **Apply on an applied guard:** `Rejected`, whoever asks.
+
+`Applied` is the all-clear. The condition check and the latch happen in the same step on the cycle thread, where commands are handled one at a time, so no command can come between them.
+
+```mermaid
+sequenceDiagram
+  participant QC as QC application
+  participant Panel as Debug panel
+  participant G as gRPC part
+  participant C as Cycle thread with the rule
+
+  Note over C: Flipper is mid-stroke
+  QC->>G: write FlipperDownGuard = true
+  G->>C: submit
+  C-->>G: Rejected, apply condition not met
+  G-->>QC: FAILED_PRECONDITION
+
+  Note over C: Flipper is down, commanded down
+  QC->>G: write FlipperDownGuard = true
+  G->>C: submit
+  Note over C: Step 3: condition met, latch set
+  C-->>G: Applied
+  Note over G: Holder of FlipperDownGuard is QC
+  G-->>QC: OK, the all-clear
+
+  Panel->>G: write FlipperUp = true
+  G->>C: submit
+  Note over C: Step 3: admit refuses, the driver is not called
+  C-->>G: Rejected by FlipperDownGuard
+  G-->>Panel: FAILED_PRECONDITION naming the guard
+
+  Panel->>G: write FlipperDownGuard = false
+  Note over G: Panel is not the holder, nothing is submitted
+  G-->>Panel: PERMISSION_DENIED
+
+  QC->>G: write FlipperDownGuard = false
+  G->>C: submit
+  Note over C: Step 3: latch cleared, no output changes
+  C-->>G: Applied
+  Note over G: FlipperDownGuard has no holder
+  G-->>QC: OK
+
+  Panel->>G: write FlipperUp = true
+  G->>C: submit
+  C-->>G: Applied
+  G-->>Panel: OK
+```
+
+The flipper's apply condition names commanded values as well as inputs. An input lags its output by several periods: after a command to raise the flipper, `FlipperAtDown` stays true until the cylinder has left the switch. A check on inputs alone would apply the guard on a flipper that is about to move.
+
+### Who does what
+
+| Part | Job |
+| --- | --- |
+| Realtime part (the rule) | The latch, the state check, refusing commands. It knows no client |
+| gRPC part (holders) | Records the client whose apply came back `Applied`. Refuses a release from any other client with `PERMISSION_DENIED`, without submitting it |
+
+A client names itself in `Hello` with an id it keeps across reconnects, so a holder that lost its connection can still release (proposed; open question 12). When two clients apply the same held guard at once, the cycle thread latches for the first and rejects the second; the gRPC part learns the holder from the outcomes.
+
+### Limits
+
+- **Identity is cooperative, not access control.** A client that presents another client's id can release its guard.
+- **A restart drops every held guard.** The latch and the holder record are in memory. A client treats a new boot id as every held guard lost (open question 10).
+- **A held guard whose holder never returns stays latched** (GA1). There is no operator release yet (open question 11).
+- **A held guard acts on commands and outputs only.** It doesn't stop motion from another cause, such as lost air pressure, and it is not a personnel safety function (N1).
+- **Another rule that forces an output the held guard protects** is not ordered against it yet (open question 13).
 
 ## Crates
 
@@ -461,7 +549,7 @@ A failure on one side of the port never stops the other side's work; it shows up
 
 | Failure | Realtime part | gRPC part and client |
 | --- | --- | --- |
-| Client disconnects or goes quiet | Unaffected. Outputs keep their last commanded value (GA1) | Streams end. A command already queued still takes effect; its outcome stays in the ledger |
+| Client disconnects or goes quiet | Unaffected. Outputs keep their last commanded value and client-held guards stay applied (GA1) | Streams end. A command already queued still takes effect; its outcome stays in the ledger |
 | gRPC part stalls or its handlers panic | Keeps cycling. Rules keep running. State is overwritten, conditions are dropped and counted. Once every event slot is reserved for an outcome, no further command is popped | Calls whose deadline passed have returned outcome unknown. On recovery the pump drains the outcomes, none of which was lost, and the ledger records them |
 | Listener fails, `serve` returns an error | The binary stops the cycle thread in order and exits | The process supervisor restarts the server; clients see a new boot id |
 | More commands than the queue holds | Unaffected | `RESOURCE_EXHAUSTED`; the command didn't take effect |
@@ -469,6 +557,7 @@ A failure on one side of the port never stops the other side's work; it shows up
 | Ring doesn't match the description | Stays in PRE-OP. Publishes the full mismatch report | Serves the report. Every command is rejected |
 | Period overrun | Counted in `State::bus` | Visible in status (R1) |
 | Panic on the cycle thread | Process exits. Device watchdogs take the outputs to their safe state | Connection drops; new boot id after restart |
+| Server restarts, for any reason | Every client-held guard is gone with the process | New boot id. A client treats it as every held guard lost |
 
 The third row is a choice: a server nobody can reach is stopped, not left driving outputs. Say so if a machine should keep cycling without its front end.
 
@@ -543,6 +632,19 @@ The proposal doesn't name these one by one. Each row of its tables is a rule, an
 
 **Invariant check, not a behaviour test:** the cycle thread doesn't allocate after startup. The behaviour this protects is a period without latency spikes, which a test can't assert reliably, so the constraint itself is checked.
 
+### Client-held guards
+
+| Test | Runs against |
+| --- | --- |
+| Applying a held guard whose apply condition is met succeeds; from then on a command the guard refuses is rejected naming the guard, whichever client sends it | `SimBus` |
+| Applying a held guard whose apply condition is not met is rejected, and the guard stays inactive | `SimBus` |
+| A held guard applied in the same period as an earlier command that breaks its apply condition is rejected | `SimBus` |
+| Releasing a held guard that only refuses commands changes no output, and a command it refused doesn't take effect afterwards | `SimBus` recording every output image |
+| Of two clients that apply the same held guard, exactly one succeeds | Whole server, `SimBus` |
+| A release from a client that isn't the holder is refused and the guard stays applied | gRPC part, scripted port |
+| A holder that reconnects with the same client id can release its guard | gRPC part, scripted port |
+| A client that disconnects keeps its held guard | Whole server, `SimBus`; GA1 |
+
 ### Covering the safety gaps from the review (2026-11-11)
 
 The review found four gaps and one undefined outcome. Their fixes are not in this proposal's design yet, so these tests describe behaviour that still has to be decided.
@@ -573,6 +675,9 @@ The review found four gaps and one undefined outcome. Their fixes are not in thi
 | **State published as `Arc<Snapshot>` per period** | Simple to share among many readers | One allocation per period on the cycle thread, and a free whenever the last reader lets go late |
 | **An own `Transport` trait** | Tonic and tokio hidden completely | Duplicates `AsyncRead + AsyncWrite`. Every socket type needs an adapter |
 | **Address string or enum in the library** | One line in `main` | Closes the set of transports. Tests need a real socket |
+| **Rules refuse only by overriding the output in step 4** | No `admit` hook in step 3 | The refused command stays in the driver and takes effect when the rule lets go. An axis operation can't be overridden in the output image at all |
+| **A client-held guard kept in the gRPC part only** | No change to the rules | The gRPC part sees the state a period late, so it can't check the apply condition and latch in one step. Another front end would bypass the guard |
+| **A client-held guard that is requested first and granted later** | The client needn't ask again | A pending state and a second signal to wait for. The guard can latch at a moment the client no longer expects it |
 | **Leases and heartbeats in the port** | Fallback when a client vanishes | GA1 rules it out. If it returns, it is a rule in the realtime part fed by a command, not a port feature |
 
 ## Known limits and future snags
@@ -596,18 +701,23 @@ Found in review on 2026-11-11. The first three are settled by Q4, Q5 and Q6.
 
 ## Open questions
 
-Questions 1, 2, 7 and 8 come from this proposal. The rest are open in `generic-api-proposals.md` and shape the port's types.
+Questions 1, 2 and 7 to 13 come from this proposal. The rest are open in `generic-api-proposals.md` and shape the port's types.
 
 Answered: what the split is for (2026-11-11, see Q1).
 
 1. **Which sockets are needed in practice?** Unix and TCP, or also others such as TLS or vsock? If access control by Unix peer credentials matters, the transport bound changes.
 2. **Should the server stop when its front end fails?** This proposal says yes.
 3. **What does "Applied" mean?** This proposal picks: carried by an exchange the devices acknowledged. The alternative is: accepted by the driver.
-4. **One commanding client, or several?** Assumed one (A2). Several would add arbitration to the gRPC part; the port doesn't change.
+4. **One commanding client, or several?** Answered (2026-11-12): several, limited by the protection rules (Q7).
 5. **Open or closed set of capabilities?** Answered (2026-11-11): closed. Open capabilities aren't worth their cost. `Action` and `Value` are fixed enums with one variant per capability.
 6. **Mailbox access at runtime:** today's `Diagnostics` reads need it, so the port has a mailbox channel. Still open: keep or drop the `Diagnostics` service, and whether IO-Link ISDU access is needed.
 7. **How do the Python end-to-end tests reach the `SimHandle`?** They run in another process, so setting an input or injecting a fault needs a path into the server: a test-only service, or scenarios given at startup.
 8. **Names:** `ethercat-port`, `ethercat-realtime`, `ethercat-grpc` are placeholders.
+9. **Who sets the apply condition of a client-held guard?** This proposal picks: the rule fixes it, so a flipper with two rest positions gets two held guards. The alternative is that the client names the condition in its request.
+10. **Client-held guards after a restart:** gone, with the client treating a new boot id as every held guard lost (this proposal), or does the machine start with them applied until a client releases?
+11. **Releasing a client-held guard whose holder never returns:** is an operator release needed, for example from the debug panel?
+12. **What is a client's identity?** This proposal picks an id the client sends in `Hello` and keeps across reconnects.
+13. **Another rule that forces an output a client-held guard protects:** which one wins?
 
 ## Steps
 
@@ -620,6 +730,6 @@ Each step leaves the server working and the checks passing. Steps 4 and 5 are ph
 5. **Command path.** Commands go through the port, one subsystem at a time: digital, analog, axis, sensors. A driver loses its locks when its last direct caller is gone.
 6. **Mailbox channel.** The `Diagnostics` service reads through it; handlers no longer hold the `MainDevice`.
 7. **Crate split.** Once no handler touches driver state or ethercrab, move the code into the three crates so the compiler holds the boundary.
-8. **Protection rules** on the cycle thread (P4).
+8. **Protection rules** on the cycle thread (P4), including `admit` and client-held guards.
 
 Later, when C1 is taken up: a simulated device per axis and sensor model, each replacing that driver's `new_simulated` mode, with rig recordings.

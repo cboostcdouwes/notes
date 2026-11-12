@@ -1,7 +1,0 @@
-# The repositories this service's packages use directly, for cdr (nl-cboost-ros-tools, deps-resolve). Each brings its
-# own dependencies through its own dependencies.repos. A pin is a branch to follow or a full commit hash.
-repositories:
-  example_common:
-    type: git
-    url: git@github.com:Cboostbv/example_common.git
-    version: main

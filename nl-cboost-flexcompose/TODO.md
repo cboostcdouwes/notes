@@ -2,73 +2,48 @@
 
 Most important first. `§n` = FLEXCOMPOSE_DESIGN.md section.
 
-## Next: service repos with their own template, imported by the machine
+## Next: PolyMX on the new starters
 
-**Implement `tmp/machine-starter-imports/PLAN.md`** (written 2026-11-10, to be implemented 2026-11-11). Start with
-its *Status* and *Before starting* sections. Steps, one commit each, each with a test: 1 the base image with `cdr`;
-2 FlexCompose imports (the code is uncommitted in the working tree; add the docs); 3 the service starter; 4 the
-integration starter and the rewritten `tests/e2e.sh`; 5 the notes; 6 PolyMX. What it builds and why:
-`tmp/machine-starter-imports/README.md`. The items under "Machine starter with `cdr`" below are its history.
+**`tmp/machine-starter-imports/PLAN.md` step 6** (other repos, on `feat/flexcompose-integration`, never on
+`main`): the app as a service repo (its temporary pip step in its `Dockerfile` and `bootstrap.sh`; settle its
+`dependencies.repos`, two branches it names no longer exist), inference as an as-image service around
+`Dockerfile.serve`, `nl-polymx-automated-qc` as the integration repo; `./lock.sh`, a test release, a run on the
+machine; the dev box in VS Code on Linux, then Windows. That also tests `ssh: [default]` in an as-image `build:`
+with private repos.
 
-- Done 2026-11-11/12: step 1 (`nl-cboost-docker-ros2` 5d36715, `cboost-ros2-jazzy:0.3.0`: `cdr` from
-  `nl-cboost-ros-tools` pinned by commit `ROS_TOOLS_REF`, `~/.colcon` owned by the user), step 2 (de2c8e5), step 3
-  (49a4d2d: `templates/service/`, the e2e test's first part; 38 checks pass).
-- Step 3 also: the service starter offers `devbox:volume` with manual setup (clone the repo into `~/workspaces/src`
-  in the box, then `bootstrap.sh --update`; user, 2026-11-12). **Step 4 must do the same for the integration
-  starter**, with an e2e check of an imported service on `devbox:volume`.
-- Untested until step 4: `ssh: [default]` in the as-image template's `build:` (in the service starter's README) with
-  private repos in a dev box. The merge keeps the entry once when `release:build` adds it too.
+- Done 2026-11-11/12, steps 1-5: base image `cboost-ros2-jazzy:0.3.0` (`nl-cboost-docker-ros2` 5d36715: `cdr`
+  pinned by commit `ROS_TOOLS_REF`, `~/.colcon` the user's); FlexCompose imports (de2c8e5); `templates/service/`
+  (49a4d2d); `templates/integration/` imports its services and releases from a lock (8ad532a, `feat!`; e2e 47
+  checks). Notes: round 8 in `machine-starter-template.md`, the *Decision* drafts of `machine-repo-layout.md` and
+  `machine-release-programs.md` (F2 deferred), the vault's `CLAUDE.md` (Rust); confirmed by the user, L2 kept over L6, `tmp/machine-starter-services/`
+  deleted (2026-11-12).
 - The ros-tools pin is a commit; a tag in `nl-cboost-ros-tools` (e.g. `v0.1.0`) could replace it in one `ARG` line.
-- Still open: tell the colleague `cdr --verify` is withdrawn; the flaky property test `tests/generate.rs:482`
-  (project names `n`/`y`/`no`/`on` come out quoted; a `test:` commit?).
 
 ## Release targets: open points
 
-Release targets, the integration starter and `tests/e2e.sh` are done (design §13). The prototype's documents are in
-git history: `git show 88758e0:prototypes/release/<file>` (`release-target.md`: constraints, questions and decisions,
-C/A/P/D/Q codes; `release-options.md`: the four layouts compared; `concept-1/`: the polymx reference).
+Release targets and both starters are done (design §13). The prototype's documents are in git history: `git show
+88758e0:prototypes/release/<file>` (`release-target.md`: constraints, questions and decisions, C/A/P/D/Q codes;
+`release-options.md`: the four layouts compared; `concept-1/`: the polymx reference). The machine starter's history:
+`machine-starter-template.md` and `tmp/machine-starter/` (the plan of 2026-11-02, replaced).
 
-- **Machine starter with `cdr`** (supersedes "programs with their own recipe" and "where a machine's services
-  live"): researched and drafted 2026-10-29 (`machine-starter-template.md`, *Decision* Draft); the full starter, the
-  PolyMX integration repo and the plan in `tmp/machine-starter/`. Paused before the review closed. Resume from
-  `tmp/machine-starter/PLAN.md`: close the review, step 0 (Decision sections of the parent logs; tell the colleague
-  `cdr --verify` is withdrawn), step A (`cdr` + vcs2l in the base image), step 1 (FlexCompose `feat!`: `build:` as
-  written).
-  - **Open (2026-11-10): the recipe back in the service repo?** The user wants a service's build instructions in
-    its own repo, several service repos per machine and a dev container per service. A working example is in
-    `tmp/machine-starter-services/` (its README lists what it changes in the plan: A-2, step 2, step 1's
-    `BASE_IMAGE`, and the open points). Not reviewed; decide before step 0, then update the log and PLAN.md.
-  - **Prototype (2026-11-10): FlexCompose imports, complete and tested, not reviewed.** A service repo keeps its
-    own `flexcompose.yaml`, release override, Dockerfile and dev box; the integration template only imports
-    (`flexcompose_options.imports: [<folder>]`). An imported workspace service gets its own checkout as `src/` and
-    its own volume; its dependencies are cloned into `deps/` in its checkout. The code is uncommitted in the
-    FlexCompose repo (check `git status`/`git log` there); the example and its test are in
-    `tmp/machine-starter-imports/` (README: how it fits, costs, what is not verified). If the user accepts it:
-    split into steps (the import; imported release overrides; the starters `templates/` and `tests/e2e.sh`;
-    design, README and REQUIREMENTS.md), record the decision in `machine-starter-template.md` (A-2 back in the
-    service repo; PLAN steps 2 and 4 replaced), and rewrite PLAN.md.
-    Limits of the prototype: only build context, bind mounts and env files of an imported service are rebased;
-    an importing template's own workspace service mounts `.`, which holds the imported folders (no warning);
-    top-level keys of imports are merged, so equal volume names are shared; the switch and shared-folder notes
-    ignore imported workspaces; `devbox:host` is refused for imported workspace services; nested imports are
-    refused; no per-developer choice between source and image.
-    `tmp/machine-starter-services/` is the earlier variant without imports: superseded, delete when decided.
-  - **Parked (user, 2026-11-10): Windows speed and `devbox:volume`**, until the dev box and release process works
-    as a whole. Decided: recommend keeping the checkout in the WSL filesystem with `devbox:host-src` (untested;
-    which GUI/GPU fragments fit a box started from WSL is unknown); for Docker Desktop users who want
-    `devbox:volume`, seed the box's empty `src/` from a read-only mount of the host checkout. An inline
-    `post_start` hook for that was tried (it worked in a spike) and reverted: the user prefers the repo's
-    `bootstrap.sh` to do the clone, with FlexCompose adding only the mount. Since 2026-11-12 the starters offer
-    `devbox:volume` with a manual clone into the empty `src/` (see *Next*); the seeding stays parked.
-  - PLAN.md steps 1-2 and the vault's `CLAUDE.md` still name the Go files; the CLI is Rust since `c88283f`.
+- **Parked (user, 2026-11-10): Windows speed and `devbox:volume`**, until the dev box and release process works as
+  a whole. Decided: recommend keeping the checkout in the WSL filesystem with `devbox:host-src` (untested; which
+  GUI/GPU fragments fit a box started from WSL is unknown); for Docker Desktop users who want `devbox:volume`, seed
+  the box's empty `src/` from a read-only mount of the host checkout. An inline `post_start` hook for that was tried
+  (it worked in a spike) and reverted: the user prefers the repo's `bootstrap.sh` to do the clone, with FlexCompose
+  adding only the mount. Since 2026-11-12 the starters offer `devbox:volume` with a manual clone into the empty
+  `src/`; the seeding stays parked.
+- **Deferred from the plan**: `generate --image <service>` (a per-developer choice between source and image);
+  FlexCompose passing `build:` on as written (F2); a warning when an importing template has a workspace service of
+  its own; keeping copied starter files in sync (a template tool, with the second machine).
 - **Machines may pull** (REQUIREMENTS.md `release-offline`, `release-registry-pull`): the release file sets
   `pull_policy: never`, which fits today: pulling from an online registry is a Won't. Waits for a request for an
   online update process; then update §13, the `release` target and the README. Until then only §13's wording is
   too strict: it says the machine *has* no registry access, where `release-offline` says it *can* run without one.
 - **Polymx Python dependencies**: proposal in `python-dependencies.md` (pip convention now, a private
-  package index later). Waits for the colleague reorganising the branches and dependencies. The machine starter's
-  plan (step 6) has a temporary pip step in PolyMX's integration repo until they are ROS packages (user,
-  2026-10-29).
+  package index later). Waits for the colleague reorganising the branches and dependencies. The plan's step 6
+  puts a temporary pip step in the app's own `Dockerfile` and `bootstrap.sh` until they are ROS packages (user,
+  2026-10-29; the app's repo since 2026-11-10).
 - **Polymx fit** (`release-target.md` D1-D13): the release build stops at rosdep (2026-10-22, base 0.2.0):
   `yaskawa_hse_ros` needs `python3-yaskawa-hse-driver` (no rosdep key; see the Python dependencies item) and
   `nl_cboost_machine_state_manager` lists `ament_python` as a dependency (not a key; it belongs in `<build_type>`).

@@ -1,5 +1,8 @@
 # Where a machine's services are defined, pinned and built
 
+**2026-11-10: A-2 back in the service repo, with FlexCompose imports** (child log `machine-starter-template.md`,
+review round 8); implemented 2026-11-11/12. *Decision* at the end (confirmed 2026-11-12).
+
 **2026-10-29: A-2 reopened in the child log `machine-starter-template.md` (axis D) and changed for colcon services:
 their release recipe is generic and lives in the machine repo (D2g); service repos hold only code and their
 `dependencies.repos`; services with their own recipe (inference) keep it.**
@@ -715,3 +718,31 @@ Checklist (round 6):
   per-service default; per kind yes; second colcon workspace later: A14-default leading.
 
 ## Decision
+**Confirmed by the user (2026-11-12).** Written after the implementation (FlexCompose de2c8e5, 49a4d2d,
+8ad532a; base image 0.3.0); the details and the child decisions are in `machine-starter-template.md` (*Decision*,
+review round 8).
+
+**Choice** (A-1..A-5, as they stand):
+- A-1 (settled 2026-10-28): every repo declares its direct dependencies in `dependencies.repos` (`cdr`'s
+  convention); the integration repo's `dependencies.repos` is the top level, naming the machine's services; a
+  committed `lock.repos` (`lock.sh`) is the release's input. Python dependencies outside ROS packages are pinned in
+  the service's own Dockerfile.
+- A-2 (decided 2026-10-28, changed 2026-10-29 to D2g, back on 2026-11-10): a service's build recipe and its
+  FlexCompose settings live in the service's repo (`templates/service/`); the integration repo imports them
+  (`flexcompose_options.imports`) and passes its locked tree as the build context `workspace`. Not by `build:`
+  from a git context: every service is in the lock and built from its checkout in it.
+- A-3 (agreed 2026-10-28, widened 2026-11-10): any service may run from source (`workspace: true` in its own
+  template); each such service gets its own box, with its checkout as `src/` and its own volume
+  `source_workspace_<service>` (imports), so nesting never arises; the others run as the image their repo builds.
+  The integration repo has no workspace service of its own.
+- A-4 (decided 2026-10-28): customer variants are branches of the integration repo; a customer branch pins its own
+  versions in `dependencies.repos` and tags `v1.2.0+<customer>`, which gives images `1.2.0_<customer>`, so two
+  customers' images never collide.
+- A-5 (decided: F2): not implemented. FlexCompose still passes the template's `image:` as `BASE_IMAGE`; a service
+  that runs as its image writes `BASE_IMAGE` out. See `machine-release-programs.md`.
+
+**Why:** M1 (must) and M6, M7, M8, M11, M13 (should) as scored in the rounds; A-2's return to the service repo on
+`service-owns-setup`, `service-alone` and `services-added-alike` (REQUIREMENTS.md, V2).
+
+**Known gaps:** as in `machine-starter-template.md` (*Known gaps*) and design §12 (*Machines with service repos*).
+M4 (could, defined in one place) is met only per service: a dependency two services share is resolved per box.

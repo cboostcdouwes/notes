@@ -6,15 +6,16 @@ working example is `service/`, `service-as-image/`, `integration/` and `test.sh`
 
 One step is one commit, made by the user. Each step ends with a test that must pass before the next starts.
 
-## Status (2026-11-10)
+## Status (2026-11-12)
 
-- **FlexCompose repo** (`nl-cboost-flexcompose`, branch `dev/release-target`, HEAD `c88283f`): the import prototype
-  is in the working tree, uncommitted: `src/input/template.rs`, `src/input/release.rs`, `src/model/workspace.rs`,
-  `src/output/imports.rs` (new), `src/output/merge.rs`, `src/output/mod.rs`, `src/output/render.rs`,
-  `src/run/generate.rs`, `tests/imports.rs` (new). 106 tests pass, clippy is clean. Nothing else is changed.
-- **Base image repo** (`nl-cboost-docker-ros2`): clean, no change yet.
-- **This example**: runs against a stand-in base (`base/Dockerfile`: 0.2.0 plus `cdr`).
-- **Not decided by the user yet**: nothing blocks the steps. The user has not reviewed the code line by line.
+- Steps 1-4 done and committed: `nl-cboost-docker-ros2` 5d36715 (base `cboost-ros2-jazzy:0.3.0`), FlexCompose
+  de2c8e5 (imports), 49a4d2d (`templates/service/`), 8ad532a (`templates/integration/`, `feat!`). The e2e test
+  (`tests/e2e.sh`) passes 47 checks.
+- Changed on the way (user, 2026-11-12): both starters offer `devbox:volume`, set up by hand; the service starter's
+  `.dockerignore` holds only `.git` and `deps`; W8 (the lock's changes reviewed) is not a requirement; the
+  `integration-repo` has the minimal rewording, `release-traceable` is unchanged.
+- Step 5 (notes) done; the *Decision* sections confirmed by the user (2026-11-12).
+- Next: step 6, PolyMX.
 
 ## Before starting
 
@@ -128,7 +129,7 @@ The code is written. This step adds the docs and is committed as one.
   FlexCompose settings in the service repo; imports; each from-source service's own checkout as `src/` with its
   dependencies in `deps/`; the costs the user accepted). The *Decision* sections of `machine-repo-layout.md` and
   `machine-release-programs.md` (the old plan's step 0).
-- `../machine-starter/PLAN.md`: mark as replaced by this file. Ask before deleting `../machine-starter-services/`.
+- `../machine-starter/PLAN.md`: mark as replaced by this file. `../machine-starter-services/` deleted (user, 2026-11-12).
 - The vault's `CLAUDE.md`: it still describes the Go CLI and the old starter.
 - `TODO.md`.
 

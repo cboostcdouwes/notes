@@ -468,34 +468,61 @@ Checklist (review round 5b, 2026-10-29: axis D decided):
 - Round 3 (2026-10-29): answers: L2 with `cdr --lock` nice-to-have, no CI (L5 won't), `1.3.0_acme` fine; remark → axis I (shared app images): I3b led; after the checks and spike-cachekey, I7 leads (cache + labels, no new names), I3b runner-up.
 - Round 4 (2026-10-29): W9 could, W12 dropped; the user's question gave I8 (app git tag as name: ✗ W6b) and I9 (inference by git tag); chosen: I7, I9. Answers: W1a must, W2 should, W11b could, W10 dropped, W6b won't, tags by convention, no guard.
   Checks: lock in the bundle, revision label, no `pull_policy: build` (offline opens), off-pin warning in bootstrap, I9b and T6 added, preconditions listed.
+- Review round 8 (2026-11-10, implemented 2026-11-11/12): the user wanted a service's build steps and settings in
+  its own repo, a dev box per service without an integration repo, several service repos per machine added alike,
+  and some services only as images in the machine's dev box. A prototype without imports
+  (`tmp/machine-starter-services/`, deleted 2026-11-12) kept one template in the integration repo and shared checkouts; the one with
+  FlexCompose imports (`tmp/machine-starter-imports/`, 18 checks) was implemented. Confirmed by the user (2026-11-12). Requirements `service-owns-setup`,
+  `service-alone`, `services-added-alike` (V2, 2026-11-11); the open, lock and release rows (V3, 2026-11-12; W8
+  withdrawn: the lock's changes need no review). Both starters offer `devbox:volume`, set up by hand (user,
+  2026-11-12).
 
 ## Decision
 Reviewed (2026-11-02, review round 7): *Why* and *Rejected* confirmed by the user (2026-10-29), on the condition that complexity stays in check; the full target state in `tmp/machine-starter/` reviewed.
+**Changed in review round 8 (2026-11-10)**: D2g and I9 replaced by D-imports below; implemented in FlexCompose
+de2c8e5 (imports), 49a4d2d (`templates/service/`), 8ad532a (`templates/integration/`, `feat!`), with base image
+`cboost-ros2-jazzy:0.3.0` (`nl-cboost-docker-ros2` 5d36715: `cdr`). The plan: `tmp/machine-starter-imports/PLAN.md`.
 
-**Choice.** The starter as in `tmp/machine-starter/integration/` (full; generic `example_` names; the plan in
-`tmp/machine-starter/PLAN.md`; the earlier PolyMX-named draft in `tmp/machine-starter-draft/`):
+**Choice.** The starters `templates/service/` and `templates/integration/` in the FlexCompose repo (until round 8:
+`tmp/machine-starter/integration/`, the plan `tmp/machine-starter/PLAN.md`, the PolyMX-named draft in
+`tmp/machine-starter-draft/`):
+- D-imports (round 8, replaces D2g and I9): every service built from one of our repos has a repo of its own with its
+  packages, `dependencies.repos`, `Dockerfile` (stages `resolve` and `workspace` clone its dependencies with `cdr`
+  when built alone; a release passes the locked tree as the context `workspace`), `flexcompose.yaml`,
+  `flexcompose.release.yaml`, `bootstrap.sh` and `.devcontainer/`. The integration repo's `dependencies.repos` names
+  the services, its template only imports their folders (`flexcompose_options.imports`), its override makes each
+  build from the locked tree, and it has a `.devcontainer/<service>/` per service that runs from source. A
+  from-source service's box has its own checkout as `src/`, its dependencies in `src/deps/` and its own volume, in
+  its own repo and in the machine alike; the others run as the image their repo builds. Every service's image is
+  named by the release version (no git-tag names). A service that only runs an outside image is written in the
+  integration repo's template.
 - S9b (review round 2): an open never clones or moves a checkout: `bootstrap.sh` runs rosdep and names missing
   repositories (top-level, or deeper via rosdep) with the hint `bash src/bootstrap.sh --update`, which runs the full
   cdr. A new box needs that command once. No `--missing-only`, no temp-folder resolve, no off-pin warning.
   Stripped in review round 3 to ~15 lines: a one-line "nothing checked out yet" test (no Python), the rosdep
   hint printed when `rosdep install` fails (no grep, no `-r`).
 - L2: `./lock.sh` writes `lock.repos` (commit hashes, a first line with `dependencies.repos`' sha256) in a fresh
-  folder; reviewed, committed, then tagged; `release.sh` builds only from it and refuses a lock written for another
+  folder; committed, then tagged; `release.sh` builds only from it and refuses a lock written for another
   `dependencies.repos`.
-- R2 + D2g (review round 5, A-2 changed for colcon services): `release.sh` checks the lock out on the host; the
-  override builds the machine repo's generic `image/Dockerfile` with that checkout as the named context `workspace`.
-  Service repos hold only code and `dependencies.repos`; services with their own recipe (inference) keep theirs.
+- R2 (with D-imports): `release.sh` checks the lock out on the host, without `.git`, and generates the release in
+  that checkout, so the imported templates and every build context are the locked ones; each service's own
+  Dockerfile gets the checkout as the named context `workspace`. (Until round 8, D2g: one generic
+  `image/Dockerfile` in the integration repo, service repos holding only code.)
 - T4b: customer releases are tagged `v1.3.0+<customer>`; images `1.3.0_<customer>`.
 - I7: the release tag is the only image name; `.git` is removed from the release checkout so equal inputs reuse
   the cached image; the bundle carries `lock.repos`. (Labels dropped in the review, see below.)
-- I9: services with their own recipe are pinned and named by their git tag (`polymx-serve:1.4.0` from `#v1.4.0`),
-  built only while missing (no `pull_policy: build`).
+- (I9, until round 8: services with their own recipe pinned and named by their git tag. Replaced by D-imports:
+  every service is in the lock and named by the release version.) An as-image service's dev image is built while
+  missing (no `pull_policy: build`).
 
 **Why** (each on a requirement the user confirmed):
+- D-imports: `service-owns-setup`, `service-alone`, `services-added-alike` (should, V2, 2026-11-11): a copy per
+  machine drifts from the service; working on a service would need a machine's repo; each service added a different
+  way is a new job.
 - S9b (was S3/S7 with S2b): W15 (should, verified review round 2: an open never acts on its own; predictable), W1b (should, verified round 1: opening must not move a checkout or refuse on WIP; the
   spike showed cdr does both), W2 (should, verified round 4: open offline), W3b (should, verified: a cdr change
   "nice", a hint fine), W1a (must, verified round 4: never lose work). The user chose the explicit sync (S9b) over automatic cloning (S9, S3) in the review.
-- L2: W5 (should, verified: refuse a stale lock), W8 (should, verified: the lock reviewed before the tag), W4b
+- L2: W5 (should, verified: refuse a stale lock), W8 (withdrawn in round 8: no review needed), W4b
   (should, written: rebuild from the same source commits), PC-06 (a shipped project builds from a committed lock).
 - R2: M11 (should, parent: the app's repo knows nothing about machines: the named context keeps the app Dockerfile
   machine-agnostic), W4b; R2 over R1 is a tie-break (no SSH or lock helper inside the build), with W7b unknown.
@@ -510,7 +537,8 @@ Reviewed (2026-11-02, review round 7): *Why* and *Rejected* confirmed by the use
   (from the lock): ~ W3b (only the last lock's dependencies), runner-up interim. S2 (full cdr when a top-level repo is
   missing): ~ W1b.
 - L1 (release.sh re-locks): W4b (a rebuilt tag re-resolves). L2a: W5. L3: W4b. L3b: ~ W7b, tie-break. L4: PC-06.
-  L5 (CI): won't for now (no CI wanted yet). L6 (one command): W8.
+  L5 (CI): won't for now (no CI wanted yet). L6 (one command): was W8; weighed again after round 8 withdrew W8,
+  and L2 kept (user, 2026-11-12): explicit steps, and no tag left behind by a failed build.
 - R1 (git context + lock helper): runner-up; R2 wins on tie-breaks. R2c: fallback if W7b matters. R3: A-2.
 - T1 (`-acme`): the user's choice of T4b. T2/T2b: the user's choice; folder/regex changes. T3, T4: not possible.
   T5: A-4. T6 (customer guard): W6b won't.
@@ -519,12 +547,18 @@ Reviewed (2026-11-02, review round 7): *Why* and *Rejected* confirmed by the use
   the user chose I7. I4: no CI; parent N20b. I5: ~ W9 (`.git` misses the cache). I6/I7b: W9 cross-PC not needed.
   I9b (build by hash): runner-up, comes back if a tag is moved.
 
-**Known gaps.**
-- Every starter file (recipe, `release.sh`, `lock.sh`, `bootstrap.sh`) is copied per machine: a fix is hand-copied
-  (~ M13); a template tool is for later (with the second machine).
+**Known gaps.** (Round 8's are also in design §12, *Machines with service repos*.)
+- Every starter file is copied: the service starter's per service (`Dockerfile`, `bootstrap.sh`, ...), the
+  integration starter's per machine (`release.sh`, `lock.sh`, `bundle/`): a fix is hand-copied (~ M13); a template
+  tool is for later (with the second machine).
 - PolyMX's release needs a temporary pip step (four Python packages, PyPI dependencies unpinned, the EtherCAT git
-  pin outside the lock) in its machine copy until those packages are ROS packages.
-- Inference's rebuild from the same source rests on tags never being moved (convention, user round 4).
+  pin outside the lock) in the app's own `Dockerfile` and `bootstrap.sh` until those packages are ROS packages.
+- Round 8: dev boxes and the release resolve dependencies differently (a service's box its own
+  `dependencies.repos`, the release the machine's lock with its overrides); a dependency two services share is
+  cloned once per box; an as-image service's dev image is not built from the lock; a service runs from source or as
+  an image as its template says (no choice per developer: `generate --image`, deferred); one `.devcontainer/`
+  folder per from-source service in the integration repo; `ssh: [default]` in an as-image `build:` untested with
+  private repos.
 - After switching to a customer branch, a developer who forgets `--update` works on the previous versions unwarned
   (off-pin warning dropped by the user for simplicity).
 - A new box needs `bash src/bootstrap.sh --update` once (S9b's ~ M12).
@@ -536,9 +570,10 @@ Reviewed (2026-11-02, review round 7): *Why* and *Rejected* confirmed by the use
 - Unverified: a failing `postAttachCommand` leaves the container usable; BuildKit git contexts by tag over SSH.
 
 **Preconditions and open child decisions.**
-- cdr and vcs2l in the base image (nl-cboost-docker-ros2) before the starter's dev box works.
-- The sibling's plan step 1 (FlexCompose passes `build:` on as written).
-- The cdr proposal (colleague's answer).
+- Done: `cdr` in the base image (0.3.0, 2026-11-12). `vcs` stays vcstool in the image; the host gets `vcs2l`.
+- Deferred, no longer a precondition: the sibling's plan step 1 (FlexCompose passes `build:` on as written); until
+  then an as-image service writes `BASE_IMAGE` out.
+- The cdr proposal (colleague's answer); tell the colleague `cdr --verify` is withdrawn.
 - Parent's later decision: a second colcon service from source; inference from source in the dev box.
 
 Changes from the review (2026-10-29):

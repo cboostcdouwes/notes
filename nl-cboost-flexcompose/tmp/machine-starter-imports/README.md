@@ -3,7 +3,7 @@
 The prototype of 2026-11-10: a service's repo holds everything about the service (packages, dependencies, Dockerfile,
 FlexCompose template, dev box), and a machine's integration repo imports its services. It needs the FlexCompose
 prototype with `flexcompose_options.imports` (uncommitted in the FlexCompose repo on that date). Not reviewed;
-`../machine-starter/PLAN.md` is unchanged. It replaces `../machine-starter-services/` (the same recipe per service
+`../machine-starter/PLAN.md` is unchanged. It replaced `../machine-starter-services/` (deleted 2026-11-12) (the same recipe per service
 repo, but one template in the integration repo and shared checkouts).
 
 Why (user, 2026-11-10): a service's own build steps and configuration live with the service; a service builds and

@@ -38,7 +38,7 @@ starter) and `polymx/` (the PolyMX integration repo).
 **Next:** step 0, then step A, then step 1.
 
 **Open before step 0 (2026-11-10):** the user asked for the recipe in the service repo, several service repos and a
-dev container per service. `../machine-starter-services/` is a working example of that (not reviewed); its README
+dev container per service. `../machine-starter-services/` (deleted 2026-11-12) was a working example of that (not reviewed); its README
 lists what it would change here (A-2, steps 1, 2, 4 and 6). Nothing below is changed for it yet.
 
 **Open questions (not blocking step 1):**

@@ -528,6 +528,10 @@ Checklist (round 11):
 
 ## Decision
 **Draft (2026-10-28), paused** by the user until `machine-repo-layout.md` settles; the review has not happened.
+**2026-11-12: still not implemented, deferred** (`tmp/machine-starter-imports/PLAN.md`, *Deferred*): the service
+and integration starters were built without it. FlexCompose still adds `target: release`, `ssh: [default]` and
+`BASE_IMAGE` (the template's `image:`) to every `build:`; a service that runs as its image writes `BASE_IMAGE` out,
+the one place where N22's reason shows. Review F2 when that next costs work.
 
 Decision checklist:
 - [x] Stop condition: N25 came from the pushback and the user decided knowing the trade-off; nothing deciding left unverified (N23b's build-stage part superseded by N23c)

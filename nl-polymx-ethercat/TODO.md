@@ -26,6 +26,10 @@
       interlocked outputs, watchdog reaction checked per device at startup, a defined safe-stop action, active
       faults in `State`; plus the outcome of a command a rule overrides. Their tests are listed in the proposal's
       *Planned tests*; the design text doesn't contain the fixes yet
+- [ ] Review the *Client-held guards* section of the split proposal (added 2026-11-12 without a design run; Q7 several
+      commanding clients, Q8 client-held guard) and the `admit` hook it brings back into step 3. Answer its open
+      questions 9-13: who sets the apply condition, held guards after a restart, operator release, client identity, a rule
+      that forces a protected output
 - [ ] ECOMODUL runs with `0x6007 = 0`: check on the rig what its outputs do when the server is killed. Applies to
       today's server too, so not tied to the redesign
 
