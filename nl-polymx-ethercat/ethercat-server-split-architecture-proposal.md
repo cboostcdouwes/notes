@@ -49,6 +49,7 @@ Only the rows marked *verified* are settled. The rest are taken from the request
 | Q6 | SDO access at runtime has a write path | Requested | From the user (2026-11-11), in reply to the recovery snag | The mailbox channel writes as well as reads; see *Mailbox channel* |
 | Q7 | Several clients may command at the same time. What they may do is limited by the protection rules, not by a single-commander rule | Requested | From the user (2026-11-12); replaces the earlier assumption of one commanding client | No arbitration in the gRPC part. The ledger keys command ids per client |
 | Q8 | A client can apply a client-held guard: a protection rule that acts from then until that client releases it. Applying succeeds only when the guard's apply condition is already met. The gRPC part enforces that only the holder releases | Requested | From the user (2026-11-12). Example given: the flipper stays put while the robot approaches. The server can't see the robot | *Client-held guards*; rules can refuse a command before it reaches a driver |
+| Q9 | An IO-Link sensor is a named entry in the machine file that points at its master and port, and is addressed by that name | Requested | From the user (2026-11-12): chosen for now. IO-Link devices as their own entry with several targets are a later expansion | *IO-Link sensors* |
 | R6 | A command never takes effect twice; an unknown outcome is reported as unknown | Should | Proposed | Command ids and the ledger in the gRPC part |
 | R7 | Every value carries its age; absent data is never shown as a value | Should | Proposed | Per-device freshness in the state |
 | R8 | A client built against an incompatible version can't change outputs | Should | Proposed | The handshake in the gRPC part |
@@ -509,6 +510,46 @@ A client names itself in `Hello` with an id it keeps across reconnects, so a hol
 - **A held guard acts on commands and outputs only.** It doesn't stop motion from another cause, such as lost air pressure, and it is not a personnel safety function (N1).
 - **Another rule that forces an output the held guard protects** is not ordered against it yet (open question 13).
 
+## IO-Link sensors
+
+Status: proposed (2026-11-12), from Q9. It has not been through a design run.
+
+Today a sensor is only a count on its master (`sensors = 3` on the EL6224), the master's driver always uses the ILR1040 profile, and a sensor has no name. In this proposal each sensor is a named entry in the machine file that points at its master and port:
+
+```toml
+[[subdevice]]
+index = 7
+model = "EL6224"
+
+[sensor.SledDistance]
+device = 7          # ring position of the IO-Link master
+port = 0
+model = "ILR1040"
+group = "Sled"
+```
+
+### Specification
+
+- **The entries say which ports are populated.** `sensors = 3` goes away. A port without an entry is switched off.
+- **The model is per port**, so one master can carry different sensor models.
+- **Each IO-Link model has a profile and a decoder**, as the ILR1040 has today. The profile supplies the identity, the process data lengths and the unit. The master's driver names no sensor model.
+- **Checked when the machine file is loaded:** the port exists on that master, no port is used twice, the model is known, and the process data of all ports fits the master's image.
+
+### Addressing
+
+- **Clients** read a sensor by its name. It is a read-only target in `Description::targets`, with the unit from the model's profile.
+- **A reading is fresh** only when the master was exchanged and the port reports valid process data. An unplugged sensor reads as absent while its master stays healthy.
+- **Rules** bind the same name at startup, so a misspelt name fails the start.
+- **A wrong or missing sensor** is part of the ring mismatch report, naming the sensor and its port. The master checks the vendor and device id per port, as today.
+- **Parameter access (ISDU)** would be a mailbox request that names the sensor, an index and a subindex (open question 6).
+
+### Later expansion
+
+Noted, not designed.
+
+- **IO-Link devices with more than one value, or with outputs** (hubs, valve islands, sensors with switching outputs). The IO-Link device becomes its own entry, and named targets point at it. The entry above grows into that without breaking: the address of an IO-Link device is already the pair of ring position and port.
+- **Other terminals with devices behind them** (serial RS232 and RS485, a CAN master). What carries over: a named entry with a model behind a ring position, a profile and code per model, and freshness per target that is separate from the master's. What differs per terminal is the address behind the ring position (a port, a station address, a node id) and how data arrives. IO-Link and CAN map fixed-size data into every exchange, so a decoder is enough. A serial terminal passes a byte stream, a few bytes per period, with no identity check. Its device needs a protocol state machine that runs across many periods, and its readings come from polling. No key is generalised for this until a machine has such a device.
+
 ## Crates
 
 Three library crates and one binary per machine. The compiler enforces the split, because neither part can name the other.
@@ -644,6 +685,15 @@ The proposal doesn't name these one by one. Each row of its tables is a rule, an
 | A release from a client that isn't the holder is refused and the guard stays applied | gRPC part, scripted port |
 | A holder that reconnects with the same client id can release its guard | gRPC part, scripted port |
 | A client that disconnects keeps its held guard | Whole server, `SimBus`; GA1 |
+
+### IO-Link sensors
+
+| Test | Runs against |
+| --- | --- |
+| A machine file with a sensor on a port its master doesn't have, two sensors on one port, or an unknown sensor model is refused when loaded, naming the entry | Machine file alone |
+| A sensor is read by its configured name, with the unit of its model | Whole server, `SimBus` (needs the C1 model) |
+| A sensor that is unplugged reads as absent while the other sensors on the same master stay fresh | `SimBus` (needs the C1 model) |
+| A sensor of another model than configured is in the mismatch report, naming the sensor and its port | `SimBus` (needs the C1 model) |
 
 ### Covering the safety gaps from the review (2026-11-11)
 

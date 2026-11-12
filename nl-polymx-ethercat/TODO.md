@@ -30,6 +30,9 @@
       commanding clients, Q8 client-held guard) and the `admit` hook it brings back into step 3. Answer its open
       questions 9-13: who sets the apply condition, held guards after a restart, operator release, client identity, a rule
       that forces a protected output
+- [ ] Review the *IO-Link sensors* section of the split proposal (added 2026-11-12 without a design run; Q9: a named
+      `[sensor.<name>]` entry with master, port and model). Later expansion noted there, not designed: IO-Link
+      devices with several values or outputs, and other terminals with devices behind them (serial, CAN)
 - [ ] ECOMODUL runs with `0x6007 = 0`: check on the rig what its outputs do when the server is killed. Applies to
       today's server too, so not tied to the redesign
 
