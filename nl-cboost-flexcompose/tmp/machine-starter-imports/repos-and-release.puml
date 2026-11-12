@@ -1,0 +1,81 @@
+@startuml repos-and-release
+' How a machine's integration repo, its service repos, the package repos and the images work together, and how they
+' end up in a release. The model of PLAN.md step 4 (imports and a lock), with the example names of the starters.
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName sans-serif
+skinparam ArrowFontSize 11
+skinparam rectangle {
+  BorderColor #555555
+}
+skinparam package {
+  BorderColor #888888
+}
+
+title Repos, images and a machine's release
+
+package "GitHub (private, over SSH)" as gh {
+  rectangle "**Integration repo**, one per machine\n----\ndependencies.repos: the machine's services\nflexcompose.yaml: imports [example_app, example_driver]\nflexcompose.release.yaml: each service builds from the locked tree\nlock.repos: exact commit of every repo (lock.sh writes it)\nlock.sh, release.sh, bundle/, .devcontainer/<service>/" as integ #E8F0FE
+
+  rectangle "**Service repo** example_app\n(runs from source in a dev box)\n----\npackages\ndependencies.repos\nDockerfile: stages resolve, workspace, build, release\nflexcompose.yaml (workspace: true)\nflexcompose.release.yaml: image, build, command\nbootstrap.sh, .devcontainer/" as app #E6F4EA
+
+  rectangle "**Service repo** example_driver\n(runs as its image, also in a dev box)\n----\npackages\ndependencies.repos\nDockerfile\nflexcompose.yaml (build:, no workspace)\nflexcompose.release.yaml" as drv #E6F4EA
+
+  rectangle "**Package repos**\n(shared between services and machines)\n----\npackages\ndependencies.repos: what they use in turn" as pkgs #FEF7E0
+}
+
+database "Registry cboost-c-nas:5100" as reg {
+  rectangle "**Base image**\ncboost-ros2-jazzy:0.3.0\n(ROS 2, cdr, vcs)" as base #F3E8FD
+}
+
+package "Developer PC: ./release.sh on the commit tagged v1.1.0" as pc {
+  rectangle "**Locked tree** (temporary folder)\nvcs import lock.repos, .git removed\nexample_app/, example_driver/, package repos\n+ the integration repo's two templates" as tree
+  rectangle "**flexcompose generate**, in the locked tree\nimports each service's flexcompose.yaml,\nits flexcompose.release.yaml, then the machine's\n→ compose.release-build.yaml, compose.release.yaml" as fc
+  rectangle "**docker compose build**, per service\nits own Dockerfile, BASE_IMAGE = base image\ncontext workspace = the locked tree\n(replaces the stages resolve and workspace)\nstage build: colcon → /opt/app\nstage release: base image + /opt/app" as build
+  rectangle "**Release images**\nexample-app:1.1.0\nexample-driver:1.1.0\n(compiled packages only, no C/C++/Rust source)" as imgs #F3E8FD
+  rectangle "**release-v1.1.0/**\nimages.tar, compose.release.yaml, .env\nlock.repos, start.sh, stop.sh, update.sh\nSHA256SUMS" as bundle #FCE8E6
+
+  tree --> fc
+  fc --> build
+  build --> imgs
+  imgs --> bundle : docker save
+}
+
+package "Machine (offline)" as machine {
+  rectangle "releases/\nrelease-v1.0.0/, release-v1.1.0/\ncurrent → release-v1.1.0" as rels
+  rectangle "**Docker**\ndocker load, up -d, never pulls\nkeeps the images of the newest 3" as eng
+  rels --> eng : update.sh
+}
+
+' How the repos refer to each other.
+integ --> app : dependencies.repos lists it;\nflexcompose.yaml imports it
+integ --> drv : dependencies.repos lists it;\nflexcompose.yaml imports it
+app --> pkgs : dependencies.repos
+drv --> pkgs : dependencies.repos
+pkgs --> pkgs : dependencies.repos
+
+' What a release is made of.
+integ ..> tree : lock.repos: every repo\nat its locked commit
+app ..> tree
+drv ..> tree
+pkgs ..> tree
+base ..> build : FROM
+bundle --> rels : copy (USB, file share)
+
+note right of integ
+  ./lock.sh resolves dependencies.repos with cdr,
+  through every service's and package's own
+  dependencies.repos, in a fresh folder.
+  Only this file settles a conflict between pins.
+  Review the diff, commit lock.repos, tag v1.1.0.
+end note
+
+note bottom of app
+  Alone: its own dev box (src/ = this repo,
+  deps/ = its dependencies) and
+  docker build --ssh default -t <name> .
+  In the machine's dev box: the same box,
+  as one container among the services.
+end note
+
+@enduml

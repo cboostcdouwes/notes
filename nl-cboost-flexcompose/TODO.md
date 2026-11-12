@@ -10,6 +10,18 @@ its *Status* and *Before starting* sections. Steps, one commit each, each with a
 integration starter and the rewritten `tests/e2e.sh`; 5 the notes; 6 PolyMX. What it builds and why:
 `tmp/machine-starter-imports/README.md`. The items under "Machine starter with `cdr`" below are its history.
 
+- Done 2026-11-11/12: step 1 (`nl-cboost-docker-ros2` 5d36715, `cboost-ros2-jazzy:0.3.0`: `cdr` from
+  `nl-cboost-ros-tools` pinned by commit `ROS_TOOLS_REF`, `~/.colcon` owned by the user), step 2 (de2c8e5), step 3
+  (49a4d2d: `templates/service/`, the e2e test's first part; 38 checks pass).
+- Step 3 also: the service starter offers `devbox:volume` with manual setup (clone the repo into `~/workspaces/src`
+  in the box, then `bootstrap.sh --update`; user, 2026-11-12). **Step 4 must do the same for the integration
+  starter**, with an e2e check of an imported service on `devbox:volume`.
+- Untested until step 4: `ssh: [default]` in the as-image template's `build:` (in the service starter's README) with
+  private repos in a dev box. The merge keeps the entry once when `release:build` adds it too.
+- The ros-tools pin is a commit; a tag in `nl-cboost-ros-tools` (e.g. `v0.1.0`) could replace it in one `ARG` line.
+- Still open: tell the colleague `cdr --verify` is withdrawn; the flaky property test `tests/generate.rs:482`
+  (project names `n`/`y`/`no`/`on` come out quoted; a `test:` commit?).
+
 ## Release targets: open points
 
 Release targets, the integration starter and `tests/e2e.sh` are done (design §13). The prototype's documents are in
@@ -46,8 +58,8 @@ C/A/P/D/Q codes; `release-options.md`: the four layouts compared; `concept-1/`: 
     which GUI/GPU fragments fit a box started from WSL is unknown); for Docker Desktop users who want
     `devbox:volume`, seed the box's empty `src/` from a read-only mount of the host checkout. An inline
     `post_start` hook for that was tried (it worked in a spike) and reverted: the user prefers the repo's
-    `bootstrap.sh` to do the clone, with FlexCompose adding only the mount. Today `devbox:volume` with imports
-    generates, but the example doesn't offer the target and `src/` starts empty.
+    `bootstrap.sh` to do the clone, with FlexCompose adding only the mount. Since 2026-11-12 the starters offer
+    `devbox:volume` with a manual clone into the empty `src/` (see *Next*); the seeding stays parked.
   - PLAN.md steps 1-2 and the vault's `CLAUDE.md` still name the Go files; the CLI is Rust since `c88283f`.
 - **Machines may pull** (REQUIREMENTS.md `release-offline`, `release-registry-pull`): the release file sets
   `pull_policy: never`, which fits today: pulling from an online registry is a Won't. Waits for a request for an
