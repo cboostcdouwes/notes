@@ -33,7 +33,7 @@ unverified until confirmed.
 | S3 | The generic server runs without any machine extension (generic binary) | *Inferred:* generic tests and guard-less machines need a runnable server | inferred | should | no |
 | S4 | Guard code can't do I/O, block or allocate unboundedly in the cycle | *Inferred from M2:* a blocking guard delays the cycle for every device | inferred | should | no |
 | A1 | The `0.0.5` contracts carry over unchanged: semver handshake, boot ID, leases and fallback, no command replay, fault lifecycle versus freshness, topology check, `deny_unknown_fields` | They encode measured failures (knowledge docs, stability report) | assumption | assumed must | no |
-| C1 | Servo motion and distance sensors can be simulated | Lets the QC app test end to end without the rig. No confirmed need yet | assumption | could | no |
+| C1 | Servo motion and distance sensors can be simulated | Lets the QC app test end to end without the rig, and tests the driver code against devices that mirror the real ones | user, 2026-11-11 | could | yes, as a could (2026-11-11) |
 | W1 | More than one bus group, runtime-loadable drivers, scripting languages for guards | No machine needs them | assumption | won't | no |
 
 ## Current state

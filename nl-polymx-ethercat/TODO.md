@@ -9,11 +9,19 @@
       fault history scale)
 - [ ] P1: move into `generic/` and `polymx/` with no behavior change
 - [ ] Answer the six open questions in `generic-api-proposals.md` (rule language, transport, "Applied", commanding
-      clients, open/closed capabilities, runtime mailbox access); confirm or loosen the R9 wording
+      clients, runtime mailbox access; capabilities answered 2026-11-11: closed). R9 wording confirmed 2026-11-11
+- [ ] Split proposal: state, decisions and open points of the 2026-11-11 review are in
+      `ecomodul/HANDOFF.md`. Pending there: whether GA1 is reversed (a commanding client that stops polling
+      triggers the safe stop; new clients never read old transitions)
 - [ ] Review the split architecture proposal (realtime part, port, gRPC part over any `AsyncRead + AsyncWrite`;
       Claude doc, 2026-11-10: https://claude.ai/artifact/3m9uzE7XYWmtnhfNRaKVYF; the vault copy is newer since
       2026-11-11) and answer its open questions 1-2 (which sockets, stop the server when the front end fails).
       Answered 2026-11-11: the split is for timing isolation, testing, other front ends and separation of concerns
+- [ ] Review the *SimBus and simulated devices* section of the split proposal (added 2026-11-11 without a design
+      run): the `Bus` and `SimDevice` sketches, rig recordings, and how the Python tests reach the `SimHandle`
+- [ ] Split proposal, *Known limits and future snags* (2026-11-11): decide snag 4 (what the fingerprint covers) and
+      snag 5 (transition log); design the rejoin sequence that uses the mailbox write path (Q6); confirm that
+      client SDO requests stay read-only
 - [ ] Decide on the four safety gaps from the review of the split proposal (2026-11-11): group write for
       interlocked outputs, watchdog reaction checked per device at startup, a defined safe-stop action, active
       faults in `State`; plus the outcome of a command a rule overrides. Their tests are listed in the proposal's

@@ -24,7 +24,7 @@ note holds the comparison and the briefs' requirements.
 | R6 | A command never takes effect twice; when the application can't know whether it took effect, it is told so | proposed |
 | R7 | Every value seen by the application or a rule carries its age; absent data is never presented as a value or as healthy | proposed |
 | R8 | An application built against an incompatible version cannot change outputs | proposed |
-| R9 | The whole stack can be exercised without hardware, using the same device-handling code that runs on the real machine | simulator verified (2026-11-09); the "same code" wording is Claude's |
+| R9 | The whole stack can be exercised without hardware, using the same device-handling code that runs on the real machine | verified: simulator (2026-11-09), same device-handling code (2026-11-11: simulated devices mirror the real ones as closely as possible, to test the driver code) |
 | N1 | No safety-function claim: personnel safety is the wiring (e-stop, STO); rules guard machine and process only | verified (2026-11-09) |
 | N2 | Only one EtherCAT master uses a network interface | proposed |
 
@@ -84,7 +84,7 @@ Present in round 1 and again in round 2, although round 2's brief no longer name
 
 ## Caveats
 
-- **R9's wording decides a lot.** "The same device-handling code" is what rules out ros2_control in E's survey. If
+- **R9's wording decides a lot (confirmed as written, 2026-11-11).** "The same device-handling code" is what rules out ros2_control in E's survey. If
   the simulator Must is looser (e.g. "the application can be tested without hardware"), ros2_control comes back
   into play.
 - **R5's "within one period"** pushes the rules into the same process. That one is verified.
@@ -99,5 +99,6 @@ Present in round 1 and again in round 2, although round 2's brief no longer name
    and `topic echo` on the machine state matter), or msgpack over a Unix socket.
 3. "Applied": accepted by the driver, or confirmed on the wire?
 4. One commanding client, or several?
-5. Open or closed capability set? (Claude's pick: open, for M1.)
+5. Open or closed capability set? (Claude's pick: open, for M1.) **Answered by the user (2026-11-11): closed;
+   open capabilities aren't worth their cost.**
 6. Runtime mailbox access: needed or not?

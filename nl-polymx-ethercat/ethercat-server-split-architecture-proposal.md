@@ -41,8 +41,12 @@ Only the rows marked *verified* are settled. The rest are taken from the request
 | R5 / M2 | Protection rules react within one period and keep acting when the device exchange fails | Must | Verified (2026-11-09) | Rules run in the realtime part, never behind the port |
 | M5 | The application is a separate process that imports a client package | Must | Verified (2026-11-03) | A network protocol is needed at all |
 | GA1 | The server takes no action when a client goes quiet | Won't | Verified (2026-11-09) | No leases or heartbeats in either part |
-| R9 | The stack runs in full without hardware | Must | Simulator verified (2026-11-09); "same device code" wording unverified | Simulation sits below the drivers, inside the realtime part |
+| R9 | The stack runs in full without hardware. The simulated devices mirror the real devices as closely as possible, so the real driver code is what runs under simulation | Must | Verified: simulator (2026-11-09), real driver code under simulation (2026-11-11). Reason: the driver code is to be tested without the rig | Simulation sits below the drivers, inside the realtime part. Drivers reach devices through `Bus`, not through ethercrab types |
+| C1 | Servo motion and distance sensors can be simulated | Could | Priority confirmed by the user (2026-11-11) | The iX7NH, ECOMODUL and EL6224 simulated devices come later; the `SimDevice` contract must allow them |
 | R1 | Fixed period per machine; missed periods are visible | Should | Proposed | Overruns are counted in the published state |
+| Q4 | A machine keeps one period. If it is too slow for a device, the period is adjusted | Requested | From the user (2026-11-11) | One `period` in `Description`; no second cycle rate or bus group |
+| Q5 | Only one front end is attached at a time | Requested | From the user (2026-11-11) | `Port` has one owner; command ids and arbitration stay in the front end |
+| Q6 | SDO access at runtime has a write path | Requested | From the user (2026-11-11), in reply to the recovery snag | The mailbox channel writes as well as reads; see *Mailbox channel* |
 | R6 | A command never takes effect twice; an unknown outcome is reported as unknown | Should | Proposed | Command ids and the ledger in the gRPC part |
 | R7 | Every value carries its age; absent data is never shown as a value | Should | Proposed | Per-device freshness in the state |
 | R8 | A client built against an incompatible version can't change outputs | Should | Proposed | The handshake in the gRPC part |
@@ -52,9 +56,70 @@ Only the rows marked *verified* are settled. The rest are taken from the request
 
 ## Architecture
 
-&#91;embedded content: architecture · two parts and the port between them\]
+```mermaid
+flowchart TB
+  subgraph clients["Clients (separate processes)"]
+    qc["QC application<br/>Python client package"]
+    panel["Debug panel"]
+  end
 
-Commands flow down through one queue; state and events flow up. The six boxes in the realtime part are one period, left to right. Nothing in the gRPC part is called by, or can block, the cycle thread.
+  subgraph process["Machine binary (one process)"]
+    subgraph grpc["gRPC part: ethercat-grpc (tokio runtime)"]
+      services["Services<br/>protobuf to port types,<br/>names to target ids"]
+      gate["Gate<br/>protocol version and fingerprint"]
+      ledger["Ledger<br/>command ids and outcomes"]
+      pump["Pump thread<br/>waits for each period"]
+    end
+
+    subgraph port["Port: ethercat-port (only owned plain data crosses)"]
+      description[("Description<br/>fixed for the process")]
+      commands[["Commands<br/>bounded queue"]]
+      state[["State<br/>latest period"]]
+      events[["Events<br/>outcomes and conditions"]]
+      mailbox[["Mailbox<br/>requests and replies"]]
+    end
+
+    subgraph realtime["Realtime part: ethercat-realtime"]
+      cycle["Cycle thread, every period:<br/>1 Exchange<br/>2 Decode into the drivers<br/>3 Apply commands<br/>4 Protection rules<br/>5 Encode from the drivers<br/>6 Publish"]
+      mbthread["Mailbox thread<br/>SDO read and write,<br/>outside the cycle"]
+      bus{{"Bus trait"}}
+    end
+  end
+
+  subgraph below["One of the two Bus implementations"]
+    ecrab["EthercrabBus"]
+    ring["EtherCAT ring<br/>real devices"]
+    sim["SimBus"]
+    simdev["Simulated devices<br/>one per device model"]
+  end
+
+  qc <-->|"gRPC over TCP or a Unix socket"| services
+  panel <-->|"gRPC"| services
+  services --> gate
+  gate --> ledger
+  ledger -->|"submit"| commands
+  commands -->|"popped in step 3"| cycle
+  services <-->|"state, outcomes, conditions"| pump
+  pump <-->|"every period"| state
+  pump <-->|"in order"| events
+  state <-->|"step 6"| cycle
+  events <-->|"step 6"| cycle
+  gate <-.->|"read"| description
+  services <-->|"diagnostic reads"| mailbox
+  mailbox <--> mbthread
+  cycle <-->|"process data"| bus
+  mbthread <-->|"SDO"| bus
+  bus --- ecrab
+  bus --- sim
+  ecrab <--> ring
+  sim <--> simdev
+
+  %% Edges 6 to 11 (counted from 0) carry data upwards only. They are declared downwards to keep the
+  %% layout straight, and this line removes their lower arrowhead.
+  linkStyle 6,7,8,9,10,11 marker-end:none
+```
+
+Commands flow down through one queue; state and events flow up. The cycle thread's six steps are one period. Nothing in the gRPC part is called by, or can block, the cycle thread. Mailbox requests take a separate path through the mailbox thread and never run on the cycle thread.
 
 ## Realtime part
 
@@ -93,6 +158,100 @@ Ethercrab is async. Its futures stay on an executor private to the cycle thread,
 Thread setup (`SCHED_FIFO`, `mlockall`, a pinned core) is done by `start` from `RealtimeConfig`. It is Linux-only. On Windows the cycle thread runs without it, which is enough for testing and gives no timing guarantee (Q3). Startup work (discovery, the topology check, SDO configuration) runs before the first period. On a ring mismatch the bus stays in PRE-OP, the port still opens, the state carries the mismatch report, and every command is rejected.
 
 A panic on the cycle thread ends the process. The devices' own watchdogs then take the outputs to their safe state.
+
+## SimBus and simulated devices
+
+Status: proposed, written without a design run. The signatures are a sketch; they are settled in step 3.
+
+R9 asks that the real driver code runs under simulation. That needs two things the server lacks today. Drivers take ethercrab's `SubDeviceRef` directly, so nothing else can stand in for the ring. And simulation replaces the driver instead of the device: the `Simulated` driver for terminals, and a `new_simulated` mode inside the iX7NH and ECOMODUL drivers.
+
+### The `Bus` trait
+
+`Bus` is everything the realtime part uses from the ring. Today's drivers and startup code use seven ethercrab calls (`sdo_write`, `sdo_read`, `name`, `identity`, `configured_address`, `inputs_raw`, `outputs_raw_mut`); the trait covers those, the state transitions and the exchange.
+
+```rust
+/// Implemented by EthercrabBus and SimBus. Drivers and the cycle see only this.
+pub trait Bus {
+    /// What is on the ring, in ring order: name, vendor, product, revision.
+    fn discover(&mut self) -> Result<Vec<Identity>, BusError>;
+
+    /// SDO access for startup configuration. Blocking; not called once the cycle runs.
+    fn sdo_read(&mut self, device: Slot, index: u16, sub: u8, into: &mut [u8]) -> Result<usize, SdoError>;
+    fn sdo_write(&mut self, device: Slot, index: u16, sub: u8, data: &[u8]) -> Result<(), SdoError>;
+
+    /// Take the ring to PRE-OP, SAFE-OP or OP. A device can refuse, and the error names it.
+    fn request_state(&mut self, state: AlState) -> Result<(), BusError>;
+
+    /// One process data exchange with the whole ring.
+    fn exchange(&mut self) -> Result<(), ExchangeError>;
+
+    /// A device's process data: the inputs of the last exchange, the outputs for the next.
+    fn image(&mut self, device: Slot) -> Image<'_>;   // { inputs: &[u8], outputs: &mut [u8] }
+
+    /// SDO and register access for the mailbox thread, usable while the cycle runs.
+    fn mailbox(&self) -> Self::Mailbox;
+}
+```
+
+`EthercrabBus` wraps today's ethercrab calls and runs their futures on the cycle thread's private executor. Nothing above `Bus` names an ethercrab type.
+
+### Simulated devices
+
+`SimBus` holds one simulated device per ring position. A simulated device stands for one device model and lives next to that model's driver.
+
+```rust
+pub trait SimDevice {
+    fn identity(&self) -> Identity;
+
+    /// The object dictionary. An object or value the real device refuses is refused here, with the same abort code.
+    fn sdo_read(&mut self, index: u16, sub: u8, into: &mut [u8]) -> Result<usize, SdoError>;
+    fn sdo_write(&mut self, index: u16, sub: u8, data: &[u8]) -> Result<(), SdoError>;
+
+    /// A state request. Refused where the real device refuses, for example on a PDO mapping it doesn't support.
+    fn request_state(&mut self, state: AlState) -> Result<(), AlError>;
+
+    /// One period: take the outputs, advance the device by `period`, produce the inputs, in the real PDO layout.
+    fn exchange(&mut self, outputs: &[u8], inputs: &mut [u8], period: Duration);
+
+    /// One period without an exchange. Runs the device's watchdog, as configured over SDO.
+    fn missed(&mut self, period: Duration);
+}
+```
+
+Rules for a simulated device:
+
+- **It is written from the manual and from what the rig showed, not from the driver.** It calls no driver code. A rig finding that the manual doesn't state (for example the ECOMODUL's sync errors above a 5 ms period) is added with a note of where it was measured.
+- **It refuses what the real device refuses.** An unknown object, a value out of range or a wrong order of state requests fails the same way, so a driver mistake shows up as a failed start.
+- **It has no clock.** Simulated time is the number of exchanges times the period, so tests are deterministic and don't sleep.
+- **A ring position without a simulated device fails `SimBus::new`**, naming the model.
+
+Tests reach the simulation through a handle returned with the bus: `SimBus::new(&machine) -> (SimBus, SimHandle)`. The handle sets what the outside world does to a device (an input level, a measured distance, a load on an axis), injects faults (a lost exchange, a device that drops out, a drive fault, a ring that differs from the description) and reads back every output image that was exchanged.
+
+### Which models exist
+
+| Device model | Simulated device | Priority |
+| --- | --- | --- |
+| EL1008, EL2008 | Input and output image; replaces today's `Simulated` driver | Part of R9: without them no machine runs on `SimBus` |
+| EL4002 | Output image and its startup SDOs | Part of R9 |
+| iX7NH | DS402 state machine, homing, motion profile, drive faults | Could (C1) |
+| ECOMODUL | Same, per axis | Could (C1) |
+| EL6224 with ILR1040 | IO-Link port states and distance readings | Could (C1) |
+
+Until a C1 model exists, its driver keeps its `new_simulated` mode, as today. That driver's bus code is then not exercised by `SimBus`; only its command and state logic is. The Python end-to-end tests for the sled and the light lift keep working on that mode.
+
+### Checking the simulation against the rig
+
+A simulated device is only as right as the knowledge it was written from. If the driver and the simulated device share one misreading of the manual, the tests pass and the rig fails. Recordings close that hole:
+
+- A wrapper around `EthercrabBus` records, on the rig, the startup SDO sequence and every period's input and output bytes for a scenario (enable, home, move, stop, a fault).
+- A replay test feeds the recorded outputs to the simulated device and compares its inputs with the recorded ones, field by field. Which fields must match exactly and which within a tolerance is set per model.
+- Every quirk found on the rig is added as a recording.
+
+### What `SimBus` doesn't cover
+
+- **ethercrab and the NIC.** Simulating at Ethernet-frame level would cover them, but needs the ESC registers, the EEPROM and the CoE mailbox protocol per device.
+- **Bus timing:** jitter, distributed clocks and frame loss, other than the faults injected through the handle.
+- **Real device behaviour beyond the model.** What the devices do when the server dies is checked on the rig (see *Planned tests*).
 
 ## The port
 
@@ -197,7 +356,7 @@ Client identity, protocol versions, command de-duplication and who may command a
 
 Today's `Diagnostics` service already reads device registers and SDOs at runtime: gRPC handlers hold the `MainDevice` and run ethercrab futures on their own runtime (`diagnostic_request.rs`). That can't stay, because the gRPC part must not depend on ethercrab. Dropping the `Diagnostics` service is the alternative.
 
-The mailbox channel carries these reads. A request names a device and what to read; each accepted request gets exactly one reply (the data, an error or a timeout). A mailbox thread in the realtime part serves the requests one at a time, outside the cycle, so a slow device delays other mailbox requests and never a period. It is read-only, as today: there is no SDO download path. The request and reply types are still open; IO-Link ISDU access would use the same channel.
+The mailbox channel carries these reads. A request names a device and what to read; each accepted request gets exactly one reply (the data, an error or a timeout). A mailbox thread in the realtime part serves the requests one at a time, outside the cycle, so a slow device delays other mailbox requests and never a period. It has a write path (Q6). The realtime part uses it to configure a device again after it dropped out and came back, which startup-only SDO access can't do; that rejoin sequence is not designed yet. Client requests stay read-only, as today (assumption: Q6 was given for recovery, not for clients). The request and reply types are still open; IO-Link ISDU access would use the same channel.
 
 ## gRPC part
 
@@ -371,7 +530,16 @@ The proposal doesn't name these one by one. Each row of its tables is a rule, an
 | A missed period is counted in the state | R1 |
 | With a stalled reader the cycle keeps its period | Failure table |
 | `Applied` is reported only after an exchange the devices acknowledged | Open question 3 |
-| A mailbox request to a slow device doesn't delay a period, and no request can write to a device | Mailbox channel |
+| A mailbox request to a slow device doesn't delay a period, and no client request can write to a device | Mailbox channel |
+
+**Simulated devices**
+
+| Test | Rule |
+| --- | --- |
+| A driver that writes an object or value the real device refuses fails to start, and the error names the device and the object | Rules for a simulated device |
+| A machine with a ring position that has no simulated device fails to start on `SimBus`, naming the model | Rules for a simulated device |
+| Two runs of the same scenario produce the same output images | No clock |
+| For every rig recording, the simulated device's inputs match the recorded inputs | Checking the simulation against the rig |
 
 **Invariant check, not a behaviour test:** the cycle thread doesn't allocate after startup. The behaviour this protects is a period without latency spikes, which a test can't assert reliably, so the constraint itself is checked.
 
@@ -407,9 +575,28 @@ The review found four gaps and one undefined outcome. Their fixes are not in thi
 | **Address string or enum in the library** | One line in `main` | Closes the set of transports. Tests need a real socket |
 | **Leases and heartbeats in the port** | Fallback when a client vanishes | GA1 rules it out. If it returns, it is a rule in the realtime part fed by a command, not a port feature |
 
+## Known limits and future snags
+
+Found in review on 2026-11-11. The first three are settled by Q4, Q5 and Q6.
+
+| # | Snag | State |
+| --- | --- | --- |
+| 1 | **One period for the whole machine.** The ECOMODUL runs out of spec at 10 ms (TODO) | Settled (Q4): the period is adjusted |
+| 2 | **Recovery needs SDO writes while the cycle runs.** A device that rejoins must be configured again | Settled (Q6): the mailbox channel gets a write path. The rejoin sequence is still to design |
+| 3 | **Only one front end can hold the port** | Settled (Q5): one front end at a time |
+| 4 | **The fingerprint hashes the whole machine description**, so a calibration change locks out every client | Open. Proposed: hash the interface only (names, kinds, units, direction) |
+| 5 | **Long operations have no completion report.** `Applied` for a home or move means "started"; how it ended is only visible in `State`, which skips periods | Open. Proposed: a numbered transition log in the front end, read forwards only. How it is evicted (by size, or by what clients have read) and whether reading doubles as a liveness signal is under discussion |
+| 6 | **One `Value` per target doesn't fit axes**, which have several values that belong to one period | Settled (2026-11-11): the capability set is closed, so the axis capability gets one `Value` variant that holds all its values of a period |
+| 7 | **No way to see every period.** State is a latest value, so a per-period trace (asked for in the TODO, for the slow braking) needs another channel or a recorder in the realtime part | Noted |
+| 8 | **The ledger grows without bound.** It keeps every command id for the boot. Evicting entries weakens R6 unless old ids are refused | Noted |
+| 9 | **Logging on the cycle thread.** The iX7NH and ECOMODUL drivers contain log calls; in the cycle they break the no-allocation and no-blocking rules unless logging goes through a non-blocking queue | Noted |
+| 10 | **Fixed bus sizes:** 16 devices and a 128-byte process image (`ethercat.rs`). The current ring is estimated at 111-119 bytes | Noted; exists today |
+| 11 | **Closed driver set.** Drivers are variants of one enum, so a machine can't bring a driver from its own repo (M4) | Noted; exists today |
+| 12 | **Mailbox requests are served one at a time**, as today's single diagnostic permit. A device that doesn't answer holds up the others for its timeout (1 s today), including a rejoin. This is a choice, not a bus limit: EtherCAT and ethercrab allow several frames in flight (16 here), and only a single device's mailbox is limited to one transfer at a time. One request in flight per device is possible later if replies carry a request id | Noted |
+
 ## Open questions
 
-The first two come from this proposal. The rest are open in `generic-api-proposals.md` and shape the port's types.
+Questions 1, 2, 7 and 8 come from this proposal. The rest are open in `generic-api-proposals.md` and shape the port's types.
 
 Answered: what the split is for (2026-11-11, see Q1).
 
@@ -417,18 +604,22 @@ Answered: what the split is for (2026-11-11, see Q1).
 2. **Should the server stop when its front end fails?** This proposal says yes.
 3. **What does "Applied" mean?** This proposal picks: carried by an exchange the devices acknowledged. The alternative is: accepted by the driver.
 4. **One commanding client, or several?** Assumed one (A2). Several would add arbitration to the gRPC part; the port doesn't change.
-5. **Open or closed set of capabilities?** Decides the shape of `Action` and `Value`.
+5. **Open or closed set of capabilities?** Answered (2026-11-11): closed. Open capabilities aren't worth their cost. `Action` and `Value` are fixed enums with one variant per capability.
 6. **Mailbox access at runtime:** today's `Diagnostics` reads need it, so the port has a mailbox channel. Still open: keep or drop the `Diagnostics` service, and whether IO-Link ISDU access is needed.
-7. **Names:** `ethercat-port`, `ethercat-realtime`, `ethercat-grpc` are placeholders.
+7. **How do the Python end-to-end tests reach the `SimHandle`?** They run in another process, so setting an input or injecting a fault needs a path into the server: a test-only service, or scenarios given at startup.
+8. **Names:** `ethercat-port`, `ethercat-realtime`, `ethercat-grpc` are placeholders.
 
 ## Steps
 
-Each step leaves the server working and the checks passing. Steps 3 and 4 are phase P3 of `generic-polymx-split.md`, now with a defined interface.
+Each step leaves the server working and the checks passing. Steps 4 and 5 are phase P3 of `generic-polymx-split.md`, now with a defined interface.
 
 1. **Transport.** `grpc_server::run` takes a stream of connections; `main` builds the TCP listener. Small, independent of the rest, and gives in-memory tests at once.
 2. **Port crate.** Types and channels, with the port tests in *Planned tests*: full queue, skipped period, dropped condition, and an outcome that is never dropped.
-3. **Read path.** The cycle thread publishes `State`; the pump feeds the read handlers, one service at a time.
-4. **Command path.** Commands go through the port, one subsystem at a time: digital, analog, axis, sensors. A driver loses its locks when its last direct caller is gone.
-5. **Mailbox channel.** The `Diagnostics` service reads through it; handlers no longer hold the `MainDevice`.
-6. **Crate split.** Once no handler touches driver state or ethercrab, move the code into the three crates so the compiler holds the boundary.
-7. **Protection rules** on the cycle thread (P4).
+3. **Bus and `SimBus`.** Drivers and startup go through `Bus` instead of ethercrab types. `SimBus` with the terminal models replaces the `Simulated` driver. Independent of the port.
+4. **Read path.** The cycle thread publishes `State`; the pump feeds the read handlers, one service at a time.
+5. **Command path.** Commands go through the port, one subsystem at a time: digital, analog, axis, sensors. A driver loses its locks when its last direct caller is gone.
+6. **Mailbox channel.** The `Diagnostics` service reads through it; handlers no longer hold the `MainDevice`.
+7. **Crate split.** Once no handler touches driver state or ethercrab, move the code into the three crates so the compiler holds the boundary.
+8. **Protection rules** on the cycle thread (P4).
+
+Later, when C1 is taken up: a simulated device per axis and sensor model, each replacing that driver's `new_simulated` mode, with rig recordings.
