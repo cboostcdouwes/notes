@@ -1,0 +1,243 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pallet Bottom Scanner</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+@@css@@
+
+<div class="wrap">
+  <header>
+    <h1>Pallet Bottom Scanner</h1>
+    <span class="stamp">GPU ray-traced line-scan and station cameras · simulated, dimensions assumed · 2026-11-13 · <span id="gpu-name">GPU: –</span></span>
+  </header>
+  <div class="row" aria-label="Share settings">
+    <button type="button" class="btn" id="set-copy">Copy settings</button>
+    <button type="button" class="btn" id="set-load">Load settings…</button>
+    <input id="set-code" type="text" spellcheck="false" aria-label="Settings code" hidden style="flex:1 1 260px;min-width:0;font:0.76rem var(--font-data);padding:4px 6px">
+    <button type="button" class="btn" id="set-apply" hidden>Apply</button>
+    <span class="cap-dim" id="set-msg" style="font-size:0.78rem"></span>
+  </div>
+
+  <div class="bar" role="group" aria-label="Scanner settings">
+    <span class="grp">
+      <span class="seg" id="presets" aria-label="Bottom cameras">
+        <button type="button" data-cams="0" aria-pressed="false">0°</button>
+        <button type="button" data-cams="25" aria-pressed="false">+25°</button>
+        <button type="button" data-cams="-25" aria-pressed="false">−25°</button>
+        <button type="button" data-cams="dual" aria-pressed="true">Dual ±25°, belt sides</button>
+      </span>
+      <label class="field" for="tilt">Tilt <input id="tilt" type="range" min="-35" max="35" step="1" value="25"><output id="tilt-out">+25°</output></label>
+      <label class="field" for="side">Side offset <input id="side" type="range" min="0" max="600" step="50" value="400"><output id="side-out">±400 mm</output></label>
+      <label class="field" for="gap">Gap <input id="gap" type="range" min="40" max="350" step="10" value="100"><output id="gap-out">100 mm</output></label>
+    </span>
+    <span class="grp">
+      <label class="field" for="sensor">Sensor <select id="sensor"><option value="1024" selected>1k px</option><option value="2048">2k px</option><option value="4096">4k px</option></select></label>
+      <label class="field" for="fnum">Lens <select id="fnum"><option value="0">pinhole (no depth of field)</option><option value="2.8">f/2.8</option><option value="4" selected>f/4</option><option value="8">f/8</option></select></label>
+      <label class="field" for="opt-fit"><input type="checkbox" id="opt-fit" checked> Fit FOV</label>
+      <label class="field" for="opt-rect"><input type="checkbox" id="opt-rect" checked> Perspective correction</label>
+      <label class="field" for="opt-light"><input type="checkbox" id="opt-light" checked> One light</label>
+      <label class="field" for="exp">Line exposure <input id="exp" type="range" min="1.3" max="3.5" step="0.05" value="2"><output id="exp-out">100 µs</output></label>
+      <label class="field" for="light">LED bar <input id="light" type="range" min="10" max="400" step="10" value="100"><output id="light-out">100%</output></label>
+      <label class="field" for="aexp">Area exposure <input id="aexp" type="range" min="-1" max="1" step="0.05" value="0"><output id="aexp-out">1.0 ms</output></label>
+      <label class="field" for="dirt">Window dirt <input id="dirt" type="range" min="0" max="1" step="0.05" value="0.25"><output id="dirt-out">25%</output></label>
+      <label class="field" for="louvre">Bar louvre <select id="louvre"><option value="0" selected>none (bare diffuser)</option><option value="45">±45° along the bar</option><option value="30">±30° along the bar</option><option value="20">±20° along the bar</option></select></label>
+      <label class="field" for="dust">Air dust <input id="dust" type="range" min="0" max="5" step="0.25" value="0.5"><output id="dust-out">0.5 mg/m³</output></label>
+      <label class="field" for="opt-glare"><input type="checkbox" id="opt-glare" checked> Lens glare</label>
+    </span>
+    <span class="grp">
+      <label class="field" for="belt">Conveyor <input id="belt" type="range" min="0.2" max="1.5" step="0.01" value="0.45"><output id="belt-out">0.45 m/s</output></label>
+      <label class="field" for="section">Middle section <input id="section" type="range" min="1" max="1.5" step="0.05" value="1.1"><output id="section-out">+10% faster</output></label>
+      <label class="field" for="speed">Playback <input id="speed" type="range" min="-3.9" max="0" step="0.05" value="0"><output id="speed-out">1.00×</output></label>
+      <label class="field" for="damage">Damaged <input id="damage" type="range" min="0" max="1" step="0.05" value="0.45"><output id="damage-out">45%</output></label>
+      <label class="field" for="scatter">Scatter <input id="scatter" type="range" min="0" max="2" step="0.1" value="1"><output id="scatter-out">±80 mm, ±5°</output></label>
+      <label class="field" for="opt-transport"><input type="checkbox" id="opt-transport" checked> Slip, jostle, sticking, touching</label>
+      <label class="field" for="opt-unusual"><input type="checkbox" id="opt-unusual" checked> Unusual cases</label>
+      <label class="field" for="opt-station"><input type="checkbox" id="opt-station" checked> Station cameras</label>
+      <button type="button" class="btn" id="pause">Pause</button>
+    </span>
+    <span class="grp" aria-label="Service state">
+      <label class="field" for="months">Since service <input id="months" type="range" min="0" max="12" step="0.5" value="0"><output id="months-out">0 months</output></label>
+      <label class="field" for="f-bar"><input type="checkbox" id="f-bar"> LED bar failed</label>
+      <label class="field" for="f-lamp"><input type="checkbox" id="f-lamp"> One station lamp out</label>
+      <label class="field" for="f-enc"><input type="checkbox" id="f-enc"> Encoder reads 8% short</label>
+      <label class="field" for="f-splinter"><input type="checkbox" id="f-splinter"> Splinter on the first bottom camera's window</label>
+      <label class="field" for="f-fog"><input type="checkbox" id="f-fog"> Fogged bottom windows</label>
+    </span>
+    <span class="grp" aria-label="Conditions">
+      <label class="field" for="driver">Light drivers <select id="driver"><option value="dc" selected>DC, flicker-free</option><option value="pwm">PWM 1 kHz (dimmed)</option><option value="ripple">100 Hz ripple (cheap driver)</option></select></label>
+      <label class="field" for="lightcol">Light colours <select id="lightcol"><option value="matched" selected>all 6500 K</option><option value="mixed">bar 6500 K, lamps 4000 K</option><option value="warm">bar 5000 K, lamps 3000 K</option></select></label>
+      <label class="field" for="daylight">Daylight <select id="daylight"><option value="none" selected>none (closed hall)</option><option value="overcast">overcast</option><option value="clouds">sun and passing clouds</option></select></label>
+      <label class="field" for="vib">Vibration <input id="vib" type="range" min="0" max="1" step="0.05" value="0.1"><output id="vib-out">0.10 mm</output></label>
+      <label class="field" for="shutter">Area shutter <select id="shutter"><option value="global" selected>global</option><option value="rolling">rolling, 20 ms readout</option></select></label>
+      <label class="field" for="f-uncal"><input type="checkbox" id="f-uncal"> Uncalibrated lenses and sensors</label>
+    </span>
+  </div>
+  <div class="types" id="types" aria-label="Pallet types in the feed"></div>
+
+  <div class="bench">
+    <div class="view" id="view">
+      <div class="overlay"><span>travel →</span><span>drag to orbit · scroll to zoom · hover for details</span></div>
+      <div class="now" id="now">Starting…</div>
+      <div class="tip" id="tex-warn" hidden style="left:10px;top:30px;max-width:420px;color:var(--bad)"></div>
+      <div class="tour" id="tour" hidden role="dialog" aria-label="Guided tour">
+        <p id="tour-text"></p>
+        <div class="row"><button type="button" class="btn" id="tour-prev">Back</button><span class="cap-dim" id="tour-step"></span><button type="button" class="btn primary" id="tour-next">Next</button><button type="button" class="btn" id="tour-exit">End tour</button></div>
+      </div>
+      <div class="viewopts">
+        <button type="button" class="btn" id="tour-start">Guided tour</button>
+        <label for="opt-follow"><input type="checkbox" id="opt-follow"> Follow pallet</label>
+        <label for="opt-fans"><input type="checkbox" id="opt-fans" checked> Fields of view</label>
+      </div>
+      <div class="tip" id="tip" hidden></div>
+    </div>
+
+    <section class="panel" aria-label="Instruments">
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" id="tab-live" aria-selected="true" data-tab="live">Live output</button>
+        <button type="button" role="tab" id="tab-vis" aria-selected="false" data-tab="vis">Visibility map</button>
+        <button type="button" role="tab" id="tab-cmp" aria-selected="false" data-tab="cmp">Compare settings</button>
+        <button type="button" role="tab" id="tab-photo" aria-selected="false" data-tab="photo">Photo render</button>
+        <button type="button" role="tab" id="tab-budget" aria-selected="false" data-tab="budget">Timing &amp; data</button>
+        <button type="button" role="tab" id="tab-batch" aria-selected="false" data-tab="batch">Batch</button>
+      </div>
+
+      <div id="pane-live" role="tabpanel" aria-labelledby="tab-live" style="display:grid;gap:10px">
+        <div class="livecams" id="livecams"></div>
+        <dl class="stats">
+          <div><dt>Frame rate</dt><dd id="st-fps">–</dd></div>
+          <div><dt>Belt</dt><dd id="st-speed">–</dd></div>
+          <div><dt>Line rate</dt><dd id="st-rate">–</dd></div>
+          <div><dt>Pixel</dt><dd id="st-res">–</dd></div>
+          <div><dt>Scanned</dt><dd id="st-count">0</dd></div>
+          <div style="grid-column:1/-1"><dt>Gap between the rollers</dt><dd id="st-gap">–</dd></div>
+          <div style="grid-column:1/-1"><dt>Sticking at the gap (model)</dt><dd id="st-stick">–</dd></div>
+          <div style="grid-column:1/-1"><dt>Lamp glare in the bottom view</dt><dd id="st-glare">–</dd></div>
+        </dl>
+        <figure class="fpsfig">
+          <figcaption><strong style="color:var(--fg)">Frame rate, last 60 s</strong><span id="fps-sum">–</span><span>line: average per ¼ s · band: slowest frame · ▲ pallet finished · ◆ analysis or photo run</span></figcaption>
+          <canvas id="fpsgraph" aria-label="Frame rate over the last 60 seconds"></canvas>
+          <div class="tip" id="fpstip" hidden></div>
+        </figure>
+      </div>
+
+      <div id="pane-vis" role="tabpanel" aria-labelledby="tab-vis" hidden style="gap:10px">
+        <div class="row">
+          <label class="field" for="vis-type">Pallet <select id="vis-type"></select></label>
+          <button type="button" class="btn primary" id="vis-run">Map visibility</button>
+        </div>
+        <p class="cap-dim" id="vis-status" style="margin:0;font-size:0.8rem">Uses the current camera settings on an intact pallet, centred and straight.</p>
+        <div class="row cap-dim" style="font-size:0.76rem">
+          <span><i class="dot" style="background:#2f9a4d"></i>seen at ≤ 1 mm/px</span>
+          <span><i class="dot" style="background:#9bc53d"></i>seen, coarser</span>
+          <span><i class="dot" style="background:#e0a640"></i>&lt; 60 px</span>
+          <span><i class="dot" style="background:#d2452b"></i>not seen</span>
+        </div>
+        <div class="tablewrap"><table id="vis-table"><thead></thead><tbody><tr><td class="cap-dim">Run a map to see which parts each camera sees.</td></tr></tbody></table></div>
+      </div>
+
+      <div id="pane-cmp" role="tabpanel" aria-labelledby="tab-cmp" hidden style="gap:10px">
+        <div class="row">
+          <label class="field" for="cmp-type">Pallet <select id="cmp-type"></select></label>
+          <label class="field" for="cmp-dmg">Damage <select id="cmp-dmg"></select></label>
+        </div>
+        <div class="row">
+          <label class="field" for="cmp-a">A <select id="cmp-a"></select></label>
+          <label class="field" for="cmp-ga">gap <select id="cmp-ga"></select></label>
+        </div>
+        <div class="row">
+          <label class="field" for="cmp-b">B <select id="cmp-b"></select></label>
+          <label class="field" for="cmp-gb">gap <select id="cmp-gb"></select></label>
+          <button type="button" class="btn primary" id="cmp-run">Compare</button>
+        </div>
+        <p class="cap-dim" id="cmp-status" style="margin:0;font-size:0.8rem">Same pallet traced intact and damaged, noise off. Red marks the pixels the damage changes.</p>
+        <div class="cmpgrid" id="cmp-out"></div>
+      </div>
+
+      <div id="pane-batch" role="tabpanel" aria-labelledby="tab-batch" hidden style="gap:10px">
+        <div class="row">
+          <label class="field" for="batch-n">Pallets <select id="batch-n"><option value="100">100</option><option value="300" selected>300</option><option value="1000">1000</option></select></label>
+          <button type="button" class="btn primary" id="batch-run">Run with the current settings</button>
+          <button type="button" class="btn" id="batch-csv">Copy CSV</button>
+          <button type="button" class="btn" id="batch-clear">Clear</button>
+        </div>
+        <p class="cap-dim" id="batch-status" style="margin:0;font-size:0.8rem">Runs the stand-in classifier on many pallets drawn like the live feed (ticked types, damage share, unusual cases, touching pairs), without tracing each one live: each damage's evidence is traced once per type for the current setup. Change a setting and run again to compare. ± is a 95% range.</p>
+        <div class="tablewrap"><table id="batch-table"><thead><tr><th>#</th><th>Setup</th><th>Pallets</th><th>Type labelled</th><th>Type wrong</th><th>Condition labelled</th><th>Condition wrong</th><th>Discards found</th><th>Repairs found</th><th>False alarms</th></tr></thead><tbody><tr><td colspan="10" class="cap-dim">No runs yet.</td></tr></tbody></table></div>
+      </div>
+
+      <div id="pane-budget" role="tabpanel" aria-labelledby="tab-budget" hidden style="gap:10px">
+        <p class="cap-dim" style="margin:0;font-size:0.8rem">Sizing for 1000 pallets/h at the conveyor speed set above, from the current settings, so for the selected sensor. Assumed: 400 mm between pallets; RGB line-scan 3 bytes/px; area cameras raw Bayer 1 byte/px (top 2.3 MP, 1920 px over 2.6 m; station 5 MP, ~0.6 mm/px); sensor full well 10,000 e⁻, read noise 12 e⁻; one link per camera with 25% headroom.</p>
+        <div class="tablewrap"><table id="budget"><thead><tr><th>Item</th><th>Value</th><th>Check</th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <div id="pane-photo" role="tabpanel" aria-labelledby="tab-photo" hidden style="gap:10px">
+        <div class="row">
+          <label class="field" for="ph-view">View <select id="ph-view"><option value="view" selected>Current 3D view</option><option value="bottom">Bottom line-scan cameras</option><option value="station">Station cameras</option></select></label>
+          <label class="field" for="ph-n">Passes <select id="ph-n"><option value="16">16 (draft)</option><option value="64" selected>64</option><option value="256">256 (final)</option></select></label>
+          <button type="button" class="btn primary" id="ph-run">Render the pallet over the gap</button>
+        </div>
+        <p class="cap-dim" id="ph-status" style="margin:0;font-size:0.8rem">Soft light, one bounce of indirect light and a sampled lens aperture, refined over many passes. The feed pauses while it renders.</p>
+        <div id="ph-out" style="display:grid;gap:8px"></div>
+      </div>
+    </section>
+  </div>
+
+  <section style="display:grid;gap:8px" aria-label="Top camera and pallet detector">
+    <h2>Top camera, live, with the pallet detector (its positions trigger the bottom capture and the station cameras)</h2>
+    <div class="topwrap">
+      <canvas id="topcam" width="640" height="340" aria-label="Live top camera with detected pallet boxes"></canvas>
+      <div class="panel">
+        <dl class="stats">
+          <div><dt>Camera</dt><dd>1 frame / 44 mm (10 fps)</dd></div>
+          <div><dt>Detector latency</dt><dd>80 ms</dd></div>
+          <div><dt>Tracks</dt><dd id="trk-n">0</dd></div>
+          <div><dt>Last trigger error</dt><dd id="trk-last">–</dd></div>
+          <div><dt>Mean |error|, last 50</dt><dd id="trk-mean">–</dd></div>
+          <div><dt>Merged boxes</dt><dd id="trk-merged">0</dd></div>
+        </dl>
+        <p class="cap-dim" style="margin:0;font-size:0.78rem">Solid boxes: the detector's latest output, one frame behind the image because of inference latency. Dashed: the tracker's prediction for now, which is what fires the triggers. Each box is turned into belt positions by assuming a 140 mm pallet height; the tracker (lead and trail edge, belt-slip rate) bridges missed frames. Boxes are simulated from the true geometry with jitter, 2% misses, and touching pallets that the model sometimes sees as one. Trigger error = true minus estimated position when a station camera fires.</p>
+      </div>
+    </div>
+  </section>
+
+  <section style="display:grid;gap:8px" aria-label="Station cameras">
+    <h2>Station cameras, latest snapshots (area cameras triggered by pallet position)</h2>
+    <div class="snaps" id="snaps"><p class="empty">Snapshots appear when a pallet reaches each camera's trigger point.</p></div>
+  </section>
+
+  <section style="display:grid;gap:8px" aria-label="Captured images">
+    <h2>Captured pallets with ground truth (newest first, click for full resolution)</h2>
+    <div class="clsbar" id="cls-sum"></div>
+    <div class="gallery" id="gallery"><p class="empty">Each pallet's images appear here once it has passed the scanner.</p></div>
+  </section>
+
+  <p class="note">Concept simulation, not a camera datasheet. Geometry, colours, wear, lighting, lens and camera figures are assumptions. The images are ray-traced on the GPU from the same geometry the 3D view shows, so what each setting can or cannot see is real for this geometry; image quality is not. Line pitch equals the across-belt pixel size (square pixels), so 4k means ~0.3 mm lines and about 16× the work of 1k. Depth of field uses a thin lens focused on the belt centre, 7 µm pixels. <span id="tex-note"></span></p>
+  <p class="note credits"><strong>Texture credits.</strong> Wood and presswood surfaces are photo-scanned textures from <a href="https://polyhaven.com" target="_blank" rel="noopener">Poly Haven</a>, released under <a href="https://polyhaven.com/license" target="_blank" rel="noopener">CC0</a>:
+    <a href="https://polyhaven.com/a/plywood" target="_blank" rel="noopener"><i>Plywood</i></a> (sawn softwood) and <a href="https://polyhaven.com/a/fine_grained_wood" target="_blank" rel="noopener"><i>Fine Grained Wood</i></a> (hardwood) by Rob Tuytel;
+    <a href="https://polyhaven.com/a/oriented_strand_board" target="_blank" rel="noopener"><i>Oriented Strand Board</i></a> (presswood blocks and moulded pallets) by Dimitrios Savva.
+    Recompressed and resized for this page; colours are tinted per part.</p>
+</div>
+
+<dialog id="zoom" aria-label="Full-resolution images">
+  <div class="row" style="justify-content:space-between"><strong id="zoom-title">Pallet</strong><button type="button" class="btn" id="zoom-close">Close</button></div>
+  <div class="cap" id="zoom-cap" style="margin:6px 0"></div>
+  <div class="row" style="margin-bottom:6px"><label class="field" for="zoom-scale">Zoom <select id="zoom-scale"><option value="0.25">25%</option><option value="0.5" selected>50%</option><option value="1">100%</option><option value="2">200%</option></select></label></div>
+  <div class="zoomwrap"><div id="zoom-imgs" style="display:flex;gap:8px;align-items:flex-start;padding:8px"></div></div>
+</dialog>
+
+@@shader vs vertex@@
+
+@@shader fs-trace fragment@@
+
+@@shader fs-post fragment@@
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+@@js@@
+})();
+</script>
+<!-- Built by build.py from src/ (template, styles, shaders, js, tex): edit those and rebuild. -->
+@@textures@@
