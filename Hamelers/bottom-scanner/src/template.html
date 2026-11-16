@@ -53,7 +53,8 @@
       <label class="field" for="f-uncal"><input type="checkbox" id="f-uncal"> Uncalibrated lenses and sensors</label>
     </div>
     <div class="grp" role="tabpanel" id="set-light" aria-labelledby="settab-light" hidden>
-      <label class="field" for="light-setup">Setup <select id="light-setup"><option value="gap" selected>LED bar under the gap</option><option value="beside">LED bar beside each camera, behind its own window</option><option value="alternate">bar under the gap and side lights, alternating lines</option><option value="side">side lights only</option></select></label>
+      <label class="field" for="light-setup">Setup <select id="light-setup"><option value="gap" selected>LED bar under the gap</option><option value="beside">LED bar beside each camera, behind its own window</option><option value="spot">LED spot beside each camera, focused to a line, behind its own window</option><option value="alternate">bar under the gap and side lights, alternating lines</option><option value="side">side lights only</option></select></label>
+      <label class="field" for="spot-beam">Spot beam <select id="spot-beam"><option value="line" selected>line lens, ±2° across, 1 per camera</option><option value="oval">10° × 50° oval spots</option><option value="round">10° round spots</option></select></label>
       <label class="field" for="opt-light"><input type="checkbox" id="opt-light" checked> One bar for all cameras (under the gap)</label>
       <label class="field" for="light">Light power <input id="light" type="range" min="10" max="400" step="10" value="100"><output id="light-out">100%</output></label>
       <label class="field" for="louvre">Bar louvre <select id="louvre"><option value="0" selected>none (bare diffuser)</option><option value="45">±45° along the bar</option><option value="30">±30° along the bar</option><option value="20">±20° along the bar</option></select></label>
@@ -211,9 +212,10 @@
         <div class="row">
           <label class="field" for="ph-view">View <select id="ph-view"><option value="view" selected>Current 3D view</option><option value="bottom">Bottom line-scan cameras</option><option value="station">Station cameras</option></select></label>
           <label class="field" for="ph-n">Passes <select id="ph-n"><option value="16">16 (draft)</option><option value="64" selected>64</option><option value="256">256 (final)</option></select></label>
+          <label class="field" for="ph-live"><input type="checkbox" id="ph-live"> Live</label>
           <button type="button" class="btn primary" id="ph-run">Render the pallet over the gap</button>
         </div>
-        <p class="cap-dim" id="ph-status" style="margin:0;font-size:0.8rem">Soft light, one bounce of indirect light and a sampled lens aperture, refined over many passes. The feed pauses while it renders.</p>
+        <p class="cap-dim" id="ph-status" style="margin:0;font-size:0.8rem">Soft light, one bounce of indirect light and a sampled lens aperture, refined over many passes. The feed pauses while it renders. Live (current 3D view only): renders while this tab is open, starting over whenever the view, the pallets or a setting change, and sharpens while they stay.</p>
         <div id="ph-out" style="display:grid;gap:8px"></div>
       </div>
     </section>

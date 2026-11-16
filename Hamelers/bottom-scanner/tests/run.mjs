@@ -44,7 +44,7 @@ const setControls = (p, o) => p.evaluate((o) => {
 }, o);
 // The controls the checks below change, at their defaults, so each check starts from the same state.
 const DEFAULTS = { "f-splinter": false, "f-fog": false, driver: "dc", vib: "0.1", "f-uncal": false, lightcol: "matched", shutter: "global",
-  daylight: "none", "light-setup": "gap", "win-angle": "0", "win-purge": false, "f-bar": false, "side-h": "260", "side-x": "0", louvre: "0", "opt-indirect": false, months: "0" };
+  daylight: "none", "light-setup": "gap", "spot-beam": "line", light: "100", exp: "2", "win-angle": "0", "win-purge": false, "f-bar": false, "side-h": "260", "side-x": "0", louvre: "0", "opt-indirect": false, months: "0" };
 // Photo render of a view with the feed paused; keeps each image's pixels in the page under tag.
 async function render(p, tag, view, settings) {
   await setControls(p, Object.assign({}, DEFAULTS, settings || {}, { "ph-view": view, "ph-n": "16" }));
@@ -153,9 +153,22 @@ try {
       expect(ends < mid - 0.02, "camera " + i + ": the ends keep " + ends.toFixed(2) + ", the middle " + mid.toFixed(2));
     }
   });
-  await check("an LED bar beside the cameras lights the scan line less than one under the gap", async () => {
-    await render(p, "bar beside", "bottom", { "light-setup": "beside" });
-    for (const i of [0, 1]) { const r = (await ratios(p, "base", "bar beside", i)).all; expect(r < 0.9, "camera " + i + " keeps " + r.toFixed(2) + " of the light"); }
+  await check("the Timing & data tab gives a bar beside the cameras less light on the scan line and focused spots far more", async () => {
+    const factor = async (setup) => { await setControls(p, Object.assign({}, DEFAULTS, { "light-setup": setup })); return 100 * await budgetNumber(p, "light on the scan line", "([\\d.]+)×"); };
+    const beside = await factor("beside"), spot = await factor("spot");
+    expect(beside < 0.9 && spot > 5, "bar beside " + beside + "×, spots " + spot + "×");
+  });
+  await check("rows of narrower spots put less light on the scan line than a line lens with the same LED power", async () => {
+    const factor = async (beam) => { await setControls(p, Object.assign({}, DEFAULTS, { "light-setup": "spot", "spot-beam": beam })); return 100 * await budgetNumber(p, "light on the scan line", "([\\d.]+)×"); };
+    const line = await factor("line"), oval = await factor("oval"), round = await factor("round");
+    expect(line > oval && oval > round, "line lens " + line + "×, oval " + oval + "×, round " + round + "×");
+  });
+  // Each line camera's gain is set for its setup's light, as in the light budget: a bright light with a short
+  // exposure must not come out clipped.
+  await check("spots with the exposure turned down to suit them give an unclipped image", async () => {
+    await render(p, "spots, dimmed", "bottom", { "light-setup": "spot", light: "10", exp: "1.3" });
+    const clipped = await p.evaluate(() => { const D = window.__imgs["spots, dimmed"][0].data; let n = 0; for (let k = 0; k < D.length; k += 4) if (D[k + 1] >= 254) n++; return n / (D.length / 4); });
+    expect(clipped < 0.02, Math.round(clipped * 100) + "% of the pixels clip");
   });
   // Against the bar-lit image, pixel by pixel, so the wood's colour and the background drop out.
   await check("side lights light the ends of the scan line far more than its middle", async () => {
@@ -295,6 +308,23 @@ try {
     // only the sensor's noise is left, lifted by the gain that makes up for the missing light
     expect(vertical < 0.2 * flat, "mean " + vertical.toFixed(1) + " behind the vertical window vs " + flat.toFixed(1) + " behind the flat one");
     expect(rows.some((r) => /window optics/i.test(r) && /short/.test(r)), "no window optics row marked short");
+  });
+  await check("the live render of the 3D view keeps drawing while the feed runs", async () => {
+    const q = await open(browser);
+    await q.evaluate(() => {
+      document.getElementById("tab-photo").click();
+      const v = document.getElementById("ph-view"); v.value = "view"; v.dispatchEvent(new Event("change"));
+      const l = document.getElementById("ph-live"); l.checked = true; l.dispatchEvent(new Event("change"));
+    });
+    await sleep(3000);
+    const r = await q.evaluate(() => {
+      const c = document.querySelector("#ph-out canvas"), d = c ? c.getContext("2d").getImageData(0, 0, c.width, c.height).data : [];
+      let drawn = 0; for (let k = 3; k < d.length; k += 4) if (d[k]) drawn++;
+      return { drawn: c ? drawn / (c.width * c.height) : 0, speed: document.getElementById("st-speed").textContent };
+    });
+    await q.close();
+    expect(r.drawn > 0.9, "only " + Math.round(r.drawn * 100) + "% of the view drawn");
+    expect(/^[\d.]+ m\/s/.test(r.speed) && parseFloat(r.speed) > 0, "the feed isn't moving: " + r.speed);
   });
   await check("a settings code restores the controls", async () => {
     const want = { gap: "150", louvre: "30", driver: "pwm", "side-h": "100", "f-fog": true, "opt-indirect": true, "win-angle": "60", "win-purge": true, "light-setup": "alternate" };

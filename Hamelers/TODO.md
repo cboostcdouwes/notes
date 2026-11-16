@@ -27,8 +27,15 @@ Hamelers: pallet classifier. Most important first. Research log: `pallet-classif
 - **Choose the bottom light setup** (simulator, Light section; geometry and powers assumed). Bar beside each camera
   behind its own window: protected like the windows, but 62% of the signal of the bar under the gap (dual cameras,
   two bars). Side lights: raking light that shows relief, but 14% of the signal at the belt centre and 18× brighter
-  550 mm out, so only useful as a second image with alternating lines (doubles the line rate and data). Decide with
-  real images from the test conveyor.
+  550 mm out, so only useful as a second image with alternating lines (doubles the line rate and data). Focused LED
+  spot beside each camera (±2° across travel, one bar's LED power): about 19× the light of the bar under the gap, even
+  along the line (0.9× at 550 mm), covers the camera's view up to 224 mm above the belt; the best protected option.
+  Off-the-shelf beams with the same LED power per camera: 3 × 10°×50° oval spots (e.g. SVL SX30-WHI-L) 10.5×, ripple
+  0.46–1.40× along the line; 11 × 10° round spots 6.9×, 0.92–2.11×; both reach 300+ mm. Run continuously (DC driver);
+  switch off between pallets for eye safety; check that the side station cameras don't look into a beam.
+  No off-the-shelf compact LED found that projects a 1.3 m line from ~600 mm: ask vendors (Smart Vision Lights LXE300
+  with narrow lens, 300–4000 mm, IP65, chainable, is a focused bar rather than a spot; Opto Engineering LTSP spots need
+  a custom line lens). Decide with real images from the test conveyor.
 - **Place the side station cameras ~150 mm along the belt from the scan line**: there they no longer see the LED bar
   down the gap (simulator v29), with no light lost.
 - **Simulator: centred 0 deg camera with one light** puts the LED bar under a roller at a 100 mm gap (the 80 mm offset

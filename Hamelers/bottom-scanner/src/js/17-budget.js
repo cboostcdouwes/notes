@@ -30,10 +30,19 @@
     const snrChk = (s) => chk(!s.saturated && s.db >= 30, !s.saturated && s.db >= 20);
     const signal = (s) => (s.saturated ? "saturated: mid-grey already fills the full well" : Math.round(s.e) + " e⁻, SNR " + s.db.toFixed(0) + " dB, gain ×" + s.gain.toFixed(1));
     const pct = (x) => Math.round(x * 100) + "%", px = (x) => (x < 0.01 ? "<0.01" : x.toFixed(2)) + " px";
-    // How evenly the side lights light the scan line: a bottom face at the pallet's edge against one at the centre.
-    function sideEvenRow() {
-      const L = bottomLights("side"), edge = lineLightAt(L, SIDE_EVEN_Z) / lineLightAt(L, 0);
-      return ["Side lights along the scan line", "a bottom face " + SIDE_EVEN_Z + " mm from the belt centre gets " + edge.toFixed(1) + "× the light at the centre (without shadows)", chk(edge <= 2, edge <= 4)];
+    // How evenly the bottom lights of image which light the scan line: a bottom face near the pallet's edge against one
+    // at the centre.
+    function evenRow(which, name) {
+      const L = bottomLights(which), edge = lineLightAt(L, SIDE_EVEN_Z) / lineLightAt(L, 0);
+      return [name + " along the scan line", "a bottom face " + SIDE_EVEN_Z + " mm from the belt centre gets " + edge.toFixed(1) + "× the light at the centre (without shadows)", chk(edge <= 2 && edge >= 0.5, edge <= 4 && edge >= 0.25)];
+    }
+    // The spots' light along the scan line, which ripples where their units overlap: the darkest and brightest bottom
+    // face within SIDE_EVEN_Z of the belt centre, against the centre.
+    function spotRangeRow() {
+      const L = bottomLights(), mid = lineLightAt(L, 0), vals = [];
+      for (let z = -SIDE_EVEN_Z; z <= SIDE_EVEN_Z; z += 10) vals.push(lineLightAt(L, z) / mid);
+      const lo = Math.min(...vals), hi = Math.max(...vals);
+      return ["Spots along the scan line", "bottom faces within " + SIDE_EVEN_Z + " mm of the belt centre get " + lo.toFixed(2) + "–" + hi.toFixed(2) + "× the light at the centre (without shadows)", chk(hi / lo <= 2, hi / lo <= 4)];
     }
     function windowRow(c, o) {
       const w = windowOptics(c, o.fnum), name = "Window optics, " + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "° camera";
@@ -62,9 +71,12 @@
       ["Exposure", Math.round(le.t) + " µs" + (o.expUs > le.tMax ? " (capped at the line period)" : ""), chk(o.expUs <= le.tMax, true)],
       ["Motion blur along travel", fmtBlur(le.blur, pitch), chk(le.blur / pitch <= 0.5, le.blur / pitch <= 1)],
       ...(o.louvre ? [["LED bar louvre ±" + o.louvre + "° along the bar", "passes " + Math.round(pass * 100) + "% of the bar's light to the scan line at the belt centre", chk(pass >= 0.8, pass >= 0.4)]] : []),
+      ...(o.lightSetup === "gap" || o.lightSetup === "alternate" ? [] : [["Light on the scan line at the belt centre", setupLight(o).toFixed(2) + "× the bar under the gap (same LED power, before dust and ageing)", ""]]),
       ["Signal at mid-grey" + (o.lightSetup === "alternate" ? ", evenly lit image (bar)" : ""), signal(sl), snrChk(sl)],
       ...(o.lightSetup === "alternate" ? [["Signal at mid-grey, raking image (side lights)", signal(sensorAt(lineSignalK(o, "side"))), snrChk(sensorAt(lineSignalK(o, "side")))]] : []),
-      ...(o.lightSetup === "alternate" || o.lightSetup === "side" ? [sideEvenRow()] : []),
+      ...(o.lightSetup === "alternate" || o.lightSetup === "side" ? [evenRow("side", "Side lights")] : []),
+      ...(o.lightSetup === "spot" ? [spotRangeRow(), ["Spot beams on the scan line", cams[0].spot.n + " × " + SPOT_BEAMS[o.spotBeam].name + " per camera; they light the bottom face where each camera looks from the belt plane up to " +
+        (Math.min(...cams.map(spotReach)) >= SPOT_REACH_MAX ? SPOT_REACH_MAX + " mm or more" : Math.min(...cams.map(spotReach)) + " mm") + " above it", chk(Math.min(...cams.map(spotReach)) >= 100, Math.min(...cams.map(spotReach)) >= 30)]] : []),
       ["Light flicker between lines: " + flickRow(flickLine)[0], flickRow(flickLine)[1], flickRow(flickLine)[2]],
       ["Brightest surface not clipped", kLine <= 2 ? "everything up to reference white" : Math.round(200 / kLine) + "% of reference white", chk(kLine <= 2, kLine <= 4)],
       ["Data rate", lineCamMBs.toFixed(1) + " MB/s per camera → " + linkFor(lineCamMBs), ""],
@@ -80,7 +92,7 @@
       ["Signal at mid-grey (" + ae.t.toFixed(1) + " ms)", signal(sa), snrChk(sa)],
       ["Light flicker between snapshots: " + flickRow(flickArea)[0], flickRow(flickArea)[1], flickRow(flickArea)[2]],
       ["Service state"],
-      ["Since service", service.months + " months: light output " + Math.round(age * 100) + "%, dust on the LED bar −" + Math.round(service.barDust(o.lightSetup === "beside") * 100) + "%, window dirt " + Math.round(o.dirt * 100) + "%, " + service.specks() + " specks per bottom window", chk(age >= 0.9 && o.dirt <= 0.5, age >= 0.8 && o.dirt <= 0.75)],
+      ["Since service", service.months + " months: light output " + Math.round(age * 100) + "%, dust on the LED bar −" + Math.round(service.barDust(besideCamera(o.lightSetup)) * 100) + "%, window dirt " + Math.round(o.dirt * 100) + "%, " + service.specks() + " specks per bottom window", chk(age >= 0.9 && o.dirt <= 0.5, age >= 0.8 && o.dirt <= 0.75)],
       ["Debris on the bottom windows", service.specks() + " specks of grit" + (o.splinter && !service.gritSlides() ? " and a splinter" : "") + ": darkens the image columns by about " + Math.round(debrisShare(o) * 100) + "% on average (estimate)", chk(debrisShare(o) <= 0.02, debrisShare(o) <= 0.1)],
       ["Bottom windows", winAngleText(service.winAngle) + " from horizontal" + (service.gritSlides() ? ", grit slides off" : "") +
         (service.purge ? "; air purge: about " + WINDOW_WEAR.purgeAirM3h * cams.length + " m³/h of compressed air (assumed)" : ""), ""],

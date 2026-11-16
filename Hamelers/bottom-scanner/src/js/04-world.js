@@ -30,8 +30,13 @@
     camList.forEach((c) => {
       out.push(part("line-scan camera", [c.C[0] - 45, c.C[1] - 45, c.C[2] - 45], [c.C[0] + 45, c.C[1] + 45, c.C[2] + 45], "steel", 1, { col: [0.06, 0.07, 0.08] }));
       out.push(part("camera stand", [c.C[0] - 15, -600, c.C[2] - 15], [c.C[0] + 15, c.C[1] - 45, c.C[2] + 15], "steel", 1, { col: [0.3, 0.31, 0.33] }));
+      if (c.spot) {   // the housing only: its light leaves in the beam (spotShare, spotGlint), not from a glowing face
+        const [x, y, z] = c.spot.pos, r = SPOT.faceR + 10;
+        out.push(part("LED spot", [x - r, y - 60, z - r], [x + r, y - 3, z + r], "steel", 1, { col: [0.06, 0.07, 0.08] }));
+        out.push(part("LED spot stand", [x - 10, -600, z - 10], [x + 10, y - 60, z + 10], "steel", 1, { col: [0.3, 0.31, 0.33] }));
+      }
       const k = String(c.lightPos);
-      if (!c.lightPos || seen.has(k)) return;
+      if (!c.lights.length || seen.has(k)) return;
       seen.add(k);
       const barI = c.lights.reduce((s, l) => s + l[3], 0);   // axis 2 tells the tracer this lamp is the bar
       out.push(part("LED bar", [c.lightPos[0] - 25, c.lightPos[1] - 30, -500], [c.lightPos[0] + 25, c.lightPos[1] - 3, 500], "lamp", 2, { col: faceRadiance(barI, 50 * 1000) }));

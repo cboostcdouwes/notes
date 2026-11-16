@@ -4,8 +4,11 @@
   // line-scan or the station cameras see it.
   const HALL_SKY = [0.32, 0.33, 0.35];
   let photoJob = null, photoPasses = 2;
-  function runPhoto() {
-    markEvent("analysis");
+  const LIVE_PASSES = 1;   // passes per frame of the live render while the feed runs
+  // live: a restart of the live render of the current 3D view (see liveRender); it reuses the canvas, runs beside the
+  // feed and isn't marked in the frame-rate graph.
+  function runPhoto(live) {
+    if (!live) markEvent("analysis");
     const view = $("ph-view").value, out = $("ph-out");
     const add = (w, h, label, aspect) => {
       const f = document.createElement("figure"), cv = document.createElement("canvas"), cap = document.createElement("figcaption");
@@ -20,9 +23,13 @@
     if (view === "view") {
       const c = viewCamera(), tx = controls.target.x * 1000;
       const pals = feed.slice().sort((a, b) => Math.abs(palletX(a, sBelt) - tx) - Math.abs(palletX(b, sBelt) - tx)).slice(0, MAXPAL);
-      out.innerHTML = "";
-      tiles.push({ cam: c, ctx: add(c.w, c.h, "Current 3D view · " + pals.length + (pals.length === 1 ? " pallet" : " pallets")), s: sBelt });
-      photoJob = { pals: pals, what: "the current 3D view", tiles: tiles, ti: 0, pass: 0, N: +$("ph-n").value, t0: performance.now() };
+      const label = "Current 3D view · " + pals.length + (pals.length === 1 ? " pallet" : " pallets") + (live ? " · live" : "");
+      const old = out.querySelector("canvas");
+      let ctx;
+      if (live && old && old.width === c.w && old.height === c.h && out.children.length === 1) { ctx = old.getContext("2d"); out.querySelector("figcaption").firstChild.textContent = label + " "; }
+      else { out.innerHTML = ""; ctx = add(c.w, c.h, label); }
+      tiles.push({ cam: c, ctx: ctx, s: sBelt });
+      photoJob = { pals: pals, what: "the current 3D view", tiles: tiles, ti: 0, pass: 0, N: +$("ph-n").value, t0: performance.now(), live: !!live };
       return;
     }
     let near = null;
@@ -37,7 +44,7 @@
     if (view === "bottom") images.forEach(([suffix, which]) => cams.forEach((cam) => {
       const rows = Math.ceil((2 * p.reach + 400) / pitch), lights = which && lightsFor(cams, "line", which);
       const ctx = add(cam.PX, rows, camLabel(cam) + suffix, (cam.PX * cam.mmPerPx).toFixed(0) + " / " + (rows * pitch).toFixed(0));
-      for (let r = 0; r < rows; r += MAXROWS) tiles.push({ cam: cam, ctx: ctx, r: r, n: Math.min(MAXROWS, rows - r), s0: -p.reach - 200 + r * pitch, lights: lights });
+      for (let r = 0; r < rows; r += MAXROWS) tiles.push({ cam: cam, ctx: ctx, r: r, n: Math.min(MAXROWS, rows - r), s0: -p.reach - 200 + r * pitch, lights: lights, which: which });
     }));
     const what = p.type.name + ": " + (p.damages.length ? p.damages.map((d) => d[0]).join(", ") : "intact");
     photoJob = { pals: [p], what: what, tiles: tiles, ti: 0, pass: 0, N: +$("ph-n").value, t0: performance.now() };
@@ -45,11 +52,12 @@
   function stepPhoto() {
     const j = photoJob, o = opts();
     uploadScene(j.pals);
-    for (let k = 0; k < photoPasses && j.ti < j.tiles.length; k++) {
-      const t = j.tiles[j.ti], show = j.pass === j.N - 1 || k === photoPasses - 1;
+    const passes = j.live && !paused ? LIVE_PASSES : photoPasses;   // beside a running feed, leave the GPU to the line tracer
+    for (let k = 0; k < passes && j.ti < j.tiles.length; k++) {
+      const t = j.tiles[j.ti], show = j.pass === j.N - 1 || k === passes - 1;
       const po = { still: true, pass: j.pass, noPost: !show, seed: 1 + j.pass * 1.618, fnum: o.fnum };
       if (t.cam.kind === "line") {
-        traceLines(t.cam, t.s0, pitch, t.n, Object.assign(po, lineExposure(o), { rect: o.rect, dirt: o.dirt, noise: 1, rowBase: t.r, sky: HALL_SKY, lightJit: [40, 15, 120], lights: t.lights }));
+        traceLines(t.cam, t.s0, pitch, t.n, Object.assign(po, lineExposure(o), { rect: o.rect, dirt: o.dirt, noise: 1, rowBase: t.r, sky: HALL_SKY, lightJit: [40, 15, 120], lights: t.lights, which: t.which }));
         if (show) t.ctx.drawImage(glc, 0, 0, t.cam.PX, t.n, 0, t.r, t.cam.PX, t.n);
       } else {
         const ov = !!t.cam.photo;
@@ -64,8 +72,28 @@
     $("ph-status").textContent = "Done in " + sec + " s · " + j.N + " passes · " + j.what + " · gap " + gap + " mm.";
     photoJob = null; sceneKey = "";
   }
-  $("ph-run").addEventListener("click", runPhoto);
-  const photoButtonText = () => { $("ph-run").textContent = $("ph-view").value === "view" ? "Render the current 3D view" : "Render the pallet over the gap"; };
+  $("ph-run").addEventListener("click", () => runPhoto(false));
+  const photoButtonText = () => {
+    $("ph-run").textContent = $("ph-view").value === "view" ? "Render the current 3D view" : "Render the pallet over the gap";
+    $("ph-live").disabled = $("ph-view").value !== "view";
+  };
   $("ph-view").addEventListener("change", photoButtonText);
   photoButtonText();
 
+  // Live render of the current 3D view: while "Live" is ticked and the Photo render tab shows the 3D view, the render
+  // restarts whenever what it would show changes (the 3D camera, the pallets, any setting) and refines while it stays.
+  // Called every frame, beside the feed.
+  let settingsRev = 0, liveKey = "";
+  ["input", "change"].forEach((ev) => document.addEventListener(ev, () => { settingsRev++; }));
+  const liveWanted = () => $("ph-live").checked && $("ph-view").value === "view" && !$("pane-photo").hidden;
+  const viewKey = () => [cam3.position.toArray(), cam3.quaternion.toArray(), cam3.aspect, Math.round(sBelt), settingsRev].join("|");
+  function liveRender() {
+    if (!liveWanted()) {
+      liveKey = "";
+      if (photoJob && photoJob.live) photoJob = null;
+      return;
+    }
+    const key = viewKey();
+    if (key !== liveKey) { liveKey = key; runPhoto(true); }
+    if (photoJob) stepPhoto();
+  }

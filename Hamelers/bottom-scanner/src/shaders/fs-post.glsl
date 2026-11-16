@@ -5,6 +5,7 @@ uniform int uOutRow;            // output drawn this many rows below the traced 
 uniform vec3 uC; uniform vec3 uD0; uniform vec3 uE; uniform float uPhi0; uniform float uDphi; uniform float uZ0; uniform float uZ1;
 uniform float uNoise; uniform float uSeed; uniform float uRowBase; uniform int uTone;
 uniform float uK;               // exposure relative to the reference (1 = mid-grey at half the full well)
+uniform float uGain;            // the camera's gain, set for its light (never below 1, so overexposure stays clipped)
 uniform float uFullWell; uniform float uReadNoise;   // electrons
 uniform sampler2D uHdr;         // the whole area image, mipmapped, for lens glare
 uniform float uVeil; uniform float uGhost; uniform int uHdrOff; uniform vec2 uHdrSize; uniform int uLevels;
@@ -103,8 +104,8 @@ void main() {
   } else {
     c = texelFetch(uNative, ivec2(ix, fy), 0).rgb;
   }
-  // Sensor: electrons from the light collected (clipped at the full well), shot and read noise, then the gain that
-  // brings an underexposed image back to the reference brightness (never below 1, so overexposure stays clipped).
+  // Sensor: electrons from the light collected (clipped at the full well), shot and read noise, then the camera's gain
+  // (uGain), which brings an underexposed image back to the reference brightness.
   c *= flicker(uT0 + float(row) * uTRow, uExpS) * uWB;
   float r0 = uRowBase + float(row);
   vec3 e = min(max(c, vec3(0.0)) * uK, vec3(1.0)) * uFullWell, g;
@@ -117,7 +118,7 @@ void main() {
     g[j] = (h11(float(ix) * 12.9898 + r0 * 78.233 + uSeed + fj) + h11(float(ix) * 3.1 + r0 * 7.7 + uSeed * 1.3 + fj) + h11(float(ix) * 5.3 + r0 * 1.9 + uSeed * 2.1 + fj) - 1.5) * 2.0;
   }
   e += uNoise * sqrt(e + uReadNoise * uReadNoise) * g;
-  c = e / uFullWell * max(1.0, 1.0 / uK);
+  c = e / uFullWell * uGain;
   if (uTone == 1) c = aces(c);   // filmic curve for the photo of the 3D view; machine-vision images stay linear
   outColor = vec4(enc(c), 1.0);
 }

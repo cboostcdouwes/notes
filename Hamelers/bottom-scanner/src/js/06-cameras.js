@@ -15,10 +15,11 @@
     const focus = dl * Math.cos(angleTo(0) - axisPhi);          // focus plane through the belt centre
     const focal = (px * PIXEL_UM / 1000 / 2) / Math.tan((p1 - p0) / 2);   // mm, for this sensor width
     const lightPos = barPosition(spec, C, o);
-    const lights = lightPos ? bar(lightPos[0], lightPos[1], -450, 450, 4, o.lightSetup === "beside" ? BAR_REF_MM : Math.hypot(lightPos[0], lightPos[1])) : [];
+    const spot = o.lightSetup === "spot" ? spotBeam([lightPos[0], lightPos[1], spec.z], o.spotBeam) : null;
+    const lights = lightPos && !spot ? bar(lightPos[0], lightPos[1], -450, 450, 4, o.lightSetup === "beside" ? BAR_REF_MM : Math.hypot(lightPos[0], lightPos[1])) : [];
     return { kind: "line", spec: spec, C: C, d0: d0, e: e, phi0: p0, phi1: p1, dphi: dphi, axisPhi: axisPhi, axis: axis, z0: z0, z1: z1,
       mmPerPx: (z1 - z0) / (px - 1), nearMm: Math.abs(beltZ(p0 + dphi) - z0), farMm: Math.abs(z1 - beltZ(p1 - dphi)),
-      focus: focus, focal: focal, lights: lights, lightPos: lightPos, PX: px };
+      focus: focus, focal: focal, lights: lights, lightPos: lightPos, spot: spot, PX: px };
   }
   const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
   const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
@@ -26,8 +27,8 @@
   const norm3 = (a) => { const l = Math.hypot(a[0], a[1], a[2]); return [a[0] / l, a[1] / l, a[2] / l]; };
   // Station area cameras (pinhole + thin lens), triggered by pallet position.
   const STATION_LIGHTS = STATION_LAMPS.map((l) => [l[0], l[1], l[2], 0.75 * 2.42 / 10 * 1300 * 1300]);
-  // Every view is lit by everything that is on: the bottom lights (the LED bars, one or one per camera, and the side
-  // lights) and the station lamps above, which also reach the bottom view through gaps in the pallet. Units: the area
+  // Every view is lit by everything that is on: the bottom lights (the LED bars, one or one per camera, the spots and
+  // the side lights) and the station lamps above, which also reach the bottom view through gaps in the pallet. Units: the area
   // cameras' 1 ms reference exposure. A line camera's exposure k already holds its shorter time and the bar's power,
   // so its view divides every light by the bar's gain. which: the bottom lights on during the image, "bar" or "side";
   // by default the setup's (the bar when the lights alternate: the evenly lit image). Area cameras expose over many
@@ -38,12 +39,14 @@
     const w = which || (setup === "side" ? "side" : "bar"), duty = both ? 0.5 : 1;
     const bars = [], age = service.lightFactor(), barGain = BAR_VS_LAMPS * o.light / 100, toView = kind === "line" ? 1 / barGain : 1;
     if (w === "bar" || both) bars.push(...uniqueBars(camList));
-    const barScale = service.barOut ? 0 : age * barGain * toView * duty, dust = service.barDust(setup === "beside");
+    const barScale = service.barOut ? 0 : age * barGain * toView * duty, dust = service.barDust(besideCamera(setup));
     const side = w === "side" || both ? sideLights().map((l) => [l[0], l[1], l[2], l[3] * age * barGain * toView * duty]) : [];
+    const spots = w === "bar" ? camList.map((c) => c.spot).filter(Boolean) : [];   // the main light, like the bar (dust, failure)
     const [kBar, kLamp] = LIGHT_COLOURS[$("lightcol").value], barCol = KELVIN[kBar], lampCol = KELVIN[kLamp];
     return { lights: bars.map((l, i) => [l[0], l[1], l[2], l[3] * barScale * (1 - dust * BAR_DUST_SPREAD[i % BAR_DUST_SPREAD.length])])
-      .concat(side, STATION_LIGHTS.map((l, i) => [l[0], l[1], l[2], service.lampOut && i === 0 ? 0 : l[3] * age * toView])),
-      nBars: bars.length, nSide: side.length, barWin: setup === "beside" ? service.winAngle * Math.PI / 180 : -1,
+      .concat(side, spots.map((sp) => sp.pos.concat(sp.I * barScale * (1 - dust))),
+        STATION_LIGHTS.map((l, i) => [l[0], l[1], l[2], service.lampOut && i === 0 ? 0 : l[3] * age * toView])),
+      nBars: bars.length, nSide: side.length, spots: spots, lightWin: besideCamera(setup) ? service.winAngle * Math.PI / 180 : -1,
       barFace: bars.length ? barScale * (1 - dust) : 0, lampFace: age * toView, hall: toView,
       barCol: barCol, lampCol: lampCol, wb: (kind === "line" ? barCol : lampCol).map((v) => 1 / v),   // each camera is white-balanced to its own light
       driver: DRIVERS[$("driver").value], day: daylight(lastLine / scanSpeed()),

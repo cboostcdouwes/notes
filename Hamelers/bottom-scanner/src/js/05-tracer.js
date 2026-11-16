@@ -213,6 +213,7 @@
     gl.uniform1i(U.uTex, texReady ? 1 : 0); gl.uniform1f(U.uTexSize, TEX_SIZE);
     lampUniforms(U);
   }
+  const MAX_SPOTS = 2, MAX_SPOT_UNITS = 16;   // one per bottom camera, as uSpotAxis[]; units each, as spotShare's loop
   const MAX_LIGHTS = 24, HALL = [0.1, 0.1, 0.11];   // HALL: brightness of the hall above, as seen through gaps
   // L: from lightsFor
   function setLights(U, L, ambient) {
@@ -220,7 +221,13 @@
     if (lights.length > MAX_LIGHTS) throw new Error(lights.length + " lights; the tracer takes " + MAX_LIGHTS + ". Raise MAX_LIGHTS and uLights[] together.");
     const a = new Float32Array(MAX_LIGHTS * 4); lights.forEach((l, i) => a.set(l, i * 4));
     gl.uniform4fv(U.uLights, a); gl.uniform1i(U.uNL, lights.length); gl.uniform1i(U.uNBar, L.nBars); gl.uniform1i(U.uNSide, L.nSide);
-    gl.uniform1f(U.uBarWin, L.barWin); gl.uniform2f(U.uGlass, GLASS.n, GLASS.thickMm); gl.uniform1f(U.uAmbient, ambient * (1 + 0.6 * L.day));
+    gl.uniform1f(U.uLightWin, L.lightWin); gl.uniform1i(U.uNSpot, L.spots.length); gl.uniform1f(U.uSpotFace, SPOT.faceR);
+    const sa = new Float32Array(MAX_SPOTS * 3), sl = new Float32Array(MAX_SPOTS * 3), st = new Float32Array(MAX_SPOTS * 2), su = new Float32Array(MAX_SPOTS * 3);
+    L.spots.forEach((sp, i) => {
+      if (sp.n > MAX_SPOT_UNITS) throw new Error(sp.n + " spot units; the tracer takes " + MAX_SPOT_UNITS + ". Raise MAX_SPOT_UNITS and the loop in spotShare together.");
+      sa.set(sp.axis, 3 * i); sl.set(sp.along, 3 * i); st.set(sp.tan, 2 * i); su.set([sp.n, sp.step, sp.ellipse ? 1 : 0], 3 * i);
+    });
+    gl.uniform3fv(U.uSpotAxis, sa); gl.uniform3fv(U.uSpotAlong, sl); gl.uniform2fv(U.uSpotTan, st); gl.uniform3fv(U.uSpotUnits, su); gl.uniform2f(U.uGlass, GLASS.n, GLASS.thickMm); gl.uniform1f(U.uAmbient, ambient * (1 + 0.6 * L.day));
     gl.uniform3fv(U.uBgUp, HALL.map((v) => v * L.hall * (1 + L.day))); gl.uniform2f(U.uFace, L.barFace, L.lampFace);
     gl.uniform3fv(U.uBarCol, L.barCol); gl.uniform3fv(U.uLampCol, L.lampCol);
     gl.uniform1f(U.uLouvreTan, L.louvreTan); gl.uniform1f(U.uBarHalf, BAR_SEGMENT_HALF); gl.uniform1f(U.uDust, L.dust);

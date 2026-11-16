@@ -39,7 +39,7 @@
         const fig = document.createElement("figure"), cap = document.createElement("figcaption"), pair = document.createElement("div");
         cap.className = "cap"; pair.className = "pair"; let changed = 0;
         cs.forEach((cam) => {
-          const ro = Object.assign({ fnum: o.fnum, dirt: o.dirt, rect: o.rect, lights: lightsFor(cs, "line"), indirect: o.indirect }, lineExposure(o));
+          const ro = Object.assign({ fnum: o.fnum, dirt: o.dirt, rect: o.rect, lights: lightsFor(cs, "line"), cams: cs, indirect: o.indirect }, lineExposure(o));
           const a = renderPass(intact, cam, ro, g), b = renderPass(damaged, cam, ro, g);
           const A = a.getContext("2d").getImageData(0, 0, a.width, a.height).data, bctx = b.getContext("2d"), B = bctx.getImageData(0, 0, b.width, b.height).data;
           const D = bctx.createImageData(b.width, b.height);

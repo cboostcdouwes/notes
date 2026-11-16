@@ -8,15 +8,23 @@
   }
   const areaExposure = (o) => ({ t: o.aexpMs, k: o.aexpMs, blur: scanSpeed() * o.aexpMs / 1000 });
   // The line cameras' signal in image which (see lightsFor) relative to the reference: the exposure, with everything
-  // that changes the light on the scan line (the setup's lights, LED ageing; for the bar its louvre, dust on it, a
-  // failure leaving only stray light from the lamps) and on the way back through the camera's window.
+  // that changes the light on the scan line (the setup's lights, LED ageing; for the main light, bar or spot, dust on
+  // it and a failure leaving only stray light from the lamps; for the bar its louvre) and on the way back through the
+  // camera's window.
   function lineSignalK(o, which) {
-    const barLit = bottomLights(which).nBars > 0;
-    const barLoss = barLit ? louvrePass(o.louvre) * (1 - service.barDust(o.lightSetup === "beside")) * (service.barOut ? 0.1 : 1) : 1;
-    return lineExposure(o).k * setupLight(o, which) * barLoss * service.lightFactor() * windowPass();
+    const L = bottomLights(which), main = L.nBars > 0 || L.spots.length > 0;
+    const mainLoss = main ? (L.nBars ? louvrePass(o.louvre) : 1) * (1 - service.barDust(besideCamera(o.lightSetup))) * (service.barOut ? 0.1 : 1) : 1;
+    return lineExposure(o).k * setupLight(o, which) * mainLoss * service.lightFactor() * windowPass();
   }
   const significantBlur = (mm, mmPerPx) => ((mm || 0) >= 0.25 * mmPerPx ? mm : 0);   // below a quarter pixel: not worth the samples
-  function sensorUniforms(P, o) { gl.uniform1f(P.uK, o.k || 1); gl.uniform1f(P.uFullWell, SENSOR.fullWell); gl.uniform1f(P.uReadNoise, SENSOR.readNoise); }
+  // gain: the camera's, never below 1; by default set for the reference light (an area camera's lamps)
+  function sensorUniforms(P, o, gain) {
+    gl.uniform1f(P.uK, o.k || 1); gl.uniform1f(P.uGain, gain || Math.max(1, 1 / (o.k || 1)));
+    gl.uniform1f(P.uFullWell, SENSOR.fullWell); gl.uniform1f(P.uReadNoise, SENSOR.readNoise);
+  }
+  // A line camera's gain, set when it was installed for the design light of its setup on the scan line (image which,
+  // cameras camList); dust and ageing since then darken its images. As the gain in the light budget (sensorAt).
+  const lineGain = (o, which, camList) => Math.max(1, 1 / ((o.k || 1) * setupLight(opts(), which, camList)));
 
   // Photo mode (o.still): pass o.pass of a running average, blended into the float target.
   function beginStill(U, o) {
@@ -62,7 +70,7 @@
     gl.uniform1i(P.uMode, 0); gl.uniform1i(P.uRect, o.rect ? 1 : 0); gl.uniform1i(P.uPX, cam.PX); gl.uniform1i(P.uH, GH);
     gl.uniform3fv(P.uC, cam.C); gl.uniform3fv(P.uD0, cam.d0); gl.uniform3fv(P.uE, cam.e);
     gl.uniform1f(P.uPhi0, cam.phi0); gl.uniform1f(P.uDphi, cam.dphi); gl.uniform1f(P.uZ0, cam.z0); gl.uniform1f(P.uZ1, cam.z1);
-    gl.uniform1f(P.uNoise, o.noise); gl.uniform1f(P.uSeed, o.seed || 1); gl.uniform1f(P.uRowBase, o.rowBase || 0); gl.uniform1i(P.uTone, 0); sensorUniforms(P, o);
+    gl.uniform1f(P.uNoise, o.noise); gl.uniform1f(P.uSeed, o.seed || 1); gl.uniform1f(P.uRowBase, o.rowBase || 0); gl.uniform1i(P.uTone, 0); sensorUniforms(P, o, lineGain(o, o.which, o.cams));
     conditionUniforms(P, L, s0 / scanSpeed(), pitch / scanSpeed(), (o.t || 100) * 1e-6, c.uncal, cam.spec.tilt * 7 + cam.spec.z);
     const db = debrisFor(cam);
     gl.uniform4fv(P.uDebris, db.data); gl.uniform1i(P.uNDebris, db.n);

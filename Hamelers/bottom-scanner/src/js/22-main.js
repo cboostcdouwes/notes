@@ -8,7 +8,8 @@
     if (t - fpsDrawn > 250) { fpsDrawn = t; drawFps(); }
     fpsN++; if (t - fpsT > 1000) { fps = Math.round(fpsN * 1000 / (t - fpsT)); $("st-fps").textContent = fps + " fps"; fpsN = 0; fpsT = t; }
     let lines = 0;
-    if (photoJob) stepPhoto();
+    const photoOnly = photoJob && !photoJob.live;   // a one-off render pauses the feed; the live render runs beside it
+    if (photoOnly) stepPhoto();
     else if (!paused && !visMode) {
       const target = sBelt + dt * scanSpeed() * speed;
       let n = Math.floor((target - lastLine) / truePitch());
@@ -26,6 +27,7 @@
       finishPallets(lastLine);
       spawn();
     }
+    if (!photoOnly) liveRender();
     lineWin.push([t, lines]); while (lineWin.length && t - lineWin[0][0] > 1000) lineWin.shift();
     const lps = lineWin.reduce((a, b) => a + b[1], 0), mps = lps * pitch / 1000;
     $("st-rate").textContent = paused ? "–" : (lps * linesPerImage(opts())).toLocaleString() + " lines/s";   // the camera's lines: twice the image's when the lights alternate

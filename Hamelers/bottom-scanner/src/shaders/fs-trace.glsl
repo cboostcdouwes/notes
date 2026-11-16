@@ -12,7 +12,11 @@ uniform float uRollX[40]; uniform int uNRoll; uniform float uRollHalf;
 uniform vec4 uLights[24]; uniform int uNL; uniform float uAmbient;
 uniform int uNBar;              // the first uNBar lights are LED bar points
 uniform int uNSide;             // the next uNSide are side lights, aimed along the gap at the belt centre
-uniform float uBarWin;          // the bars' own windows (bar beside its camera): angle from horizontal, rad; < 0: none
+uniform int uNSpot;             // the next uNSpot are the spots beside the cameras, each a row of units: axis, along the line,
+uniform vec3 uSpotAxis[2]; uniform vec3 uSpotAlong[2]; uniform vec2 uSpotTan[2];   // a unit's half-angle tangents across and along,
+uniform vec3 uSpotUnits[2];     // and units, angle between them (rad), shape (1: elliptical cone, 0: rectangular)
+uniform float uSpotFace;        // radius of a spot's emitting face, mm
+uniform float uLightWin;        // own windows of the lights beside the cameras: angle from horizontal, rad; < 0: none
 uniform vec2 uFace;             // scale of the lamps' face radiance in this view: x the LED bar, y the station lamps
 uniform float uLouvreTan;       // tangent of the bar louvre's cut-off angle along the bar; 0: no louvre
 uniform float uBarHalf;         // mm of bar each bar point stands for, to either side
@@ -185,23 +189,46 @@ float louvreT(float tanA) { return uLouvreTan > 0.0 ? max(LOUVRE_LEAK, 1.0 - tan
 float triCum(float x, float w) { x = clamp(x, -w, w); return x < 0.0 ? (x + w) * (x + w) / (2.0 * w) : w - (w - x) * (w - x) / (2.0 * w); }
 // Share of bar point lp's intensity that reaches p: the cosine of the face, and with a louvre the part of the bar
 // stretch the point stands for that the louvre passes toward p (by each part's angle along the bar).
-// Behind its own window, the light leaving toward p also passes the glass (turned toward the scan line at x = 0).
+// Behind its own window, the light leaving toward p also passes the glass (ownWindowT).
+float ownWindowT(vec3 lp, vec3 u);
 float barWeight(vec3 lp, vec3 p) {
   vec3 v = p - lp; float len = length(v), cosT = v.y / len;
   if (cosT <= 0.0) return 0.0;
-  if (uBarWin >= 0.0) cosT *= glassT(dot(v / len, vec3((lp.x > 0.0 ? -1.0 : 1.0) * sin(uBarWin), cos(uBarWin), 0.0)));
+  cosT *= ownWindowT(lp, v / len);
   if (uLouvreTan <= 0.0) return cosT;
   float w = v.y * uLouvreTan;
   return cosT * (triCum(lp.z + uBarHalf - p.z, w) - triCum(lp.z - uBarHalf - p.z, w)) / (2.0 * uBarHalf);
 }
+// A light beside its camera (lp) sends light along u through its own window, turned toward the scan line at x = 0.
+float ownWindowT(vec3 lp, vec3 u) {
+  if (uLightWin < 0.0) return 1.0;
+  return glassT(dot(u, vec3((lp.x > 0.0 ? -1.0 : 1.0) * sin(uLightWin), cos(uLightWin), 0.0)));
+}
+// How many of spot k's units (spot at Lw) send light toward p, through its window (as beamShare in the page script).
+// Unit i is turned along the line by (i - (n - 1) / 2) times the angle between units.
+float spotShare(int k, vec3 Lw, vec3 p) {
+  vec3 u = normalize(p - Lw), U = uSpotUnits[k];
+  float count = 0.0;
+  for (int i = 0; i < 16; i++) {
+    if (float(i) >= U.x) break;
+    float th = (float(i) - (U.x - 1.0) * 0.5) * U.y, c = cos(th), sn = sin(th);
+    vec3 ax = c * uSpotAxis[k] + sn * uSpotAlong[k], al = c * uSpotAlong[k] - sn * uSpotAxis[k];
+    float f = dot(u, ax);
+    if (f <= 0.0) continue;
+    float x = abs(dot(u, cross(ax, al))) / (uSpotTan[k].x * f), y = abs(dot(u, al)) / (uSpotTan[k].y * f);
+    if (U.z > 0.5 ? x * x + y * y <= 1.0 : max(x, y) <= 1.0) count += 1.0;
+  }
+  return count > 0.0 ? count * ownWindowT(Lw, u) : 0.0;
+}
 // Share of light l's intensity (at Lw) that reaches p: a bar point by barWeight, a side light by the cosine of its
-// face, aimed at the belt centre; a station lamp all of it (as lightShareAt in the page script).
+// face, aimed at the belt centre, a spot by its beam; a station lamp all of it (as lightShareAt in the page script).
 float lightShare(int l, vec3 Lw, vec3 p) {
   if (l < uNBar) return barWeight(Lw, p);
   if (l < uNBar + uNSide) return max(0.0, dot(normalize(p - Lw), -normalize(Lw)));
+  if (l < uNBar + uNSide + uNSpot) return spotShare(l - uNBar - uNSide, Lw, p);
   return 1.0;
 }
-vec3 lightCol(int l) { return l < uNBar + uNSide ? uBarCol : uLampCol; }   // the bottom lights share the bar's LEDs
+vec3 lightCol(int l) { return l < uNBar + uNSide + uNSpot ? uBarCol : uLampCol; }   // the bottom lights share the bar's LEDs
 
 vec3 toWorld(int p, float s, vec3 v, bool point) {
   if (p < 0 || uPalB[p].y < 0.5) return v;
@@ -399,6 +426,36 @@ vec3 lampGlint(vec3 wp, vec3 r, float rough) {
   }
   return sum;
 }
+// Mirror images of the spots' faces (discs of radius uSpotFace) in a shiny surface at wp, reflected direction r: seen
+// only from inside a spot's beam. A rough surface blurs each image as in lampGlint.
+vec3 spotGlint(vec3 wp, vec3 r, float rough) {
+  vec3 sum = vec3(0.0);
+  for (int k = 0; k < 2; k++) {
+    if (k >= uNSpot) break;
+    int l = uNBar + uNSide + k;
+    vec3 Lw = uLights[l].xyz, v = Lw - wp;
+    float t = dot(v, r), R = uSpotFace + rough * t;
+    if (t <= 0.0 || length(v - r * t) > R) continue;
+    float share = spotShare(k, Lw, wp);
+    if (share <= 0.0 || palletShadow(wp, r, t) || rollerBlocked(wp, Lw)) continue;
+    sum += uLights[l].w * share / (3.14159265 * R * R) * uBarCol;   // the face's radiance, spread over the blurred image
+  }
+  return sum;
+}
+// The spots' faces seen directly along the ray from o (direction d) up to distance tEnd: a face (disc of radius
+// uSpotFace) is as bright as its light toward the viewer, so only from inside its beam.
+vec3 spotFaces(vec3 o, vec3 d, float tEnd) {
+  vec3 sum = vec3(0.0);
+  for (int k = 0; k < 2; k++) {
+    if (k >= uNSpot) break;
+    int l = uNBar + uNSide + k;
+    vec3 Lw = uLights[l].xyz, v = Lw - o;
+    float t = dot(v, d);
+    if (t <= 0.0 || t > tEnd || length(v - d * t) > uSpotFace) continue;
+    sum += uLights[l].w * spotShare(k, Lw, o) / (3.14159265 * uSpotFace * uSpotFace) * uBarCol;
+  }
+  return sum;
+}
 // Surfaces at least this shiny (spec) reflect the lamps as mirror images (lampGlint) instead of highlights.
 const float MIRROR_SPEC = 0.1;
 const float METAL_F0 = 0.5, DIELECTRIC_F0 = 0.04;   // head-on reflectance: zinc and steel (assumed), water, ice and plastic
@@ -451,7 +508,8 @@ vec3 shade(Hit h, float s, float foot, out vec3 alb, out vec3 wn) {
     float F0 = metal ? METAL_F0 : DIELECTRIC_F0, F = F0 + (1.0 - F0) * pow(1.0 - clamp(dot(-h.ld, n), 0.0, 1.0), 5.0);
     float rough = mix(0.25, 0.02, smoothstep(MIRROR_SPEC, 0.6, spec)) + (metal ? 0.08 : 0.0);   // spread angle, rad
     vec3 r = reflect(h.ld, n);
-    c += F * lampGlint(wp, movable ? worldD(q, r) : r, rough);
+    vec3 rw = movable ? worldD(q, r) : r;
+    c += F * (lampGlint(wp, rw, rough) + spotGlint(wp, rw, rough));
   }
   return c;
 }
@@ -576,7 +634,8 @@ void main() {
     seen += 1.0;
     Hit h = trace(oo, dd, sk);
     vec3 alb, wn;
-    vec3 c = shade(h, sk, h.t * uPixAng, alb, wn) + dustGlow(oo, dd, h.k < 0 && h.roller < 0 ? 8000.0 : h.t, sk);
+    float tEnd = h.k < 0 && h.roller < 0 ? 8000.0 : h.t;
+    vec3 c = shade(h, sk, h.t * uPixAng, alb, wn) + dustGlow(oo, dd, tEnd, sk) + spotFaces(oo, dd, tEnd);
     if (h.k >= 0 || h.roller >= 0) {
       if (uStill == 1) c += alb * bounce(h, sk, wn);
       else if (uIndirect > 0) {

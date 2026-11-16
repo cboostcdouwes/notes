@@ -34,7 +34,7 @@
       scrollLive(live[k], out, cam, n);
       if (liveRaking[k]) {   // the side lights' lines fall between the bar's
         traceLines(cam, s0 + tp / 2, tp, n, Object.assign({ fnum: o.fnum, dirt: o.dirt, rect: o.rect, noise: 1, seed: seedN + 0.5, rowBase: lineCounter, outRow: OUT_RAKING + k * MAXROWS,
-          lights: lightsFor(cams, "line", "side") }, lineExposure(o)));
+          lights: lightsFor(cams, "line", "side"), which: "side" }, lineExposure(o)));
         scrollLive(liveRaking[k], OUT_RAKING + k * MAXROWS, cam, n);
       }
       let r = 0;
