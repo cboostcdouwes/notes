@@ -42,6 +42,20 @@ Release targets and both starters are done (design §13). The prototype's docume
   (it worked in a spike) and reverted: the user prefers the repo's `bootstrap.sh` to do the clone, with FlexCompose
   adding only the mount. Since 2026-11-12 the starters offer `devbox:volume` with a manual clone into the empty
   `src/`; the seeding stays parked.
+- **Slow first build of a new dev box** (asked 2026-11-16; `research:design` offered, user: later). Slow per the
+  user: both rosdep/apt and compiling the repos of `dependencies.repos`; both `devbox:host-src` and `devbox:volume`
+  are in use; idea: a PC that builds nightly. Not measured, and no requirement covers it yet (REQUIREMENTS.md
+  first). Options looked at:
+  1. *Prebuilt underlay* (fits both answers best): a nightly image per service with the rosdep installs and the
+     dependencies built in; the box builds only its own repo, `deps/` is cloned only to edit one. Open: the image
+     must match the pins; `image:` is also the release's `BASE_IMAGE` (set it explicitly in the release override).
+     Also open (2026-11-16): a moving `:nightly` tag or dated tags; a machine's `override: true` pin differs from
+     the service's image; editing one dependency shadows it under prebuilt packages built against the old one;
+     `bootstrap.sh` must source the underlay before rosdep; the nightly PC's SSH key; registry clean-up.
+  2. *Shared compiler cache* (ccache/sccache, remote storage on the NAS): works for both types and existing boxes,
+     C/C++ compiling only, not apt. Neither tool is in base 0.3.0.
+  3. *Seeded volume* (an image with a built `~/workspaces` fills a new, empty volume): `devbox:volume` only. With
+     `devbox:host-src` the host checkout's file times make make/ninja rebuild everything, or skip changed files.
 - **Deferred from the plan**: `generate --image <service>` (a per-developer choice between source and image);
   FlexCompose passing `build:` on as written (F2); a warning when an importing template has a workspace service of
   its own; keeping copied starter files in sync (a template tool, with the second machine).
@@ -67,6 +81,10 @@ Release targets and both starters are done (design §13). The prototype's docume
   `pull_policy: never`, which fits today: pulling from an online registry is a Won't. Waits for a request for an
   online update process; then update §13, the `release` target and the README. Until then only §13's wording is
   too strict: it says the machine *has* no registry access, where `release-offline` says it *can* run without one.
+- **Bundle without the base layers** (asked 2026-11-16, no decision): `docker load` skips layers the machine has,
+  so `release.sh` can drop the base image's blobs from `images.tar` and ship the base once. Tried by hand on Docker
+  29.9.3 with the classic image store (btrfs); not tried on the containerd image store or with the base missing.
+  Open: the machines' image store, how a new machine or a base bump gets the base, an e2e test to guard it.
 - **Polymx Python dependencies**: proposal in `python-dependencies.md` (pip convention now, a private
   package index later). Waits for the colleague reorganising the branches and dependencies. The plan's step 6
   puts a temporary pip step in the app's own `Dockerfile` and `bootstrap.sh` until they are ROS packages (user,
