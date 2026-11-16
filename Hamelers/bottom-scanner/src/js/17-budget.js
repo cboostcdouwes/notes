@@ -8,6 +8,7 @@
     return { e: e, saturated: 0.5 * k >= 1, db: 20 * Math.log10(e / Math.sqrt(e + SENSOR.readNoise * SENSOR.readNoise)), gain: Math.max(1, 1 / k) };
   }
   const typeLen = new Map();
+  const SIDE_EVEN_Z = 550;   // near the edge of a 1200 mm wide pallet
   function updateBudget() {
     const body = $("budget").querySelector("tbody"), o = opts(), types = TYPES.filter((t) => enabled.has(t.id));
     if (!types.length || !cams.length) { body.innerHTML = '<tr><td colspan="3" class="cap-dim">Tick at least one pallet type.</td></tr>'; return; }
@@ -15,13 +16,13 @@
     const v = beltSpeed, L = Math.max(...types.map((t) => typeLen.get(t.id))), cycle = 3600 / TARGET_PER_H, beltPitch = L + SPACING;
     const st = stickEstimate(gap), lost = st.perPallet * st.meanStall;   // travel lost to sticking, mm per pallet
     const capacity = v * 3600 / beltPitch, capStick = v * 3600 / (beltPitch + lost);
-    const vs = scanSpeed(), le = lineExposure(o), ae = areaExposure(o), lineRate = vs / pitch;
+    const vs = scanSpeed(), le = lineExposure(o), ae = areaExposure(o), lineRate = vs / pitch * linesPerImage(o);
     const pass = louvrePass(o.louvre), kLine = le.k * pass;
     const age = service.lightFactor(), sl = sensorAt(lineSignalK(o)), sa = sensorAt(ae.k * age);
     const driver = DRIVERS[$("driver").value], driverName = $("driver").selectedOptions[0].textContent;
     const flickLine = flickerSpread(driver, le.t * 1e-6), flickArea = flickerSpread(driver, ae.t * 1e-3);
     const flickRow = (spread) => [driverName, spread ? "brightness differs up to " + Math.round(spread * 100) + "% between exposures" : "steady", chk(spread <= 0.02, spread <= 0.1)];
-    const lineCamMBs = lineRate * cams[0].PX * 3 / 1e6, linePalletMB = (L + 2 * MARGIN) / pitch * cams[0].PX * 3 * cams.length / 1e6;
+    const lineCamMBs = lineRate * cams[0].PX * 3 / 1e6, linePalletMB = (L + 2 * MARGIN) / pitch * linesPerImage(o) * cams[0].PX * 3 * cams.length / 1e6;
     const topMmPx = AREA_REAL.topField / AREA_REAL.topPx, topMBs = AREA_REAL.topMP * TOP_FPS;
     const stations = AREA_CAMS.length - 1, stationMB = AREA_REAL.stationMP * stations, keptMB = linePalletMB + stationMB + AREA_REAL.topMP;
     const deadline = (1200 - MARGIN) / vs;   // end of the bottom scan until the trail leaves the station frame
@@ -29,6 +30,11 @@
     const snrChk = (s) => chk(!s.saturated && s.db >= 30, !s.saturated && s.db >= 20);
     const signal = (s) => (s.saturated ? "saturated: mid-grey already fills the full well" : Math.round(s.e) + " e⁻, SNR " + s.db.toFixed(0) + " dB, gain ×" + s.gain.toFixed(1));
     const pct = (x) => Math.round(x * 100) + "%", px = (x) => (x < 0.01 ? "<0.01" : x.toFixed(2)) + " px";
+    // How evenly the side lights light the scan line: a bottom face at the pallet's edge against one at the centre.
+    function sideEvenRow() {
+      const L = bottomLights("side"), edge = lineLightAt(L, SIDE_EVEN_Z) / lineLightAt(L, 0);
+      return ["Side lights along the scan line", "a bottom face " + SIDE_EVEN_Z + " mm from the belt centre gets " + edge.toFixed(1) + "× the light at the centre (without shadows)", chk(edge <= 2, edge <= 4)];
+    }
     function windowRow(c, o) {
       const w = windowOptics(c, o.fnum), name = "Window optics, " + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "° camera";
       if (w.housed === 1) return [name, "too steep: the camera can't see through it", chk(false)];
@@ -52,11 +58,13 @@
         ["Touching pallets come apart by", "about " + Math.round((sectionFactor - 1) * L) + " mm (longest type)", chk((sectionFactor - 1) * L >= 50, (sectionFactor - 1) * L >= 20)]] : []),
       ["… less gap sticking (" + st.perPallet.toFixed(2) + " × " + st.meanStall.toFixed(0) + " mm per pallet, model)", Math.round(capStick) + " pallets/h", chk(capStick >= TARGET_PER_H)],
       ["Bottom line-scan, " + cams.length + " × " + cams[0].PX + " px" + (sectionFactor > 1.001 ? ", at the middle-section speed" : "")],
-      ["Line rate", Math.round(lineRate) + " lines/s, " + (1000 / lineRate).toFixed(2) + " ms per line", ""],
+      ["Line rate", Math.round(lineRate) + " lines/s, " + (1000 / lineRate).toFixed(2) + " ms per line" + (linesPerImage(o) > 1 ? " (the lights alternate: each image every other line)" : ""), ""],
       ["Exposure", Math.round(le.t) + " µs" + (o.expUs > le.tMax ? " (capped at the line period)" : ""), chk(o.expUs <= le.tMax, true)],
       ["Motion blur along travel", fmtBlur(le.blur, pitch), chk(le.blur / pitch <= 0.5, le.blur / pitch <= 1)],
       ...(o.louvre ? [["LED bar louvre ±" + o.louvre + "° along the bar", "passes " + Math.round(pass * 100) + "% of the bar's light to the scan line at the belt centre", chk(pass >= 0.8, pass >= 0.4)]] : []),
-      ["Signal at mid-grey", signal(sl), snrChk(sl)],
+      ["Signal at mid-grey" + (o.lightSetup === "alternate" ? ", evenly lit image (bar)" : ""), signal(sl), snrChk(sl)],
+      ...(o.lightSetup === "alternate" ? [["Signal at mid-grey, raking image (side lights)", signal(sensorAt(lineSignalK(o, "side"))), snrChk(sensorAt(lineSignalK(o, "side")))]] : []),
+      ...(o.lightSetup === "alternate" || o.lightSetup === "side" ? [sideEvenRow()] : []),
       ["Light flicker between lines: " + flickRow(flickLine)[0], flickRow(flickLine)[1], flickRow(flickLine)[2]],
       ["Brightest surface not clipped", kLine <= 2 ? "everything up to reference white" : Math.round(200 / kLine) + "% of reference white", chk(kLine <= 2, kLine <= 4)],
       ["Data rate", lineCamMBs.toFixed(1) + " MB/s per camera → " + linkFor(lineCamMBs), ""],
@@ -72,7 +80,7 @@
       ["Signal at mid-grey (" + ae.t.toFixed(1) + " ms)", signal(sa), snrChk(sa)],
       ["Light flicker between snapshots: " + flickRow(flickArea)[0], flickRow(flickArea)[1], flickRow(flickArea)[2]],
       ["Service state"],
-      ["Since service", service.months + " months: light output " + Math.round(age * 100) + "%, dust on the LED bar −" + Math.round(service.barDust() * 100) + "%, window dirt " + Math.round(o.dirt * 100) + "%, " + service.specks() + " specks per bottom window", chk(age >= 0.9 && o.dirt <= 0.5, age >= 0.8 && o.dirt <= 0.75)],
+      ["Since service", service.months + " months: light output " + Math.round(age * 100) + "%, dust on the LED bar −" + Math.round(service.barDust(o.lightSetup === "beside") * 100) + "%, window dirt " + Math.round(o.dirt * 100) + "%, " + service.specks() + " specks per bottom window", chk(age >= 0.9 && o.dirt <= 0.5, age >= 0.8 && o.dirt <= 0.75)],
       ["Debris on the bottom windows", service.specks() + " specks of grit" + (o.splinter && !service.gritSlides() ? " and a splinter" : "") + ": darkens the image columns by about " + Math.round(debrisShare(o) * 100) + "% on average (estimate)", chk(debrisShare(o) <= 0.02, debrisShare(o) <= 0.1)],
       ["Bottom windows", winAngleText(service.winAngle) + " from horizontal" + (service.gritSlides() ? ", grit slides off" : "") +
         (service.purge ? "; air purge: about " + WINDOW_WEAR.purgeAirM3h * cams.length + " m³/h of compressed air (assumed)" : ""), ""],

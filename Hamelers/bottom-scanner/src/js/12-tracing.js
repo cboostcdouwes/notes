@@ -17,6 +17,12 @@
   }
   // real travel per recorded line: more than the nominal pitch when the encoder under-counts
   const truePitch = () => pitch * (1 + service.encErr);
+  // Scroll live waterfall L by n new rows (true proportions, newest at the bottom) and queue them from canvas row out.
+  function scrollLive(L, out, cam, n) {
+    const ctx = L.ctx, cv = ctx.canvas, h = n * pitch / L.mm; L.acc += h; const shift = Math.floor(L.acc); L.acc -= shift;
+    if (shift > 0) ctx.drawImage(cv, 0, -shift);
+    queueCopy(0, out, cam.PX, n, () => ctx, 0, cv.height - h, cv.width, h);
+  }
   function traceBatch(n) {
     const o = opts(), tp = truePitch(), s0 = lastLine + tp;
     uploadScene(activePallets(s0 + n * tp / 2));
@@ -25,10 +31,12 @@
     cams.forEach((cam, k) => {
       const out = k * MAXROWS;
       traceLines(cam, s0, tp, n, Object.assign({ fnum: o.fnum, dirt: o.dirt, rect: o.rect, noise: 1, seed: seedN, rowBase: lineCounter, outRow: out }, lineExposure(o)));
-      const L = live[k], ctx = L.ctx, cv = ctx.canvas;   // live waterfall, newest at the bottom, true proportions
-      const h = n * pitch / L.mm; L.acc += h; const shift = Math.floor(L.acc); L.acc -= shift;
-      if (shift > 0) ctx.drawImage(cv, 0, -shift);
-      queueCopy(0, out, cam.PX, n, () => ctx, 0, cv.height - h, cv.width, h);
+      scrollLive(live[k], out, cam, n);
+      if (liveRaking[k]) {   // the side lights' lines fall between the bar's
+        traceLines(cam, s0 + tp / 2, tp, n, Object.assign({ fnum: o.fnum, dirt: o.dirt, rect: o.rect, noise: 1, seed: seedN + 0.5, rowBase: lineCounter, outRow: OUT_RAKING + k * MAXROWS,
+          lights: lightsFor(cams, "line", "side") }, lineExposure(o)));
+        scrollLive(liveRaking[k], OUT_RAKING + k * MAXROWS, cam, n);
+      }
       let r = 0;
       while (r < n) {   // captures: contiguous rows that belong to one pallet
         const p = owners[r]; let e = r; while (e < n && owners[e] === p) e++;

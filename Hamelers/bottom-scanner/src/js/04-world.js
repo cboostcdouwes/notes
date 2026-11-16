@@ -30,12 +30,16 @@
     camList.forEach((c) => {
       out.push(part("line-scan camera", [c.C[0] - 45, c.C[1] - 45, c.C[2] - 45], [c.C[0] + 45, c.C[1] + 45, c.C[2] + 45], "steel", 1, { col: [0.06, 0.07, 0.08] }));
       out.push(part("camera stand", [c.C[0] - 15, -600, c.C[2] - 15], [c.C[0] + 15, c.C[1] - 45, c.C[2] + 15], "steel", 1, { col: [0.3, 0.31, 0.33] }));
-      const k = c.lightPos.join(",");
-      if (seen.has(k)) return;
+      const k = String(c.lightPos);
+      if (!c.lightPos || seen.has(k)) return;
       seen.add(k);
       const barI = c.lights.reduce((s, l) => s + l[3], 0);   // axis 2 tells the tracer this lamp is the bar
       out.push(part("LED bar", [c.lightPos[0] - 25, c.lightPos[1] - 30, -500], [c.lightPos[0] + 25, c.lightPos[1] - 3, 500], "lamp", 2, { col: faceRadiance(barI, 50 * 1000) }));
       [-450, 450].forEach((z) => out.push(part("LED bar stand", [c.lightPos[0] - 12, -600, z - 12], [c.lightPos[0] + 12, c.lightPos[1] - 30, z + 12], "steel", 1, { col: [0.3, 0.31, 0.33] })));
+    });
+    if (opts().lightSetup === "side" || opts().lightSetup === "alternate") sideLights().forEach(([x, y, z, I]) => {   // facing in along the gap
+      const s = Math.sign(z), face = 100 * 40;
+      out.push(part("side light", [x - 50, y - 20, s > 0 ? z + 3 : z - 33], [x + 50, y + 20, s > 0 ? z + 33 : z - 3], "lamp", 0, { col: faceRadiance(I, face) }));
     });
     out.forEach((p) => { p.stain = [0, 0, 0]; p.knots = [1e9, 1e9, 1e9, 1e9]; });
     return out;
@@ -59,7 +63,7 @@
     out.forEach((p) => { p.stain = [0, 0, 0]; p.knots = [1e9, 1e9, 1e9, 1e9]; });
     return out;
   }
-  const rigKey = (camList) => camList.map((c) => c.C.map(Math.round).join(",") + "/" + c.lightPos.join(",")).join(";") +
+  const rigKey = (camList) => camList.map((c) => c.C.map(Math.round).join(",") + "/" + String(c.lightPos)).join(";") + "|" + opts().lightSetup +
     "|" + $("opt-station").checked + ":" + AREA_CAMS.map((c) => c.C.join(",")).join(";");
   function worldFor(g, camList) {
     const key = g + "|" + rigKey(camList);

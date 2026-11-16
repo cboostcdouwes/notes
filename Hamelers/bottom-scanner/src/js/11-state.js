@@ -6,9 +6,9 @@
   let lineCap = 48, frameMs = 16;   // measured tracing cost, ms per pixel
   const enabled = new Set(TYPES.map((t) => t.id));
   const liveEl = $("livecams"), gallery = $("gallery");
-  let live = [];
+  let live = [], liveRaking = [];
   const LIVE_W = 512, LIVE_MM = 1700;
-  const opts = () => ({ fit: $("opt-fit").checked, rect: $("opt-rect").checked, sharedLight: $("opt-light").checked, anyZero: specs.some((s) => s.tilt === 0),
+  const opts = () => ({ fit: $("opt-fit").checked, rect: $("opt-rect").checked, sharedLight: $("opt-light").checked, lightSetup: $("light-setup").value, anyZero: specs.some((s) => s.tilt === 0),
     fnum: +$("fnum").value, dirt: Math.min(1, +$("dirt").value + service.extraDirt()), transport: $("opt-transport").checked, station: $("opt-station").checked,
     expUs: Math.pow(10, +$("exp").value), light: +$("light").value, aexpMs: Math.pow(10, +$("aexp").value),
     louvre: +$("louvre").value, dust: +$("dust").value, glare: $("opt-glare").checked,
@@ -58,10 +58,11 @@
       const dx = b[0] - a[0], dy = b[1] - a[1], t = Math.max(0, Math.min(1, ((cx - a[0]) * dx + (cy - a[1]) * dy) / (dx * dx + dy * dy)));
       return Math.hypot(a[0] + t * dx - cx, a[1] + t * dy - cy) - ROLL_R;
     }));
-    let rays = Infinity, lit = Infinity;
+    let rays = Infinity, lit = Infinity;   // lit stays Infinity without a bar (side lights only)
     cs.forEach((c) => {
       rays = Math.min(rays, clearance([c.C[0], c.C[1]], [0, 0]) - (fnum > 0 ? c.focal / fnum / 2 : 0));
       // highest point on the scan plane (x = y · C.x / C.y) the light still reaches past the rollers
+      if (!c.lightPos) return;
       let y = 0; while (y < 300 && clearance(c.lightPos, [y * c.C[0] / c.C[1], y]) > 0) y += 2;
       lit = Math.min(lit, y);
     });
@@ -81,7 +82,7 @@
   function updateGapStat() {
     const r = gapReport(gap, cams, opts().fnum);
     $("st-gap").textContent = gap + " mm · " + (r.rays >= 0 ? "camera rays clear the rollers by " + r.rays.toFixed(0) + " mm" : "rollers cut into the camera view (" + r.rays.toFixed(0) + " mm)") +
-      " · light reaches " + (r.lit >= 300 ? "the whole pallet height" : r.lit <= 0 ? "nothing above the belt" : "up to " + r.lit + " mm above the belt");
+      (r.lit === Infinity ? " · side lights along the gap" : " · light reaches " + (r.lit >= 300 ? "the whole pallet height" : r.lit <= 0 ? "nothing above the belt" : "up to " + r.lit + " mm above the belt"));
     const glare = lampGlare(cams);
     $("st-glare").textContent = glare.length ? "seen by the " + glare.map((c) => (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "°").join(" and ") + " camera" + (glare.length > 1 ? "s" : "") + ": move or shield the lamps" : "no station lamp in a bottom camera's view";
     $("st-glare").style.color = glare.length ? "var(--bad)" : "";
@@ -90,18 +91,22 @@
       st.perPallet.toFixed(2) + " catches per pallet, " + st.meanStall.toFixed(0) + " mm stall on average, up to " + st.worst.toFixed(0) + " mm (intact pallets; damaged ones droop more)";
   }
 
+  // One live waterfall per bottom camera, and with alternating lights a second one for its raking-light image.
   function setupLive() {
-    liveEl.innerHTML = ""; live = [];
-    cams.forEach((c) => {
+    liveEl.innerHTML = ""; live = []; liveRaking = [];
+    const waterfall = (c, label) => {
       const wrap = document.createElement("div"); wrap.className = "livecam";
       const lbl = document.createElement("span");
-      lbl.textContent = camLabel(c);
+      lbl.textContent = label;
       const mm = (c.z1 - c.z0) / LIVE_W;
       const cv = document.createElement("canvas"); cv.width = LIVE_W; cv.height = Math.round(LIVE_MM / mm);
       const ctx = cv.getContext("2d"); ctx.fillStyle = "#0b0c0d"; ctx.fillRect(0, 0, cv.width, cv.height);
       const mark = document.createElement("i"); mark.className = "scanmark";
-      wrap.append(lbl, cv, mark); liveEl.append(wrap); live.push({ ctx: ctx, acc: 0, mm: mm });
-    });
+      wrap.append(lbl, cv, mark); liveEl.append(wrap);
+      return { ctx: ctx, acc: 0, mm: mm };
+    };
+    cams.forEach((c) => live.push(waterfall(c, camLabel(c))));
+    if (opts().lightSetup === "alternate") cams.forEach((c) => liveRaking.push(waterfall(c, camLabel(c) + " · raking light")));
     const c0 = cams[0];
     $("st-res").textContent = (opts().rect ? c0.mmPerPx.toFixed(2) : c0.nearMm.toFixed(2) + "–" + c0.farMm.toFixed(2)) + " mm · " + c0.PX + " px";
   }

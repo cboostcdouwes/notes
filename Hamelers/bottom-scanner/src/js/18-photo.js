@@ -33,11 +33,12 @@
     out.innerHTML = "";
     const areaTile = (c, label) => tiles.push({ cam: c, ctx: add(c.w, c.h, label), s: -c.trigger(p, 0) });   // triggers are cx + constant
     if (view === "station") AREA_CAMS.forEach((c) => areaTile(c, c.name));
-    if (view === "bottom") cams.forEach((cam) => {
-      const rows = Math.ceil((2 * p.reach + 400) / pitch);
-      const ctx = add(cam.PX, rows, camLabel(cam), (cam.PX * cam.mmPerPx).toFixed(0) + " / " + (rows * pitch).toFixed(0));
-      for (let r = 0; r < rows; r += MAXROWS) tiles.push({ cam: cam, ctx: ctx, r: r, n: Math.min(MAXROWS, rows - r), s0: -p.reach - 200 + r * pitch });
-    });
+    const images = opts().lightSetup === "alternate" ? [["", undefined], [" · raking light", "side"]] : [["", undefined]];
+    if (view === "bottom") images.forEach(([suffix, which]) => cams.forEach((cam) => {
+      const rows = Math.ceil((2 * p.reach + 400) / pitch), lights = which && lightsFor(cams, "line", which);
+      const ctx = add(cam.PX, rows, camLabel(cam) + suffix, (cam.PX * cam.mmPerPx).toFixed(0) + " / " + (rows * pitch).toFixed(0));
+      for (let r = 0; r < rows; r += MAXROWS) tiles.push({ cam: cam, ctx: ctx, r: r, n: Math.min(MAXROWS, rows - r), s0: -p.reach - 200 + r * pitch, lights: lights });
+    }));
     const what = p.type.name + ": " + (p.damages.length ? p.damages.map((d) => d[0]).join(", ") : "intact");
     photoJob = { pals: [p], what: what, tiles: tiles, ti: 0, pass: 0, N: +$("ph-n").value, t0: performance.now() };
   }
@@ -48,7 +49,7 @@
       const t = j.tiles[j.ti], show = j.pass === j.N - 1 || k === photoPasses - 1;
       const po = { still: true, pass: j.pass, noPost: !show, seed: 1 + j.pass * 1.618, fnum: o.fnum };
       if (t.cam.kind === "line") {
-        traceLines(t.cam, t.s0, pitch, t.n, Object.assign(po, lineExposure(o), { rect: o.rect, dirt: o.dirt, noise: 1, rowBase: t.r, sky: HALL_SKY, lightJit: [40, 15, 120] }));
+        traceLines(t.cam, t.s0, pitch, t.n, Object.assign(po, lineExposure(o), { rect: o.rect, dirt: o.dirt, noise: 1, rowBase: t.r, sky: HALL_SKY, lightJit: [40, 15, 120], lights: t.lights }));
         if (show) t.ctx.drawImage(glc, 0, 0, t.cam.PX, t.n, 0, t.r, t.cam.PX, t.n);
       } else {
         const ov = !!t.cam.photo;

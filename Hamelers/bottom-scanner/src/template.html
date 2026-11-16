@@ -12,6 +12,10 @@
     <h1>Pallet Bottom Scanner</h1>
     <span class="stamp">GPU ray-traced line-scan and station cameras · simulated, dimensions assumed · 2026-11-13 · <span id="gpu-name">GPU: –</span></span>
   </header>
+  <div class="bar" role="group" aria-label="Playback">
+      <button type="button" class="btn" id="pause">Pause</button>
+      <label class="field" for="speed">Playback <input id="speed" type="range" min="-3.9" max="0" step="0.05" value="0"><output id="speed-out">1.00×</output></label>
+  </div>
   <div class="row" aria-label="Share settings">
     <button type="button" class="btn" id="set-copy">Copy settings</button>
     <button type="button" class="btn" id="set-load">Load settings…</button>
@@ -20,8 +24,9 @@
     <span class="cap-dim" id="set-msg" style="font-size:0.78rem"></span>
   </div>
 
-  <div class="bar" role="group" aria-label="Scanner settings">
-    <span class="grp">
+  <div class="bar groups" role="group" aria-label="Scanner settings">
+    <div class="grp" role="group" aria-label="Bottom cameras">
+      <span class="grp-h">Bottom cameras</span>
       <span class="seg" id="presets" aria-label="Bottom cameras">
         <button type="button" data-cams="0" aria-pressed="false">0°</button>
         <button type="button" data-cams="25" aria-pressed="false">+25°</button>
@@ -30,54 +35,63 @@
       </span>
       <label class="field" for="tilt">Tilt <input id="tilt" type="range" min="-35" max="35" step="1" value="25"><output id="tilt-out">+25°</output></label>
       <label class="field" for="side">Side offset <input id="side" type="range" min="0" max="600" step="50" value="400"><output id="side-out">±400 mm</output></label>
-      <label class="field" for="gap">Gap <input id="gap" type="range" min="40" max="350" step="10" value="100"><output id="gap-out">100 mm</output></label>
-    </span>
-    <span class="grp">
       <label class="field" for="sensor">Sensor <select id="sensor"><option value="1024" selected>1k px</option><option value="2048">2k px</option><option value="4096">4k px</option></select></label>
       <label class="field" for="fnum">Lens <select id="fnum"><option value="0">pinhole (no depth of field)</option><option value="2.8">f/2.8</option><option value="4" selected>f/4</option><option value="8">f/8</option></select></label>
       <label class="field" for="opt-fit"><input type="checkbox" id="opt-fit" checked> Fit FOV</label>
       <label class="field" for="opt-rect"><input type="checkbox" id="opt-rect" checked> Perspective correction</label>
-      <label class="field" for="opt-light"><input type="checkbox" id="opt-light" checked> One light</label>
       <label class="field" for="exp">Line exposure <input id="exp" type="range" min="1.3" max="3.5" step="0.05" value="2"><output id="exp-out">100 µs</output></label>
-      <label class="field" for="light">LED bar <input id="light" type="range" min="10" max="400" step="10" value="100"><output id="light-out">100%</output></label>
-      <label class="field" for="aexp">Area exposure <input id="aexp" type="range" min="-1" max="1" step="0.05" value="0"><output id="aexp-out">1.0 ms</output></label>
-      <label class="field" for="dirt">Window dirt <input id="dirt" type="range" min="0" max="1" step="0.05" value="0.25"><output id="dirt-out">25%</output></label>
-      <label class="field" for="louvre">Bar louvre <select id="louvre"><option value="0" selected>none (bare diffuser)</option><option value="45">±45° along the bar</option><option value="30">±30° along the bar</option><option value="20">±20° along the bar</option></select></label>
-      <label class="field" for="dust">Air dust <input id="dust" type="range" min="0" max="5" step="0.25" value="0.5"><output id="dust-out">0.5 mg/m³</output></label>
       <label class="field" for="opt-glare"><input type="checkbox" id="opt-glare" checked> Lens glare</label>
-    </span>
-    <span class="grp">
+      <label class="field" for="f-uncal"><input type="checkbox" id="f-uncal"> Uncalibrated lenses and sensors</label>
+    </div>
+    <div class="grp" role="group" aria-label="Light">
+      <span class="grp-h">Light</span>
+      <label class="field" for="light-setup">Setup <select id="light-setup"><option value="gap" selected>LED bar under the gap</option><option value="beside">LED bar beside each camera, behind its own window</option><option value="alternate">bar under the gap and side lights, alternating lines</option><option value="side">side lights only</option></select></label>
+      <label class="field" for="opt-light"><input type="checkbox" id="opt-light" checked> One bar for all cameras (under the gap)</label>
+      <label class="field" for="light">Light power <input id="light" type="range" min="10" max="400" step="10" value="100"><output id="light-out">100%</output></label>
+      <label class="field" for="louvre">Bar louvre <select id="louvre"><option value="0" selected>none (bare diffuser)</option><option value="45">±45° along the bar</option><option value="30">±30° along the bar</option><option value="20">±20° along the bar</option></select></label>
+      <label class="field" for="driver">Light drivers <select id="driver"><option value="dc" selected>DC, flicker-free</option><option value="pwm">PWM 1 kHz (dimmed)</option><option value="ripple">100 Hz ripple (cheap driver)</option></select></label>
+      <label class="field" for="lightcol">Light colours <select id="lightcol"><option value="matched" selected>all 6500 K</option><option value="mixed">bar 6500 K, lamps 4000 K</option><option value="warm">bar 5000 K, lamps 3000 K</option></select></label>
+      <label class="field" for="daylight">Daylight <select id="daylight"><option value="none" selected>none (closed hall)</option><option value="overcast">overcast</option><option value="clouds">sun and passing clouds</option></select></label>
+    </div>
+    <div class="grp" role="group" aria-label="Windows and air">
+      <span class="grp-h">Windows and air</span>
+      <label class="field" for="win-angle">Bottom windows <input id="win-angle" type="range" min="0" max="90" step="5" value="0"><output id="win-angle-out">0° (flat)</output></label>
+      <label class="field" for="win-purge"><input type="checkbox" id="win-purge"> Air purge</label>
+      <label class="field" for="dirt">Window dirt <input id="dirt" type="range" min="0" max="1" step="0.05" value="0.25"><output id="dirt-out">25%</output></label>
+      <label class="field" for="dust">Air dust <input id="dust" type="range" min="0" max="5" step="0.25" value="0.5"><output id="dust-out">0.5 mg/m³</output></label>
+      <label class="field" for="f-fog"><input type="checkbox" id="f-fog"> Fogged bottom windows</label>
+      <label class="field" for="f-splinter"><input type="checkbox" id="f-splinter"> Splinter on the first bottom camera's window</label>
+    </div>
+    <div class="grp" role="group" aria-label="Conveyor and feed">
+      <span class="grp-h">Conveyor and feed</span>
+      <label class="field" for="gap">Gap <input id="gap" type="range" min="40" max="350" step="10" value="100"><output id="gap-out">100 mm</output></label>
       <label class="field" for="belt">Conveyor <input id="belt" type="range" min="0.2" max="1.5" step="0.01" value="0.45"><output id="belt-out">0.45 m/s</output></label>
       <label class="field" for="section">Middle section <input id="section" type="range" min="1" max="1.5" step="0.05" value="1.1"><output id="section-out">+10% faster</output></label>
-      <label class="field" for="speed">Playback <input id="speed" type="range" min="-3.9" max="0" step="0.05" value="0"><output id="speed-out">1.00×</output></label>
       <label class="field" for="damage">Damaged <input id="damage" type="range" min="0" max="1" step="0.05" value="0.45"><output id="damage-out">45%</output></label>
       <label class="field" for="scatter">Scatter <input id="scatter" type="range" min="0" max="2" step="0.1" value="1"><output id="scatter-out">±80 mm, ±5°</output></label>
       <label class="field" for="opt-transport"><input type="checkbox" id="opt-transport" checked> Slip, jostle, sticking, touching</label>
       <label class="field" for="opt-unusual"><input type="checkbox" id="opt-unusual" checked> Unusual cases</label>
+    </div>
+    <div class="grp" role="group" aria-label="Station cameras">
+      <span class="grp-h">Station cameras</span>
       <label class="field" for="opt-station"><input type="checkbox" id="opt-station" checked> Station cameras</label>
-      <button type="button" class="btn" id="pause">Pause</button>
-    </span>
-    <span class="grp" aria-label="Service state">
+      <label class="field" for="aexp">Area exposure <input id="aexp" type="range" min="-1" max="1" step="0.05" value="0"><output id="aexp-out">1.0 ms</output></label>
+      <label class="field" for="shutter">Area shutter <select id="shutter"><option value="global" selected>global</option><option value="rolling">rolling, 20 ms readout</option></select></label>
+      <label class="field" for="side-h">Side cameras: height <input id="side-h" type="range" min="30" max="400" step="10" value="260"><output id="side-h-out">260 mm</output></label>
+      <label class="field" for="side-x">along travel <input id="side-x" type="range" min="0" max="500" step="25" value="0"><output id="side-x-out">0 mm</output></label>
+    </div>
+    <div class="grp" role="group" aria-label="Service and faults">
+      <span class="grp-h">Service and faults</span>
       <label class="field" for="months">Since service <input id="months" type="range" min="0" max="12" step="0.5" value="0"><output id="months-out">0 months</output></label>
       <label class="field" for="f-bar"><input type="checkbox" id="f-bar"> LED bar failed</label>
       <label class="field" for="f-lamp"><input type="checkbox" id="f-lamp"> One station lamp out</label>
       <label class="field" for="f-enc"><input type="checkbox" id="f-enc"> Encoder reads 8% short</label>
-      <label class="field" for="f-splinter"><input type="checkbox" id="f-splinter"> Splinter on the first bottom camera's window</label>
-      <label class="field" for="f-fog"><input type="checkbox" id="f-fog"> Fogged bottom windows</label>
-      <label class="field" for="win-angle">Bottom windows <input id="win-angle" type="range" min="0" max="90" step="5" value="0"><output id="win-angle-out">0° (flat)</output></label>
-      <label class="field" for="win-purge"><input type="checkbox" id="win-purge"> Air purge</label>
-    </span>
-    <span class="grp" aria-label="Conditions">
-      <label class="field" for="driver">Light drivers <select id="driver"><option value="dc" selected>DC, flicker-free</option><option value="pwm">PWM 1 kHz (dimmed)</option><option value="ripple">100 Hz ripple (cheap driver)</option></select></label>
-      <label class="field" for="lightcol">Light colours <select id="lightcol"><option value="matched" selected>all 6500 K</option><option value="mixed">bar 6500 K, lamps 4000 K</option><option value="warm">bar 5000 K, lamps 3000 K</option></select></label>
-      <label class="field" for="daylight">Daylight <select id="daylight"><option value="none" selected>none (closed hall)</option><option value="overcast">overcast</option><option value="clouds">sun and passing clouds</option></select></label>
       <label class="field" for="vib">Vibration <input id="vib" type="range" min="0" max="1" step="0.05" value="0.1"><output id="vib-out">0.10 mm</output></label>
-      <label class="field" for="shutter">Area shutter <select id="shutter"><option value="global" selected>global</option><option value="rolling">rolling, 20 ms readout</option></select></label>
-      <label class="field" for="f-uncal"><input type="checkbox" id="f-uncal"> Uncalibrated lenses and sensors</label>
-      <label class="field" for="side-h">Side cameras: height <input id="side-h" type="range" min="30" max="400" step="10" value="260"><output id="side-h-out">260 mm</output></label>
-      <label class="field" for="side-x">along travel <input id="side-x" type="range" min="0" max="500" step="25" value="0"><output id="side-x-out">0 mm</output></label>
+    </div>
+    <div class="grp" role="group" aria-label="Analysis">
+      <span class="grp-h">Analysis</span>
       <label class="field" for="opt-indirect"><input type="checkbox" id="opt-indirect"> Indirect light in Compare and Batch (slower)</label>
-    </span>
+    </div>
   </div>
   <div class="types" id="types" aria-label="Pallet types in the feed"></div>
 

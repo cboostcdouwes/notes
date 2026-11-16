@@ -11,12 +11,14 @@ uniform vec4 uBbLo[6]; uniform vec4 uBbHi[6];
 uniform float uRollX[40]; uniform int uNRoll; uniform float uRollHalf;
 uniform vec4 uLights[24]; uniform int uNL; uniform float uAmbient;
 uniform int uNBar;              // the first uNBar lights are LED bar points
+uniform int uNSide;             // the next uNSide are side lights, aimed along the gap at the belt centre
+uniform float uBarWin;          // the bars' own windows (bar beside its camera): angle from horizontal, rad; < 0: none
 uniform vec2 uFace;             // scale of the lamps' face radiance in this view: x the LED bar, y the station lamps
 uniform float uLouvreTan;       // tangent of the bar louvre's cut-off angle along the bar; 0: no louvre
 uniform float uBarHalf;         // mm of bar each bar point stands for, to either side
 uniform float uDust;            // scattering by dust in the air, per mm
 uniform vec3 uBarCol; uniform vec3 uLampCol;   // light colours (linear RGB, luminance 1)
-uniform vec4 uLampLo[12]; uniform vec4 uLampHi[12]; uniform int uNLamp;   // lamp faces: box, radiance (lo.w), is the bar (hi.w)
+uniform vec4 uLampLo[16]; uniform vec4 uLampHi[16]; uniform int uNLamp;   // lamp faces: box, radiance (lo.w), is the bar (hi.w)
 uniform float uVib;             // bottom camera vibration amplitude, mm
 uniform float uSpeed;           // belt speed over the scanner, mm/s (encoder position to time)
 uniform float uDistort;         // uncorrected barrel distortion of the lens; 0: calibrated
@@ -33,6 +35,7 @@ uniform int uStill; uniform vec3 uSky; uniform vec3 uLightJit;   // photo mode: 
 uniform float uBlur;            // encoder travel during one exposure, mm: samples spread over it (motion blur)
 uniform vec3 uWinN; uniform vec3 uWinO;   // line-scan: the window's outward normal, where the lens axis crosses it
 uniform vec2 uGlass;            // the window glass: index, thickness (mm)
+float glassT(float c);
 out vec4 outColor;
 
 uint rngS;
@@ -182,13 +185,23 @@ float louvreT(float tanA) { return uLouvreTan > 0.0 ? max(LOUVRE_LEAK, 1.0 - tan
 float triCum(float x, float w) { x = clamp(x, -w, w); return x < 0.0 ? (x + w) * (x + w) / (2.0 * w) : w - (w - x) * (w - x) / (2.0 * w); }
 // Share of bar point lp's intensity that reaches p: the cosine of the face, and with a louvre the part of the bar
 // stretch the point stands for that the louvre passes toward p (by each part's angle along the bar).
+// Behind its own window, the light leaving toward p also passes the glass (turned toward the scan line at x = 0).
 float barWeight(vec3 lp, vec3 p) {
-  vec3 v = p - lp; float cosT = v.y / length(v);
+  vec3 v = p - lp; float len = length(v), cosT = v.y / len;
   if (cosT <= 0.0) return 0.0;
+  if (uBarWin >= 0.0) cosT *= glassT(dot(v / len, vec3((lp.x > 0.0 ? -1.0 : 1.0) * sin(uBarWin), cos(uBarWin), 0.0)));
   if (uLouvreTan <= 0.0) return cosT;
   float w = v.y * uLouvreTan;
   return cosT * (triCum(lp.z + uBarHalf - p.z, w) - triCum(lp.z - uBarHalf - p.z, w)) / (2.0 * uBarHalf);
 }
+// Share of light l's intensity (at Lw) that reaches p: a bar point by barWeight, a side light by the cosine of its
+// face, aimed at the belt centre; a station lamp all of it (as lightShareAt in the page script).
+float lightShare(int l, vec3 Lw, vec3 p) {
+  if (l < uNBar) return barWeight(Lw, p);
+  if (l < uNBar + uNSide) return max(0.0, dot(normalize(p - Lw), -normalize(Lw)));
+  return 1.0;
+}
+vec3 lightCol(int l) { return l < uNBar + uNSide ? uBarCol : uLampCol; }   // the bottom lights share the bar's LEDs
 
 vec3 toWorld(int p, float s, vec3 v, bool point) {
   if (p < 0 || uPalB[p].y < 0.5) return v;
@@ -373,7 +386,7 @@ vec3 albedo(int k, vec3 p, inout vec3 n, float foot, out float spec) {
 // its brightness spreads over the larger area.
 vec3 lampGlint(vec3 wp, vec3 r, float rough) {
   vec3 sum = vec3(0.0), inv = safeInv(r);
-  for (int i = 0; i < 12; i++) {
+  for (int i = 0; i < 16; i++) {
     if (i >= uNLamp) break;
     vec3 lo = uLampLo[i].xyz, hi = uLampHi[i].xyz;
     float grow = rough * length((lo + hi) * 0.5 - wp), tn, tf; vec3 a, b;
@@ -423,12 +436,12 @@ vec3 shade(Hit h, float s, float foot, out vec3 alb, out vec3 wn) {
     float lam = dot(n, u);
     if (lam <= 0.0 || dot(h.n, u) <= -0.05) continue;
     vec3 toL = Lw - wp; float dl = length(toL);
-    float share = l < uNBar ? barWeight(Lw, wp) : 1.0;
+    float share = lightShare(l, Lw, wp);
     if (share <= 0.0) continue;
     if (palletShadow(wp, toL / dl, dl)) continue;   // any pallet, onto pallets, rollers, frame and floor alike
     if (rollerBlocked(wp, Lw)) continue;
     float fall = uLights[l].w * share / (dist * dist);
-    vec3 col = l < uNBar ? uBarCol : uLampCol;
+    vec3 col = lightCol(l);
     irr += lam * fall * col;
     if (spec > 0.0 && !mirror) { vec3 hv = normalize(u - h.ld); float nh = dot(n, hv); if (nh > 0.0) sp += col * spec * pow(nh, gloss) * fall * (gloss + 2.0) / 42.0; }
   }
@@ -474,8 +487,8 @@ vec3 dustGlow(vec3 o, vec3 d, float tEnd, float s) {
     float J = (atan((tEnd - tc) / hh) - atan(-tc / hh)) / hh;   // integral of 1 / distance² along the ray
     vec3 pc = o + d * clamp(tc, 0.0, tEnd), u = pc - Lw; float du = max(length(u), 1e-3); u /= du;
     float g2 = DUST_G * DUST_G, phase = (1.0 - g2) / (12.566371 * pow(1.0 + g2 - 2.0 * DUST_G * dot(u, -d), 1.5));
-    float add = uDust * phase * uLights[l].w * (l < uNBar ? barWeight(Lw, pc) : 1.0) * J;
-    vec3 col = l < uNBar ? uBarCol : uLampCol;
+    float add = uDust * phase * uLights[l].w * lightShare(l, Lw, pc) * J;
+    vec3 col = lightCol(l);
     if (add * uExposure < DUST_VISIBLE) { sum += add * col; continue; }
     if (!posed) { loadPoses(s); posed = true; }
     if (palletShadow(pc, -u, du) || rollerBlocked(pc, Lw)) continue;
@@ -495,16 +508,21 @@ vec3 vibration(float t) {
 
 // The bottom camera's window, a parallel glass plate: the ray from o leaves it in its own direction d, shifted
 // sideways (o moves to the shifted line, so distances still count from the camera, and each aperture sample shifts
-// on its own: astigmatism). Returns the share of the light let through: both faces reflect, by Fresnel for each
-// polarisation, and the light bouncing between them comes out too (as glassPass in the page script). A ray that
-// doesn't cross the window outward ends on the black housing.
+// on its own: astigmatism). Returns the share of the light let through (glassT). A ray that doesn't cross the window
+// outward ends on the black housing.
 float throughWindow(inout vec3 o, vec3 d) {
-  float c = dot(d, uWinN), n = uGlass.x;
+  float c = dot(d, uWinN);
   if (c <= 0.0) return 0.0;
-  vec3 p1 = o + d * (dot(uWinO - o, uWinN) / c), r = refract(d, -uWinN, 1.0 / n);
-  float ct = dot(r, uWinN);
-  vec3 w = p1 + r * (uGlass.y / ct) - o;
+  vec3 p1 = o + d * (dot(uWinO - o, uWinN) / c), r = refract(d, -uWinN, 1.0 / uGlass.x);
+  vec3 w = p1 + r * (uGlass.y / dot(r, uWinN)) - o;
   o += w - d * dot(w, d);
+  return glassT(c);
+}
+// Share of the light a window lets through at cosine c to its normal: both faces reflect, by Fresnel for each
+// polarisation, and the light bouncing between them comes out too (as glassPass in the page script).
+float glassT(float c) {
+  if (c <= 0.0) return 0.0;
+  float n = uGlass.x, ct = sqrt(1.0 - (1.0 - c * c) / (n * n));
   float rs = (c - n * ct) / (c + n * ct), rp = (n * c - ct) / (n * c + ct);
   rs *= rs; rp *= rp;
   return 0.5 * ((1.0 - rs) / (1.0 + rs) + (1.0 - rp) / (1.0 + rp));

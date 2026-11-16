@@ -15,11 +15,13 @@
     lightFactor() { return 1 - WEAR.ledLoss * this.months; },
     faceUp() { return Math.cos(this.winAngle * Math.PI / 180); },
     gritSlides() { return this.winAngle >= WINDOW_WEAR.gritSlideDeg; },
-    extraDirt() {
+    dustSettles() {   // share of the flat-window dust rate that settles on a window at this angle and purge
       const settles = this.faceUp() + WINDOW_WEAR.dustCling * (1 - this.faceUp());
-      return WEAR.windowDirt * this.months * settles * (this.purge ? WINDOW_WEAR.purgeDust : 1);
+      return settles * (this.purge ? WINDOW_WEAR.purgeDust : 1);
     },
-    barDust() { return Math.min(0.7, WEAR.barDust * this.months); },
+    extraDirt() { return WEAR.windowDirt * this.months * this.dustSettles(); },
+    // behindWindow: the bar sits beside its camera behind its own window, which collects the dust instead
+    barDust(behindWindow) { return Math.min(0.7, WEAR.barDust * this.months * (behindWindow ? this.dustSettles() : 1)); },
     specks() { return this.purge || this.gritSlides() ? 0 : Math.min(10, Math.floor(WEAR.specks * this.months * this.faceUp())); } };
   const winAngleText = (a) => a + "°" + (a === 0 ? " (flat)" : a === 90 ? " (vertical)" : "");
   let beltSpeed = 450;   // real infeed conveyor speed, mm/s (the Playback slider only runs the simulation faster or slower)

@@ -34,11 +34,65 @@
     return 0;
   }
 
+  // Light setups for the bottom cameras (assumed geometry):
+  // - gap: the LED bar under the gap, one for all cameras or one per camera along its view.
+  // - beside: each camera's own bar BESIDE_MM from its lens, on the side away from the belt, behind a window of its own
+  //   at the window angle, turned toward the scan line. It is the same bar as the shared one under the gap (its power
+  //   set for BAR_REF_MM), so from further away it gives less light.
+  // - side: a compact LED light at each belt side, SIDE_LIGHT below the side frame on the gap line, its face aimed
+  //   along the gap at the belt centre; each emits as much light as the whole bar.
+  // - alternate: the bar under the gap and the side lights, on during alternate lines; the cameras run at twice the
+  //   line rate, so each light gives an image at the usual pitch.
+  const BAR_REF_MM = 250, BESIDE_MM = 80, SIDE_LIGHT = { y: -130, z: BELT_W / 2 + 70 };
+  const sideLights = () => [-1, 1].map((s) => [0, SIDE_LIGHT.y, s * SIDE_LIGHT.z, 0.75 * 2.42 * BAR_REF_MM * BAR_REF_MM]);
+  const linesPerImage = (o) => (o.lightSetup === "alternate" ? 2 : 1);   // camera lines per image line
+  // Where camera spec (lens at C) has its LED bar in the travel/height plane, or null for side lights only.
+  function barPosition(spec, C, o) {
+    const t = spec.tilt * Math.PI / 180, sx = Math.sin(t), cyy = Math.cos(t);
+    if (o.lightSetup === "side") return null;
+    if (o.lightSetup === "beside") { const s = Math.sign(spec.tilt) || 1; return [C[0] + s * BESIDE_MM * cyy, C[1] - s * BESIDE_MM * sx]; }
+    return o.sharedLight ? [o.anyZero ? -80 : 0, -250] : [-350 * sx + (spec.tilt === 0 ? -80 : 0), -350 * cyy];
+  }
+  // The bottom lights of image which (as lightsFor picks them, see there), at full power, for lineLightAt.
+  function bottomLights(which) {
+    const o = opts(), w = which || (o.lightSetup === "side" ? "side" : "bar");
+    const bars = w === "bar" ? uniqueBars(cams) : [], side = w === "side" ? sideLights() : [];
+    return { lights: bars.concat(side), nBars: bars.length, nSide: side.length, barWin: o.lightSetup === "beside" ? service.winAngle * Math.PI / 180 : -1 };
+  }
+  const uniqueBars = (camList) => {
+    const out = [];
+    camList.forEach((c) => c.lights.forEach((l) => { if (!out.some((b) => b[0] === l[0] && b[1] === l[1] && b[2] === l[2])) out.push(l); }));
+    return out;
+  };
+  // The reference exposure's light: the shared bar under the gap.
+  const REF_LIGHTS = { lights: bar(0, -BAR_REF_MM, -450, 450, 4, BAR_REF_MM), nBars: 4, nSide: 0, barWin: -1 };
+  // Irradiance on a bottom face (facing down) on the scan line, z mm across the belt, from bottom lights L, without
+  // shadows; as lightShare in the tracer.
+  function lineLightAt(L, z) {
+    let e = 0;
+    L.lights.slice(0, L.nBars + L.nSide).forEach((l, i) => {
+      const v = [-l[0], -l[1], z - l[2]], d = Math.hypot(...v), u = v.map((x) => x / d);   // from the light to the point
+      e += l[3] * lightShareAt(l, u, i < L.nBars, L.barWin) * (-l[1] / d) / (d * d);
+    });
+    return e;
+  }
+  // Light on the scan line at the belt centre for image which, relative to the reference: 1 for the bar under the gap
+  // (the reference holds it, one bar or one per camera alike).
+  const setupLight = (o, which) => (bottomLights(which).nBars && o.lightSetup !== "beside" ? 1 : lineLightAt(bottomLights(which), 0) / lineLightAt(REF_LIGHTS, 0));
+  // Share of light l's intensity sent along u (unit, away from it): a bar's upward face (by its cosine, through its
+  // window when it has one, angle barWin), or a side light's face aimed at the belt centre.
+  function lightShareAt(l, u, isBar, barWin) {
+    if (!isBar) { const d = Math.hypot(l[0], l[1], l[2]); return Math.max(0, -(u[0] * l[0] + u[1] * l[1] + u[2] * l[2]) / d); }
+    if (u[1] <= 0) return 0;
+    if (barWin < 0) return u[1];
+    const s = l[0] > 0 ? -1 : 1;
+    return u[1] * glassPass(u[0] * s * Math.sin(barWin) + u[1] * Math.cos(barWin), GLASS.n).T;
+  }
   // Share of the bar's light that the louvre passes to the scan line at the belt centre, for the budget: onto a bottom
   // face (facing the bar), so each point's light counts with the face's cosine too. The same per-point weighting as
   // barWeight in the tracer.
   function louvrePass(deg) {
-    if (!deg) return 1;
+    if (!deg || !cams[0].lightPos) return 1;
     const c = cams[0], w = -c.lightPos[1] * Math.tan(deg * Math.PI / 180), h = BAR_SEGMENT_HALF;
     const triCum = (x) => { x = Math.max(-w, Math.min(w, x)); return x < 0 ? (x + w) * (x + w) / (2 * w) : w - (w - x) * (w - x) / (2 * w); };
     let bare = 0, cut = 0;

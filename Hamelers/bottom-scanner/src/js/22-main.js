@@ -28,7 +28,7 @@
     }
     lineWin.push([t, lines]); while (lineWin.length && t - lineWin[0][0] > 1000) lineWin.shift();
     const lps = lineWin.reduce((a, b) => a + b[1], 0), mps = lps * pitch / 1000;
-    $("st-rate").textContent = paused ? "–" : lps.toLocaleString() + " lines/s";
+    $("st-rate").textContent = paused ? "–" : (lps * linesPerImage(opts())).toLocaleString() + " lines/s";   // the camera's lines: twice the image's when the lights alternate
     $("st-speed").textContent = paused ? "paused" : mps.toFixed(mps < 0.1 ? 3 : 2) + " m/s" + (speed > 0.3 && mps < scanSpeed() / 1000 * speed * 0.9 ? (softGL ? " (no GPU: slowed)" : " (GPU-limited)") : "");
     let current = null;
     feed.forEach((p) => {

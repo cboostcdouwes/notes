@@ -35,6 +35,10 @@ h2 { margin: 0; font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppe
 .bar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; font-size: 0.84rem; }
 .bar .grp { display: inline-flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding-right: 14px; border-right: 1px solid var(--rule); }
 .bar .grp:last-child { border-right: 0; }
+.bar.groups { display: grid; gap: 8px; }
+.bar.groups .grp { display: flex; border-right: 0; padding: 0 0 8px; border-bottom: 1px solid var(--rule); }
+.bar.groups .grp:last-child { border-bottom: 0; padding-bottom: 0; }
+.grp-h { flex: 0 0 9.5em; font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
 .seg { display: inline-flex; flex-wrap: wrap; gap: 4px; }
 .seg button, .btn, select { font: 500 0.8rem var(--font-ui); color: var(--fg); background: var(--bg); border: 1px solid var(--rule); border-radius: 6px; padding: 5px 9px; cursor: pointer; }
 .seg button[aria-pressed="true"], .tabs button[aria-selected="true"] { border-color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
@@ -119,6 +123,10 @@ dialog::backdrop { background: rgb(0 0 0 / 0.55); }
     <h1>Pallet Bottom Scanner</h1>
     <span class="stamp">GPU ray-traced line-scan and station cameras · simulated, dimensions assumed · 2026-11-13 · <span id="gpu-name">GPU: –</span></span>
   </header>
+  <div class="bar" role="group" aria-label="Playback">
+      <button type="button" class="btn" id="pause">Pause</button>
+      <label class="field" for="speed">Playback <input id="speed" type="range" min="-3.9" max="0" step="0.05" value="0"><output id="speed-out">1.00×</output></label>
+  </div>
   <div class="row" aria-label="Share settings">
     <button type="button" class="btn" id="set-copy">Copy settings</button>
     <button type="button" class="btn" id="set-load">Load settings…</button>
@@ -127,8 +135,9 @@ dialog::backdrop { background: rgb(0 0 0 / 0.55); }
     <span class="cap-dim" id="set-msg" style="font-size:0.78rem"></span>
   </div>
 
-  <div class="bar" role="group" aria-label="Scanner settings">
-    <span class="grp">
+  <div class="bar groups" role="group" aria-label="Scanner settings">
+    <div class="grp" role="group" aria-label="Bottom cameras">
+      <span class="grp-h">Bottom cameras</span>
       <span class="seg" id="presets" aria-label="Bottom cameras">
         <button type="button" data-cams="0" aria-pressed="false">0°</button>
         <button type="button" data-cams="25" aria-pressed="false">+25°</button>
@@ -137,54 +146,63 @@ dialog::backdrop { background: rgb(0 0 0 / 0.55); }
       </span>
       <label class="field" for="tilt">Tilt <input id="tilt" type="range" min="-35" max="35" step="1" value="25"><output id="tilt-out">+25°</output></label>
       <label class="field" for="side">Side offset <input id="side" type="range" min="0" max="600" step="50" value="400"><output id="side-out">±400 mm</output></label>
-      <label class="field" for="gap">Gap <input id="gap" type="range" min="40" max="350" step="10" value="100"><output id="gap-out">100 mm</output></label>
-    </span>
-    <span class="grp">
       <label class="field" for="sensor">Sensor <select id="sensor"><option value="1024" selected>1k px</option><option value="2048">2k px</option><option value="4096">4k px</option></select></label>
       <label class="field" for="fnum">Lens <select id="fnum"><option value="0">pinhole (no depth of field)</option><option value="2.8">f/2.8</option><option value="4" selected>f/4</option><option value="8">f/8</option></select></label>
       <label class="field" for="opt-fit"><input type="checkbox" id="opt-fit" checked> Fit FOV</label>
       <label class="field" for="opt-rect"><input type="checkbox" id="opt-rect" checked> Perspective correction</label>
-      <label class="field" for="opt-light"><input type="checkbox" id="opt-light" checked> One light</label>
       <label class="field" for="exp">Line exposure <input id="exp" type="range" min="1.3" max="3.5" step="0.05" value="2"><output id="exp-out">100 µs</output></label>
-      <label class="field" for="light">LED bar <input id="light" type="range" min="10" max="400" step="10" value="100"><output id="light-out">100%</output></label>
-      <label class="field" for="aexp">Area exposure <input id="aexp" type="range" min="-1" max="1" step="0.05" value="0"><output id="aexp-out">1.0 ms</output></label>
-      <label class="field" for="dirt">Window dirt <input id="dirt" type="range" min="0" max="1" step="0.05" value="0.25"><output id="dirt-out">25%</output></label>
-      <label class="field" for="louvre">Bar louvre <select id="louvre"><option value="0" selected>none (bare diffuser)</option><option value="45">±45° along the bar</option><option value="30">±30° along the bar</option><option value="20">±20° along the bar</option></select></label>
-      <label class="field" for="dust">Air dust <input id="dust" type="range" min="0" max="5" step="0.25" value="0.5"><output id="dust-out">0.5 mg/m³</output></label>
       <label class="field" for="opt-glare"><input type="checkbox" id="opt-glare" checked> Lens glare</label>
-    </span>
-    <span class="grp">
+      <label class="field" for="f-uncal"><input type="checkbox" id="f-uncal"> Uncalibrated lenses and sensors</label>
+    </div>
+    <div class="grp" role="group" aria-label="Light">
+      <span class="grp-h">Light</span>
+      <label class="field" for="light-setup">Setup <select id="light-setup"><option value="gap" selected>LED bar under the gap</option><option value="beside">LED bar beside each camera, behind its own window</option><option value="alternate">bar under the gap and side lights, alternating lines</option><option value="side">side lights only</option></select></label>
+      <label class="field" for="opt-light"><input type="checkbox" id="opt-light" checked> One bar for all cameras (under the gap)</label>
+      <label class="field" for="light">Light power <input id="light" type="range" min="10" max="400" step="10" value="100"><output id="light-out">100%</output></label>
+      <label class="field" for="louvre">Bar louvre <select id="louvre"><option value="0" selected>none (bare diffuser)</option><option value="45">±45° along the bar</option><option value="30">±30° along the bar</option><option value="20">±20° along the bar</option></select></label>
+      <label class="field" for="driver">Light drivers <select id="driver"><option value="dc" selected>DC, flicker-free</option><option value="pwm">PWM 1 kHz (dimmed)</option><option value="ripple">100 Hz ripple (cheap driver)</option></select></label>
+      <label class="field" for="lightcol">Light colours <select id="lightcol"><option value="matched" selected>all 6500 K</option><option value="mixed">bar 6500 K, lamps 4000 K</option><option value="warm">bar 5000 K, lamps 3000 K</option></select></label>
+      <label class="field" for="daylight">Daylight <select id="daylight"><option value="none" selected>none (closed hall)</option><option value="overcast">overcast</option><option value="clouds">sun and passing clouds</option></select></label>
+    </div>
+    <div class="grp" role="group" aria-label="Windows and air">
+      <span class="grp-h">Windows and air</span>
+      <label class="field" for="win-angle">Bottom windows <input id="win-angle" type="range" min="0" max="90" step="5" value="0"><output id="win-angle-out">0° (flat)</output></label>
+      <label class="field" for="win-purge"><input type="checkbox" id="win-purge"> Air purge</label>
+      <label class="field" for="dirt">Window dirt <input id="dirt" type="range" min="0" max="1" step="0.05" value="0.25"><output id="dirt-out">25%</output></label>
+      <label class="field" for="dust">Air dust <input id="dust" type="range" min="0" max="5" step="0.25" value="0.5"><output id="dust-out">0.5 mg/m³</output></label>
+      <label class="field" for="f-fog"><input type="checkbox" id="f-fog"> Fogged bottom windows</label>
+      <label class="field" for="f-splinter"><input type="checkbox" id="f-splinter"> Splinter on the first bottom camera's window</label>
+    </div>
+    <div class="grp" role="group" aria-label="Conveyor and feed">
+      <span class="grp-h">Conveyor and feed</span>
+      <label class="field" for="gap">Gap <input id="gap" type="range" min="40" max="350" step="10" value="100"><output id="gap-out">100 mm</output></label>
       <label class="field" for="belt">Conveyor <input id="belt" type="range" min="0.2" max="1.5" step="0.01" value="0.45"><output id="belt-out">0.45 m/s</output></label>
       <label class="field" for="section">Middle section <input id="section" type="range" min="1" max="1.5" step="0.05" value="1.1"><output id="section-out">+10% faster</output></label>
-      <label class="field" for="speed">Playback <input id="speed" type="range" min="-3.9" max="0" step="0.05" value="0"><output id="speed-out">1.00×</output></label>
       <label class="field" for="damage">Damaged <input id="damage" type="range" min="0" max="1" step="0.05" value="0.45"><output id="damage-out">45%</output></label>
       <label class="field" for="scatter">Scatter <input id="scatter" type="range" min="0" max="2" step="0.1" value="1"><output id="scatter-out">±80 mm, ±5°</output></label>
       <label class="field" for="opt-transport"><input type="checkbox" id="opt-transport" checked> Slip, jostle, sticking, touching</label>
       <label class="field" for="opt-unusual"><input type="checkbox" id="opt-unusual" checked> Unusual cases</label>
+    </div>
+    <div class="grp" role="group" aria-label="Station cameras">
+      <span class="grp-h">Station cameras</span>
       <label class="field" for="opt-station"><input type="checkbox" id="opt-station" checked> Station cameras</label>
-      <button type="button" class="btn" id="pause">Pause</button>
-    </span>
-    <span class="grp" aria-label="Service state">
+      <label class="field" for="aexp">Area exposure <input id="aexp" type="range" min="-1" max="1" step="0.05" value="0"><output id="aexp-out">1.0 ms</output></label>
+      <label class="field" for="shutter">Area shutter <select id="shutter"><option value="global" selected>global</option><option value="rolling">rolling, 20 ms readout</option></select></label>
+      <label class="field" for="side-h">Side cameras: height <input id="side-h" type="range" min="30" max="400" step="10" value="260"><output id="side-h-out">260 mm</output></label>
+      <label class="field" for="side-x">along travel <input id="side-x" type="range" min="0" max="500" step="25" value="0"><output id="side-x-out">0 mm</output></label>
+    </div>
+    <div class="grp" role="group" aria-label="Service and faults">
+      <span class="grp-h">Service and faults</span>
       <label class="field" for="months">Since service <input id="months" type="range" min="0" max="12" step="0.5" value="0"><output id="months-out">0 months</output></label>
       <label class="field" for="f-bar"><input type="checkbox" id="f-bar"> LED bar failed</label>
       <label class="field" for="f-lamp"><input type="checkbox" id="f-lamp"> One station lamp out</label>
       <label class="field" for="f-enc"><input type="checkbox" id="f-enc"> Encoder reads 8% short</label>
-      <label class="field" for="f-splinter"><input type="checkbox" id="f-splinter"> Splinter on the first bottom camera's window</label>
-      <label class="field" for="f-fog"><input type="checkbox" id="f-fog"> Fogged bottom windows</label>
-      <label class="field" for="win-angle">Bottom windows <input id="win-angle" type="range" min="0" max="90" step="5" value="0"><output id="win-angle-out">0° (flat)</output></label>
-      <label class="field" for="win-purge"><input type="checkbox" id="win-purge"> Air purge</label>
-    </span>
-    <span class="grp" aria-label="Conditions">
-      <label class="field" for="driver">Light drivers <select id="driver"><option value="dc" selected>DC, flicker-free</option><option value="pwm">PWM 1 kHz (dimmed)</option><option value="ripple">100 Hz ripple (cheap driver)</option></select></label>
-      <label class="field" for="lightcol">Light colours <select id="lightcol"><option value="matched" selected>all 6500 K</option><option value="mixed">bar 6500 K, lamps 4000 K</option><option value="warm">bar 5000 K, lamps 3000 K</option></select></label>
-      <label class="field" for="daylight">Daylight <select id="daylight"><option value="none" selected>none (closed hall)</option><option value="overcast">overcast</option><option value="clouds">sun and passing clouds</option></select></label>
       <label class="field" for="vib">Vibration <input id="vib" type="range" min="0" max="1" step="0.05" value="0.1"><output id="vib-out">0.10 mm</output></label>
-      <label class="field" for="shutter">Area shutter <select id="shutter"><option value="global" selected>global</option><option value="rolling">rolling, 20 ms readout</option></select></label>
-      <label class="field" for="f-uncal"><input type="checkbox" id="f-uncal"> Uncalibrated lenses and sensors</label>
-      <label class="field" for="side-h">Side cameras: height <input id="side-h" type="range" min="30" max="400" step="10" value="260"><output id="side-h-out">260 mm</output></label>
-      <label class="field" for="side-x">along travel <input id="side-x" type="range" min="0" max="500" step="25" value="0"><output id="side-x-out">0 mm</output></label>
+    </div>
+    <div class="grp" role="group" aria-label="Analysis">
+      <span class="grp-h">Analysis</span>
       <label class="field" for="opt-indirect"><input type="checkbox" id="opt-indirect"> Indirect light in Compare and Batch (slower)</label>
-    </span>
+    </div>
   </div>
   <div class="types" id="types" aria-label="Pallet types in the feed"></div>
 
@@ -361,12 +379,14 @@ uniform vec4 uBbLo[6]; uniform vec4 uBbHi[6];
 uniform float uRollX[40]; uniform int uNRoll; uniform float uRollHalf;
 uniform vec4 uLights[24]; uniform int uNL; uniform float uAmbient;
 uniform int uNBar;              // the first uNBar lights are LED bar points
+uniform int uNSide;             // the next uNSide are side lights, aimed along the gap at the belt centre
+uniform float uBarWin;          // the bars' own windows (bar beside its camera): angle from horizontal, rad; < 0: none
 uniform vec2 uFace;             // scale of the lamps' face radiance in this view: x the LED bar, y the station lamps
 uniform float uLouvreTan;       // tangent of the bar louvre's cut-off angle along the bar; 0: no louvre
 uniform float uBarHalf;         // mm of bar each bar point stands for, to either side
 uniform float uDust;            // scattering by dust in the air, per mm
 uniform vec3 uBarCol; uniform vec3 uLampCol;   // light colours (linear RGB, luminance 1)
-uniform vec4 uLampLo[12]; uniform vec4 uLampHi[12]; uniform int uNLamp;   // lamp faces: box, radiance (lo.w), is the bar (hi.w)
+uniform vec4 uLampLo[16]; uniform vec4 uLampHi[16]; uniform int uNLamp;   // lamp faces: box, radiance (lo.w), is the bar (hi.w)
 uniform float uVib;             // bottom camera vibration amplitude, mm
 uniform float uSpeed;           // belt speed over the scanner, mm/s (encoder position to time)
 uniform float uDistort;         // uncorrected barrel distortion of the lens; 0: calibrated
@@ -383,6 +403,7 @@ uniform int uStill; uniform vec3 uSky; uniform vec3 uLightJit;   // photo mode: 
 uniform float uBlur;            // encoder travel during one exposure, mm: samples spread over it (motion blur)
 uniform vec3 uWinN; uniform vec3 uWinO;   // line-scan: the window's outward normal, where the lens axis crosses it
 uniform vec2 uGlass;            // the window glass: index, thickness (mm)
+float glassT(float c);
 out vec4 outColor;
 
 uint rngS;
@@ -532,13 +553,23 @@ float louvreT(float tanA) { return uLouvreTan > 0.0 ? max(LOUVRE_LEAK, 1.0 - tan
 float triCum(float x, float w) { x = clamp(x, -w, w); return x < 0.0 ? (x + w) * (x + w) / (2.0 * w) : w - (w - x) * (w - x) / (2.0 * w); }
 // Share of bar point lp's intensity that reaches p: the cosine of the face, and with a louvre the part of the bar
 // stretch the point stands for that the louvre passes toward p (by each part's angle along the bar).
+// Behind its own window, the light leaving toward p also passes the glass (turned toward the scan line at x = 0).
 float barWeight(vec3 lp, vec3 p) {
-  vec3 v = p - lp; float cosT = v.y / length(v);
+  vec3 v = p - lp; float len = length(v), cosT = v.y / len;
   if (cosT <= 0.0) return 0.0;
+  if (uBarWin >= 0.0) cosT *= glassT(dot(v / len, vec3((lp.x > 0.0 ? -1.0 : 1.0) * sin(uBarWin), cos(uBarWin), 0.0)));
   if (uLouvreTan <= 0.0) return cosT;
   float w = v.y * uLouvreTan;
   return cosT * (triCum(lp.z + uBarHalf - p.z, w) - triCum(lp.z - uBarHalf - p.z, w)) / (2.0 * uBarHalf);
 }
+// Share of light l's intensity (at Lw) that reaches p: a bar point by barWeight, a side light by the cosine of its
+// face, aimed at the belt centre; a station lamp all of it (as lightShareAt in the page script).
+float lightShare(int l, vec3 Lw, vec3 p) {
+  if (l < uNBar) return barWeight(Lw, p);
+  if (l < uNBar + uNSide) return max(0.0, dot(normalize(p - Lw), -normalize(Lw)));
+  return 1.0;
+}
+vec3 lightCol(int l) { return l < uNBar + uNSide ? uBarCol : uLampCol; }   // the bottom lights share the bar's LEDs
 
 vec3 toWorld(int p, float s, vec3 v, bool point) {
   if (p < 0 || uPalB[p].y < 0.5) return v;
@@ -723,7 +754,7 @@ vec3 albedo(int k, vec3 p, inout vec3 n, float foot, out float spec) {
 // its brightness spreads over the larger area.
 vec3 lampGlint(vec3 wp, vec3 r, float rough) {
   vec3 sum = vec3(0.0), inv = safeInv(r);
-  for (int i = 0; i < 12; i++) {
+  for (int i = 0; i < 16; i++) {
     if (i >= uNLamp) break;
     vec3 lo = uLampLo[i].xyz, hi = uLampHi[i].xyz;
     float grow = rough * length((lo + hi) * 0.5 - wp), tn, tf; vec3 a, b;
@@ -773,12 +804,12 @@ vec3 shade(Hit h, float s, float foot, out vec3 alb, out vec3 wn) {
     float lam = dot(n, u);
     if (lam <= 0.0 || dot(h.n, u) <= -0.05) continue;
     vec3 toL = Lw - wp; float dl = length(toL);
-    float share = l < uNBar ? barWeight(Lw, wp) : 1.0;
+    float share = lightShare(l, Lw, wp);
     if (share <= 0.0) continue;
     if (palletShadow(wp, toL / dl, dl)) continue;   // any pallet, onto pallets, rollers, frame and floor alike
     if (rollerBlocked(wp, Lw)) continue;
     float fall = uLights[l].w * share / (dist * dist);
-    vec3 col = l < uNBar ? uBarCol : uLampCol;
+    vec3 col = lightCol(l);
     irr += lam * fall * col;
     if (spec > 0.0 && !mirror) { vec3 hv = normalize(u - h.ld); float nh = dot(n, hv); if (nh > 0.0) sp += col * spec * pow(nh, gloss) * fall * (gloss + 2.0) / 42.0; }
   }
@@ -824,8 +855,8 @@ vec3 dustGlow(vec3 o, vec3 d, float tEnd, float s) {
     float J = (atan((tEnd - tc) / hh) - atan(-tc / hh)) / hh;   // integral of 1 / distance² along the ray
     vec3 pc = o + d * clamp(tc, 0.0, tEnd), u = pc - Lw; float du = max(length(u), 1e-3); u /= du;
     float g2 = DUST_G * DUST_G, phase = (1.0 - g2) / (12.566371 * pow(1.0 + g2 - 2.0 * DUST_G * dot(u, -d), 1.5));
-    float add = uDust * phase * uLights[l].w * (l < uNBar ? barWeight(Lw, pc) : 1.0) * J;
-    vec3 col = l < uNBar ? uBarCol : uLampCol;
+    float add = uDust * phase * uLights[l].w * lightShare(l, Lw, pc) * J;
+    vec3 col = lightCol(l);
     if (add * uExposure < DUST_VISIBLE) { sum += add * col; continue; }
     if (!posed) { loadPoses(s); posed = true; }
     if (palletShadow(pc, -u, du) || rollerBlocked(pc, Lw)) continue;
@@ -845,16 +876,21 @@ vec3 vibration(float t) {
 
 // The bottom camera's window, a parallel glass plate: the ray from o leaves it in its own direction d, shifted
 // sideways (o moves to the shifted line, so distances still count from the camera, and each aperture sample shifts
-// on its own: astigmatism). Returns the share of the light let through: both faces reflect, by Fresnel for each
-// polarisation, and the light bouncing between them comes out too (as glassPass in the page script). A ray that
-// doesn't cross the window outward ends on the black housing.
+// on its own: astigmatism). Returns the share of the light let through (glassT). A ray that doesn't cross the window
+// outward ends on the black housing.
 float throughWindow(inout vec3 o, vec3 d) {
-  float c = dot(d, uWinN), n = uGlass.x;
+  float c = dot(d, uWinN);
   if (c <= 0.0) return 0.0;
-  vec3 p1 = o + d * (dot(uWinO - o, uWinN) / c), r = refract(d, -uWinN, 1.0 / n);
-  float ct = dot(r, uWinN);
-  vec3 w = p1 + r * (uGlass.y / ct) - o;
+  vec3 p1 = o + d * (dot(uWinO - o, uWinN) / c), r = refract(d, -uWinN, 1.0 / uGlass.x);
+  vec3 w = p1 + r * (uGlass.y / dot(r, uWinN)) - o;
   o += w - d * dot(w, d);
+  return glassT(c);
+}
+// Share of the light a window lets through at cosine c to its normal: both faces reflect, by Fresnel for each
+// polarisation, and the light bouncing between them comes out too (as glassPass in the page script).
+float glassT(float c) {
+  if (c <= 0.0) return 0.0;
+  float n = uGlass.x, ct = sqrt(1.0 - (1.0 - c * c) / (n * n));
   float rs = (c - n * ct) / (c + n * ct), rp = (n * c - ct) / (n * c + ct);
   rs *= rs; rp *= rp;
   return 0.5 * ((1.0 - rs) / (1.0 + rs) + (1.0 - rp) / (1.0 + rp));
@@ -1078,11 +1114,13 @@ void main() {
     lightFactor() { return 1 - WEAR.ledLoss * this.months; },
     faceUp() { return Math.cos(this.winAngle * Math.PI / 180); },
     gritSlides() { return this.winAngle >= WINDOW_WEAR.gritSlideDeg; },
-    extraDirt() {
+    dustSettles() {   // share of the flat-window dust rate that settles on a window at this angle and purge
       const settles = this.faceUp() + WINDOW_WEAR.dustCling * (1 - this.faceUp());
-      return WEAR.windowDirt * this.months * settles * (this.purge ? WINDOW_WEAR.purgeDust : 1);
+      return settles * (this.purge ? WINDOW_WEAR.purgeDust : 1);
     },
-    barDust() { return Math.min(0.7, WEAR.barDust * this.months); },
+    extraDirt() { return WEAR.windowDirt * this.months * this.dustSettles(); },
+    // behindWindow: the bar sits beside its camera behind its own window, which collects the dust instead
+    barDust(behindWindow) { return Math.min(0.7, WEAR.barDust * this.months * (behindWindow ? this.dustSettles() : 1)); },
     specks() { return this.purge || this.gritSlides() ? 0 : Math.min(10, Math.floor(WEAR.specks * this.months * this.faceUp())); } };
   const winAngleText = (a) => a + "°" + (a === 0 ? " (flat)" : a === 90 ? " (vertical)" : "");
   let beltSpeed = 450;   // real infeed conveyor speed, mm/s (the Playback slider only runs the simulation faster or slower)
@@ -1507,12 +1545,16 @@ void main() {
     camList.forEach((c) => {
       out.push(part("line-scan camera", [c.C[0] - 45, c.C[1] - 45, c.C[2] - 45], [c.C[0] + 45, c.C[1] + 45, c.C[2] + 45], "steel", 1, { col: [0.06, 0.07, 0.08] }));
       out.push(part("camera stand", [c.C[0] - 15, -600, c.C[2] - 15], [c.C[0] + 15, c.C[1] - 45, c.C[2] + 15], "steel", 1, { col: [0.3, 0.31, 0.33] }));
-      const k = c.lightPos.join(",");
-      if (seen.has(k)) return;
+      const k = String(c.lightPos);
+      if (!c.lightPos || seen.has(k)) return;
       seen.add(k);
       const barI = c.lights.reduce((s, l) => s + l[3], 0);   // axis 2 tells the tracer this lamp is the bar
       out.push(part("LED bar", [c.lightPos[0] - 25, c.lightPos[1] - 30, -500], [c.lightPos[0] + 25, c.lightPos[1] - 3, 500], "lamp", 2, { col: faceRadiance(barI, 50 * 1000) }));
       [-450, 450].forEach((z) => out.push(part("LED bar stand", [c.lightPos[0] - 12, -600, z - 12], [c.lightPos[0] + 12, c.lightPos[1] - 30, z + 12], "steel", 1, { col: [0.3, 0.31, 0.33] })));
+    });
+    if (opts().lightSetup === "side" || opts().lightSetup === "alternate") sideLights().forEach(([x, y, z, I]) => {   // facing in along the gap
+      const s = Math.sign(z), face = 100 * 40;
+      out.push(part("side light", [x - 50, y - 20, s > 0 ? z + 3 : z - 33], [x + 50, y + 20, s > 0 ? z + 33 : z - 3], "lamp", 0, { col: faceRadiance(I, face) }));
     });
     out.forEach((p) => { p.stain = [0, 0, 0]; p.knots = [1e9, 1e9, 1e9, 1e9]; });
     return out;
@@ -1536,7 +1578,7 @@ void main() {
     out.forEach((p) => { p.stain = [0, 0, 0]; p.knots = [1e9, 1e9, 1e9, 1e9]; });
     return out;
   }
-  const rigKey = (camList) => camList.map((c) => c.C.map(Math.round).join(",") + "/" + c.lightPos.join(",")).join(";") +
+  const rigKey = (camList) => camList.map((c) => c.C.map(Math.round).join(",") + "/" + String(c.lightPos)).join(";") + "|" + opts().lightSetup +
     "|" + $("opt-station").checked + ":" + AREA_CAMS.map((c) => c.C.join(",")).join(";");
   function worldFor(g, camList) {
     const key = g + "|" + rigKey(camList);
@@ -1667,8 +1709,9 @@ void main() {
   }
   // Reading the WebGL canvas back is slow in some browsers (about 2 ms per copy in Firefox), so each frame's renders
   // go to separate rows of it and are read back once, by queueCopy/flushCopies. Rows: bottom camera k at k × MAXROWS,
-  // then the top camera's strip, then a station snapshot strip.
-  const OUT_TOP = 2 * MAXROWS, OUT_SNAP = () => OUT_TOP + TOP_LIVE.h;
+  // its raking-light image (alternating lights) at (2 + k) × MAXROWS, then the top camera's strip, then a station
+  // snapshot strip.
+  const OUT_RAKING = 2 * MAXROWS, OUT_TOP = 4 * MAXROWS, OUT_SNAP = () => OUT_TOP + TOP_LIVE.h;
   const stage = document.createElement("canvas"), stageCtx = stage.getContext("2d");
   const strip = document.createElement("canvas"), stripCtx = strip.getContext("2d");   // see flushCopies
   const copyQueue = [], afterCopy = [];
@@ -1731,7 +1774,7 @@ void main() {
   }
   const palA = new Float32Array(24), palB = new Float32Array(24), bbLo = new Float32Array(24), bbHi = new Float32Array(24);
   const rollArr = new Float32Array(40);
-  const MAX_LAMPS = 12, lampLo = new Float32Array(MAX_LAMPS * 4), lampHi = new Float32Array(MAX_LAMPS * 4);
+  const MAX_LAMPS = 16, lampLo = new Float32Array(MAX_LAMPS * 4), lampHi = new Float32Array(MAX_LAMPS * 4);
   // The lamp faces, for mirror reflections: box, base radiance (lo.w) and whether it is the LED bar (hi.w).
   function lampUniforms(U) {
     const lamps = worldFor(sceneGap, cams).parts.filter((q) => q.mat === "lamp");
@@ -1764,7 +1807,8 @@ void main() {
     const lights = L.lights;
     if (lights.length > MAX_LIGHTS) throw new Error(lights.length + " lights; the tracer takes " + MAX_LIGHTS + ". Raise MAX_LIGHTS and uLights[] together.");
     const a = new Float32Array(MAX_LIGHTS * 4); lights.forEach((l, i) => a.set(l, i * 4));
-    gl.uniform4fv(U.uLights, a); gl.uniform1i(U.uNL, lights.length); gl.uniform1i(U.uNBar, L.nBars); gl.uniform1f(U.uAmbient, ambient * (1 + 0.6 * L.day));
+    gl.uniform4fv(U.uLights, a); gl.uniform1i(U.uNL, lights.length); gl.uniform1i(U.uNBar, L.nBars); gl.uniform1i(U.uNSide, L.nSide);
+    gl.uniform1f(U.uBarWin, L.barWin); gl.uniform2f(U.uGlass, GLASS.n, GLASS.thickMm); gl.uniform1f(U.uAmbient, ambient * (1 + 0.6 * L.day));
     gl.uniform3fv(U.uBgUp, HALL.map((v) => v * L.hall * (1 + L.day))); gl.uniform2f(U.uFace, L.barFace, L.lampFace);
     gl.uniform3fv(U.uBarCol, L.barCol); gl.uniform3fv(U.uLampCol, L.lampCol);
     gl.uniform1f(U.uLouvreTan, L.louvreTan); gl.uniform1f(U.uBarHalf, BAR_SEGMENT_HALF); gl.uniform1f(U.uDust, L.dust);
@@ -1790,8 +1834,8 @@ void main() {
     const z0 = beltZ(p0), z1 = beltZ(p1);
     const focus = dl * Math.cos(angleTo(0) - axisPhi);          // focus plane through the belt centre
     const focal = (px * PIXEL_UM / 1000 / 2) / Math.tan((p1 - p0) / 2);   // mm, for this sensor width
-    const lightPos = o.sharedLight ? [o.anyZero ? -80 : 0, -250] : [-350 * sx + (spec.tilt === 0 ? -80 : 0), -350 * cyy];
-    const lights = bar(lightPos[0], lightPos[1], -450, 450, 4, Math.hypot(lightPos[0], lightPos[1]));
+    const lightPos = barPosition(spec, C, o);
+    const lights = lightPos ? bar(lightPos[0], lightPos[1], -450, 450, 4, o.lightSetup === "beside" ? BAR_REF_MM : Math.hypot(lightPos[0], lightPos[1])) : [];
     return { kind: "line", spec: spec, C: C, d0: d0, e: e, phi0: p0, phi1: p1, dphi: dphi, axisPhi: axisPhi, axis: axis, z0: z0, z1: z1,
       mmPerPx: (z1 - z0) / (px - 1), nearMm: Math.abs(beltZ(p0 + dphi) - z0), farMm: Math.abs(z1 - beltZ(p1 - dphi)),
       focus: focus, focal: focal, lights: lights, lightPos: lightPos, PX: px };
@@ -1802,18 +1846,25 @@ void main() {
   const norm3 = (a) => { const l = Math.hypot(a[0], a[1], a[2]); return [a[0] / l, a[1] / l, a[2] / l]; };
   // Station area cameras (pinhole + thin lens), triggered by pallet position.
   const STATION_LIGHTS = STATION_LAMPS.map((l) => [l[0], l[1], l[2], 0.75 * 2.42 / 10 * 1300 * 1300]);
-  // Every view is lit by everything that is on: the bottom cameras' LED bars (one, or one per camera) and the
-  // station lamps above, which also reach the bottom view through gaps in the pallet. Units: the area cameras' 1 ms
-  // reference exposure. A line camera's exposure k already holds its shorter time and the bar's power, so its view
-  // divides every light by the bar's gain. Also returns what the tracer needs for the bars' optics and the air.
-  function lightsFor(camList, kind) {
-    const bars = [], age = service.lightFactor(), o = opts(), barGain = BAR_VS_LAMPS * o.light / 100, toView = kind === "line" ? 1 / barGain : 1;
-    camList.forEach((c) => c.lights.forEach((l) => { if (!bars.some((b) => b[0] === l[0] && b[1] === l[1] && b[2] === l[2])) bars.push(l); }));
-    const barScale = service.barOut ? 0 : age * barGain * toView, dust = service.barDust();
+  // Every view is lit by everything that is on: the bottom lights (the LED bars, one or one per camera, and the side
+  // lights) and the station lamps above, which also reach the bottom view through gaps in the pallet. Units: the area
+  // cameras' 1 ms reference exposure. A line camera's exposure k already holds its shorter time and the bar's power,
+  // so its view divides every light by the bar's gain. which: the bottom lights on during the image, "bar" or "side";
+  // by default the setup's (the bar when the lights alternate: the evenly lit image). Area cameras expose over many
+  // lines, so with alternating lights they see both at half power. Also returns what the tracer needs for the bars'
+  // optics and the air.
+  function lightsFor(camList, kind, which) {
+    const o = opts(), setup = o.lightSetup, both = setup === "alternate" && kind === "area" && !which;
+    const w = which || (setup === "side" ? "side" : "bar"), duty = both ? 0.5 : 1;
+    const bars = [], age = service.lightFactor(), barGain = BAR_VS_LAMPS * o.light / 100, toView = kind === "line" ? 1 / barGain : 1;
+    if (w === "bar" || both) bars.push(...uniqueBars(camList));
+    const barScale = service.barOut ? 0 : age * barGain * toView * duty, dust = service.barDust(setup === "beside");
+    const side = w === "side" || both ? sideLights().map((l) => [l[0], l[1], l[2], l[3] * age * barGain * toView * duty]) : [];
     const [kBar, kLamp] = LIGHT_COLOURS[$("lightcol").value], barCol = KELVIN[kBar], lampCol = KELVIN[kLamp];
     return { lights: bars.map((l, i) => [l[0], l[1], l[2], l[3] * barScale * (1 - dust * BAR_DUST_SPREAD[i % BAR_DUST_SPREAD.length])])
-      .concat(STATION_LIGHTS.map((l, i) => [l[0], l[1], l[2], service.lampOut && i === 0 ? 0 : l[3] * age * toView])),
-      nBars: bars.length, barFace: barScale * (1 - dust), lampFace: age * toView, hall: toView,
+      .concat(side, STATION_LIGHTS.map((l, i) => [l[0], l[1], l[2], service.lampOut && i === 0 ? 0 : l[3] * age * toView])),
+      nBars: bars.length, nSide: side.length, barWin: setup === "beside" ? service.winAngle * Math.PI / 180 : -1,
+      barFace: bars.length ? barScale * (1 - dust) : 0, lampFace: age * toView, hall: toView,
       barCol: barCol, lampCol: lampCol, wb: (kind === "line" ? barCol : lampCol).map((v) => 1 / v),   // each camera is white-balanced to its own light
       driver: DRIVERS[$("driver").value], day: daylight(lastLine / scanSpeed()),
       louvreTan: o.louvre ? Math.tan(o.louvre * Math.PI / 180) : 0, dust: o.dust * DUST_SIGMA };
@@ -1890,11 +1941,65 @@ void main() {
     return 0;
   }
 
+  // Light setups for the bottom cameras (assumed geometry):
+  // - gap: the LED bar under the gap, one for all cameras or one per camera along its view.
+  // - beside: each camera's own bar BESIDE_MM from its lens, on the side away from the belt, behind a window of its own
+  //   at the window angle, turned toward the scan line. It is the same bar as the shared one under the gap (its power
+  //   set for BAR_REF_MM), so from further away it gives less light.
+  // - side: a compact LED light at each belt side, SIDE_LIGHT below the side frame on the gap line, its face aimed
+  //   along the gap at the belt centre; each emits as much light as the whole bar.
+  // - alternate: the bar under the gap and the side lights, on during alternate lines; the cameras run at twice the
+  //   line rate, so each light gives an image at the usual pitch.
+  const BAR_REF_MM = 250, BESIDE_MM = 80, SIDE_LIGHT = { y: -130, z: BELT_W / 2 + 70 };
+  const sideLights = () => [-1, 1].map((s) => [0, SIDE_LIGHT.y, s * SIDE_LIGHT.z, 0.75 * 2.42 * BAR_REF_MM * BAR_REF_MM]);
+  const linesPerImage = (o) => (o.lightSetup === "alternate" ? 2 : 1);   // camera lines per image line
+  // Where camera spec (lens at C) has its LED bar in the travel/height plane, or null for side lights only.
+  function barPosition(spec, C, o) {
+    const t = spec.tilt * Math.PI / 180, sx = Math.sin(t), cyy = Math.cos(t);
+    if (o.lightSetup === "side") return null;
+    if (o.lightSetup === "beside") { const s = Math.sign(spec.tilt) || 1; return [C[0] + s * BESIDE_MM * cyy, C[1] - s * BESIDE_MM * sx]; }
+    return o.sharedLight ? [o.anyZero ? -80 : 0, -250] : [-350 * sx + (spec.tilt === 0 ? -80 : 0), -350 * cyy];
+  }
+  // The bottom lights of image which (as lightsFor picks them, see there), at full power, for lineLightAt.
+  function bottomLights(which) {
+    const o = opts(), w = which || (o.lightSetup === "side" ? "side" : "bar");
+    const bars = w === "bar" ? uniqueBars(cams) : [], side = w === "side" ? sideLights() : [];
+    return { lights: bars.concat(side), nBars: bars.length, nSide: side.length, barWin: o.lightSetup === "beside" ? service.winAngle * Math.PI / 180 : -1 };
+  }
+  const uniqueBars = (camList) => {
+    const out = [];
+    camList.forEach((c) => c.lights.forEach((l) => { if (!out.some((b) => b[0] === l[0] && b[1] === l[1] && b[2] === l[2])) out.push(l); }));
+    return out;
+  };
+  // The reference exposure's light: the shared bar under the gap.
+  const REF_LIGHTS = { lights: bar(0, -BAR_REF_MM, -450, 450, 4, BAR_REF_MM), nBars: 4, nSide: 0, barWin: -1 };
+  // Irradiance on a bottom face (facing down) on the scan line, z mm across the belt, from bottom lights L, without
+  // shadows; as lightShare in the tracer.
+  function lineLightAt(L, z) {
+    let e = 0;
+    L.lights.slice(0, L.nBars + L.nSide).forEach((l, i) => {
+      const v = [-l[0], -l[1], z - l[2]], d = Math.hypot(...v), u = v.map((x) => x / d);   // from the light to the point
+      e += l[3] * lightShareAt(l, u, i < L.nBars, L.barWin) * (-l[1] / d) / (d * d);
+    });
+    return e;
+  }
+  // Light on the scan line at the belt centre for image which, relative to the reference: 1 for the bar under the gap
+  // (the reference holds it, one bar or one per camera alike).
+  const setupLight = (o, which) => (bottomLights(which).nBars && o.lightSetup !== "beside" ? 1 : lineLightAt(bottomLights(which), 0) / lineLightAt(REF_LIGHTS, 0));
+  // Share of light l's intensity sent along u (unit, away from it): a bar's upward face (by its cosine, through its
+  // window when it has one, angle barWin), or a side light's face aimed at the belt centre.
+  function lightShareAt(l, u, isBar, barWin) {
+    if (!isBar) { const d = Math.hypot(l[0], l[1], l[2]); return Math.max(0, -(u[0] * l[0] + u[1] * l[1] + u[2] * l[2]) / d); }
+    if (u[1] <= 0) return 0;
+    if (barWin < 0) return u[1];
+    const s = l[0] > 0 ? -1 : 1;
+    return u[1] * glassPass(u[0] * s * Math.sin(barWin) + u[1] * Math.cos(barWin), GLASS.n).T;
+  }
   // Share of the bar's light that the louvre passes to the scan line at the belt centre, for the budget: onto a bottom
   // face (facing the bar), so each point's light counts with the face's cosine too. The same per-point weighting as
   // barWeight in the tracer.
   function louvrePass(deg) {
-    if (!deg) return 1;
+    if (!deg || !cams[0].lightPos) return 1;
     const c = cams[0], w = -c.lightPos[1] * Math.tan(deg * Math.PI / 180), h = BAR_SEGMENT_HALF;
     const triCum = (x) => { x = Math.max(-w, Math.min(w, x)); return x < 0 ? (x + w) * (x + w) / (2 * w) : w - (w - x) * (w - x) / (2 * w); };
     let bare = 0, cut = 0;
@@ -2013,14 +2118,18 @@ void main() {
   // the full well. Longer exposure or more light raises k (brighter surfaces clip); less lowers it (more gain, more noise).
   const SENSOR = { fullWell: 10000, readNoise: 12 };   // electrons per pixel, typical industrial CMOS (assumed)
   function lineExposure(o) {
-    const tMax = pitch / scanSpeed() * 1e6, t = Math.min(o.expUs, tMax);   // a line can't integrate longer than its period
+    const tMax = pitch / scanSpeed() * 1e6 / linesPerImage(o), t = Math.min(o.expUs, tMax);   // a line can't integrate longer than its period
     return { t: t, tMax: tMax, k: t / 100 * (o.light / 100) * Math.pow(4 / (o.fnum || 4), 2), blur: scanSpeed() * t * 1e-6 };
   }
   const areaExposure = (o) => ({ t: o.aexpMs, k: o.aexpMs, blur: scanSpeed() * o.aexpMs / 1000 });
-  // The line cameras' signal relative to the reference: the exposure, with everything that dims the bar's light on
-  // the scan line (louvre, LED ageing, dust on the bar, a failed bar leaving only stray light from the lamps) and on
-  // the way back through the camera's window.
-  const lineSignalK = (o) => lineExposure(o).k * louvrePass(o.louvre) * service.lightFactor() * (1 - service.barDust()) * (service.barOut ? 0.1 : 1) * windowPass();
+  // The line cameras' signal in image which (see lightsFor) relative to the reference: the exposure, with everything
+  // that changes the light on the scan line (the setup's lights, LED ageing; for the bar its louvre, dust on it, a
+  // failure leaving only stray light from the lamps) and on the way back through the camera's window.
+  function lineSignalK(o, which) {
+    const barLit = bottomLights(which).nBars > 0;
+    const barLoss = barLit ? louvrePass(o.louvre) * (1 - service.barDust(o.lightSetup === "beside")) * (service.barOut ? 0.1 : 1) : 1;
+    return lineExposure(o).k * setupLight(o, which) * barLoss * service.lightFactor() * windowPass();
+  }
   const significantBlur = (mm, mmPerPx) => ((mm || 0) >= 0.25 * mmPerPx ? mm : 0);   // below a quarter pixel: not worth the samples
   function sensorUniforms(P, o) { gl.uniform1f(P.uK, o.k || 1); gl.uniform1f(P.uFullWell, SENSOR.fullWell); gl.uniform1f(P.uReadNoise, SENSOR.readNoise); }
 
@@ -2054,7 +2163,7 @@ void main() {
     gl.uniform3fv(U.uAxis, cam.axis); gl.uniform1f(U.uFocus, cam.focus); gl.uniform1f(U.uAperture, fnum > 0 ? cam.focal / fnum : 0); gl.uniform1i(U.uDof, fnum > 0 ? LENS_SAMPLES : 0);
     gl.uniform1f(U.uPixAng, cam.dphi); gl.uniform1f(U.uBlur, significantBlur(o.blur, pitch));
     const win = windowFor(cam);
-    gl.uniform3fv(U.uWinN, win.n); gl.uniform3fv(U.uWinO, win.o); gl.uniform2f(U.uGlass, GLASS.n, GLASS.thickMm);
+    gl.uniform3fv(U.uWinN, win.n); gl.uniform3fv(U.uWinO, win.o);
     beginStill(U, o);
     gl.uniform1i(U.uIndirect, o.indirect && !o.still && !o.id ? INDIRECT_SAMPLES : 0);
     if (o.indirect && !o.still) gl.uniform3fv(U.uSky, HALL_SKY.map((v) => v * L.hall * (1 + L.day)));
@@ -2386,11 +2495,17 @@ void main() {
       // stands, as in the traced scene (rigParts): one under each camera, two under each LED bar
       const standM = M(css("--steel"), { metalness: 0.4, roughness: 0.5 }), stand = (x, top, z, w) => rig.add(tip(box(w, top + 0.6, w, standM, x, (top - 0.6) / 2, z), "Stand on the floor, 0.6 m below the belt."));
       stand(C.x, C.y - 0.045, C.z, 0.03);
-      if (!leds.has(c.lightPos.join(","))) [-0.45, 0.45].forEach((z) => stand(c.lightPos[0] / 1000, c.lightPos[1] / 1000 - 0.03, z, 0.024));
+      const lk = String(c.lightPos), newBar = c.lightPos && !leds.has(lk);
+      if (newBar) [-0.45, 0.45].forEach((z) => stand(c.lightPos[0] / 1000, c.lightPos[1] / 1000 - 0.03, z, 0.024));
       rig.add(tip(body, "Line-scan camera " + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "°" + (c.spec.z ? ", " + Math.abs(c.spec.z) + " mm " + (c.spec.z < 0 ? "left" : "right") : ", centred") +
         ". FOV " + ((c.phi1 - c.phi0) * 180 / Math.PI).toFixed(0) + "°, " + c.PX + " px over " + Math.round(c.z1 - c.z0) + " mm; lens " + c.focal.toFixed(0) + " mm focused at " + Math.round(c.focus) + " mm."));
-      const lk = c.lightPos.join(",");
-      if (!leds.has(lk)) { leds.add(lk); rig.add(tip(box(0.05, 0.03, 1.0, ledM, c.lightPos[0] / 1000, c.lightPos[1] / 1000, 0), "LED line light, 1 m bar, " + Math.round(-c.lightPos[1]) + " mm below the belt" + (c.lightPos[0] === 0 ? ", centred under the gap." : "."))); }
+      if (newBar) {
+        leds.add(lk);
+        const beside = opts().lightSetup === "beside";
+        rig.add(tip(box(0.05, 0.03, 1.0, ledM, c.lightPos[0] / 1000, c.lightPos[1] / 1000, 0), "LED line light, 1 m bar, " + Math.round(-c.lightPos[1]) + " mm below the belt" +
+          (beside ? ", beside the camera behind its own window." : c.lightPos[0] === 0 ? ", centred under the gap." : ".")));
+        if (beside) rig.add(barWindowMesh(c.lightPos));
+      }
       const pts = [C]; const N = 20;
       for (let i = 0; i <= N; i++) {
         const phi = c.phi0 + (c.phi1 - c.phi0) * i / N;
@@ -2400,7 +2515,21 @@ void main() {
       const geo = new THREE.BufferGeometry().setFromPoints(pts); const idx = []; for (let i = 1; i <= N; i++) idx.push(0, i, i + 1); geo.setIndex(idx);
       const fan = new THREE.Mesh(geo, beam); fan.userData.kind = "line"; rig.add(tip(fan, "Scan plane of the " + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "° camera; it passes through the gap line.")); fans.push(fan);
     });
+    if (opts().lightSetup === "side" || opts().lightSetup === "alternate") sideLights().forEach(([x, y, z]) => {
+      rig.add(tip(box(0.1, 0.04, 0.03, ledM, x / 1000, y / 1000, (z + Math.sign(z) * 18) / 1000), "Side light, " + (-y) + " mm below the belt, aimed along the gap at the belt centre (raking light)."));
+    });
     applyFans();
+  }
+  // An LED bar's own window (bar beside its camera): a 1 m pane above the bar at the window angle, turned toward the
+  // scan line, as in the tracer (barWeight).
+  function barWindowMesh(lp) {
+    const ang = service.winAngle * Math.PI / 180, s = lp[0] > 0 ? -1 : 1;
+    const n = new THREE.Vector3(s * Math.sin(ang), Math.cos(ang), 0), a = new THREE.Vector3(0, 0, 1), b = n.clone().cross(a);
+    const g = new THREE.Group(); g.matrixAutoUpdate = false;
+    g.matrix.makeBasis(b, a, n).setPosition(lp[0] / 1000, (lp[1] + 30) / 1000, 0);
+    g.add(tip(box(0.07, 1.02, GLASS.thickMm / 1000, M("#a8d8ea", { transparent: true, opacity: 0.5, roughness: 0.05, depthWrite: false }), 0, 0, 0),
+      "The LED bar's own window, plain glass " + GLASS.thickMm + " mm, " + winAngleText(service.winAngle) + " from horizontal."));
+    return g;
   }
   // Camera c's window, as a pane of the glass it needs, and the air purge collar along its upper edge when on.
   function windowMesh(c) {
@@ -2471,9 +2600,9 @@ void main() {
   let lineCap = 48, frameMs = 16;   // measured tracing cost, ms per pixel
   const enabled = new Set(TYPES.map((t) => t.id));
   const liveEl = $("livecams"), gallery = $("gallery");
-  let live = [];
+  let live = [], liveRaking = [];
   const LIVE_W = 512, LIVE_MM = 1700;
-  const opts = () => ({ fit: $("opt-fit").checked, rect: $("opt-rect").checked, sharedLight: $("opt-light").checked, anyZero: specs.some((s) => s.tilt === 0),
+  const opts = () => ({ fit: $("opt-fit").checked, rect: $("opt-rect").checked, sharedLight: $("opt-light").checked, lightSetup: $("light-setup").value, anyZero: specs.some((s) => s.tilt === 0),
     fnum: +$("fnum").value, dirt: Math.min(1, +$("dirt").value + service.extraDirt()), transport: $("opt-transport").checked, station: $("opt-station").checked,
     expUs: Math.pow(10, +$("exp").value), light: +$("light").value, aexpMs: Math.pow(10, +$("aexp").value),
     louvre: +$("louvre").value, dust: +$("dust").value, glare: $("opt-glare").checked,
@@ -2523,10 +2652,11 @@ void main() {
       const dx = b[0] - a[0], dy = b[1] - a[1], t = Math.max(0, Math.min(1, ((cx - a[0]) * dx + (cy - a[1]) * dy) / (dx * dx + dy * dy)));
       return Math.hypot(a[0] + t * dx - cx, a[1] + t * dy - cy) - ROLL_R;
     }));
-    let rays = Infinity, lit = Infinity;
+    let rays = Infinity, lit = Infinity;   // lit stays Infinity without a bar (side lights only)
     cs.forEach((c) => {
       rays = Math.min(rays, clearance([c.C[0], c.C[1]], [0, 0]) - (fnum > 0 ? c.focal / fnum / 2 : 0));
       // highest point on the scan plane (x = y · C.x / C.y) the light still reaches past the rollers
+      if (!c.lightPos) return;
       let y = 0; while (y < 300 && clearance(c.lightPos, [y * c.C[0] / c.C[1], y]) > 0) y += 2;
       lit = Math.min(lit, y);
     });
@@ -2546,7 +2676,7 @@ void main() {
   function updateGapStat() {
     const r = gapReport(gap, cams, opts().fnum);
     $("st-gap").textContent = gap + " mm · " + (r.rays >= 0 ? "camera rays clear the rollers by " + r.rays.toFixed(0) + " mm" : "rollers cut into the camera view (" + r.rays.toFixed(0) + " mm)") +
-      " · light reaches " + (r.lit >= 300 ? "the whole pallet height" : r.lit <= 0 ? "nothing above the belt" : "up to " + r.lit + " mm above the belt");
+      (r.lit === Infinity ? " · side lights along the gap" : " · light reaches " + (r.lit >= 300 ? "the whole pallet height" : r.lit <= 0 ? "nothing above the belt" : "up to " + r.lit + " mm above the belt"));
     const glare = lampGlare(cams);
     $("st-glare").textContent = glare.length ? "seen by the " + glare.map((c) => (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "°").join(" and ") + " camera" + (glare.length > 1 ? "s" : "") + ": move or shield the lamps" : "no station lamp in a bottom camera's view";
     $("st-glare").style.color = glare.length ? "var(--bad)" : "";
@@ -2555,18 +2685,22 @@ void main() {
       st.perPallet.toFixed(2) + " catches per pallet, " + st.meanStall.toFixed(0) + " mm stall on average, up to " + st.worst.toFixed(0) + " mm (intact pallets; damaged ones droop more)";
   }
 
+  // One live waterfall per bottom camera, and with alternating lights a second one for its raking-light image.
   function setupLive() {
-    liveEl.innerHTML = ""; live = [];
-    cams.forEach((c) => {
+    liveEl.innerHTML = ""; live = []; liveRaking = [];
+    const waterfall = (c, label) => {
       const wrap = document.createElement("div"); wrap.className = "livecam";
       const lbl = document.createElement("span");
-      lbl.textContent = camLabel(c);
+      lbl.textContent = label;
       const mm = (c.z1 - c.z0) / LIVE_W;
       const cv = document.createElement("canvas"); cv.width = LIVE_W; cv.height = Math.round(LIVE_MM / mm);
       const ctx = cv.getContext("2d"); ctx.fillStyle = "#0b0c0d"; ctx.fillRect(0, 0, cv.width, cv.height);
       const mark = document.createElement("i"); mark.className = "scanmark";
-      wrap.append(lbl, cv, mark); liveEl.append(wrap); live.push({ ctx: ctx, acc: 0, mm: mm });
-    });
+      wrap.append(lbl, cv, mark); liveEl.append(wrap);
+      return { ctx: ctx, acc: 0, mm: mm };
+    };
+    cams.forEach((c) => live.push(waterfall(c, camLabel(c))));
+    if (opts().lightSetup === "alternate") cams.forEach((c) => liveRaking.push(waterfall(c, camLabel(c) + " · raking light")));
     const c0 = cams[0];
     $("st-res").textContent = (opts().rect ? c0.mmPerPx.toFixed(2) : c0.nearMm.toFixed(2) + "–" + c0.farMm.toFixed(2)) + " mm · " + c0.PX + " px";
   }
@@ -2605,6 +2739,12 @@ void main() {
   }
   // real travel per recorded line: more than the nominal pitch when the encoder under-counts
   const truePitch = () => pitch * (1 + service.encErr);
+  // Scroll live waterfall L by n new rows (true proportions, newest at the bottom) and queue them from canvas row out.
+  function scrollLive(L, out, cam, n) {
+    const ctx = L.ctx, cv = ctx.canvas, h = n * pitch / L.mm; L.acc += h; const shift = Math.floor(L.acc); L.acc -= shift;
+    if (shift > 0) ctx.drawImage(cv, 0, -shift);
+    queueCopy(0, out, cam.PX, n, () => ctx, 0, cv.height - h, cv.width, h);
+  }
   function traceBatch(n) {
     const o = opts(), tp = truePitch(), s0 = lastLine + tp;
     uploadScene(activePallets(s0 + n * tp / 2));
@@ -2613,10 +2753,12 @@ void main() {
     cams.forEach((cam, k) => {
       const out = k * MAXROWS;
       traceLines(cam, s0, tp, n, Object.assign({ fnum: o.fnum, dirt: o.dirt, rect: o.rect, noise: 1, seed: seedN, rowBase: lineCounter, outRow: out }, lineExposure(o)));
-      const L = live[k], ctx = L.ctx, cv = ctx.canvas;   // live waterfall, newest at the bottom, true proportions
-      const h = n * pitch / L.mm; L.acc += h; const shift = Math.floor(L.acc); L.acc -= shift;
-      if (shift > 0) ctx.drawImage(cv, 0, -shift);
-      queueCopy(0, out, cam.PX, n, () => ctx, 0, cv.height - h, cv.width, h);
+      scrollLive(live[k], out, cam, n);
+      if (liveRaking[k]) {   // the side lights' lines fall between the bar's
+        traceLines(cam, s0 + tp / 2, tp, n, Object.assign({ fnum: o.fnum, dirt: o.dirt, rect: o.rect, noise: 1, seed: seedN + 0.5, rowBase: lineCounter, outRow: OUT_RAKING + k * MAXROWS,
+          lights: lightsFor(cams, "line", "side") }, lineExposure(o)));
+        scrollLive(liveRaking[k], OUT_RAKING + k * MAXROWS, cam, n);
+      }
       let r = 0;
       while (r < n) {   // captures: contiguous rows that belong to one pallet
         const p = owners[r]; let e = r; while (e < n && owners[e] === p) e++;
@@ -3030,6 +3172,7 @@ void main() {
     return { e: e, saturated: 0.5 * k >= 1, db: 20 * Math.log10(e / Math.sqrt(e + SENSOR.readNoise * SENSOR.readNoise)), gain: Math.max(1, 1 / k) };
   }
   const typeLen = new Map();
+  const SIDE_EVEN_Z = 550;   // near the edge of a 1200 mm wide pallet
   function updateBudget() {
     const body = $("budget").querySelector("tbody"), o = opts(), types = TYPES.filter((t) => enabled.has(t.id));
     if (!types.length || !cams.length) { body.innerHTML = '<tr><td colspan="3" class="cap-dim">Tick at least one pallet type.</td></tr>'; return; }
@@ -3037,13 +3180,13 @@ void main() {
     const v = beltSpeed, L = Math.max(...types.map((t) => typeLen.get(t.id))), cycle = 3600 / TARGET_PER_H, beltPitch = L + SPACING;
     const st = stickEstimate(gap), lost = st.perPallet * st.meanStall;   // travel lost to sticking, mm per pallet
     const capacity = v * 3600 / beltPitch, capStick = v * 3600 / (beltPitch + lost);
-    const vs = scanSpeed(), le = lineExposure(o), ae = areaExposure(o), lineRate = vs / pitch;
+    const vs = scanSpeed(), le = lineExposure(o), ae = areaExposure(o), lineRate = vs / pitch * linesPerImage(o);
     const pass = louvrePass(o.louvre), kLine = le.k * pass;
     const age = service.lightFactor(), sl = sensorAt(lineSignalK(o)), sa = sensorAt(ae.k * age);
     const driver = DRIVERS[$("driver").value], driverName = $("driver").selectedOptions[0].textContent;
     const flickLine = flickerSpread(driver, le.t * 1e-6), flickArea = flickerSpread(driver, ae.t * 1e-3);
     const flickRow = (spread) => [driverName, spread ? "brightness differs up to " + Math.round(spread * 100) + "% between exposures" : "steady", chk(spread <= 0.02, spread <= 0.1)];
-    const lineCamMBs = lineRate * cams[0].PX * 3 / 1e6, linePalletMB = (L + 2 * MARGIN) / pitch * cams[0].PX * 3 * cams.length / 1e6;
+    const lineCamMBs = lineRate * cams[0].PX * 3 / 1e6, linePalletMB = (L + 2 * MARGIN) / pitch * linesPerImage(o) * cams[0].PX * 3 * cams.length / 1e6;
     const topMmPx = AREA_REAL.topField / AREA_REAL.topPx, topMBs = AREA_REAL.topMP * TOP_FPS;
     const stations = AREA_CAMS.length - 1, stationMB = AREA_REAL.stationMP * stations, keptMB = linePalletMB + stationMB + AREA_REAL.topMP;
     const deadline = (1200 - MARGIN) / vs;   // end of the bottom scan until the trail leaves the station frame
@@ -3051,6 +3194,11 @@ void main() {
     const snrChk = (s) => chk(!s.saturated && s.db >= 30, !s.saturated && s.db >= 20);
     const signal = (s) => (s.saturated ? "saturated: mid-grey already fills the full well" : Math.round(s.e) + " e⁻, SNR " + s.db.toFixed(0) + " dB, gain ×" + s.gain.toFixed(1));
     const pct = (x) => Math.round(x * 100) + "%", px = (x) => (x < 0.01 ? "<0.01" : x.toFixed(2)) + " px";
+    // How evenly the side lights light the scan line: a bottom face at the pallet's edge against one at the centre.
+    function sideEvenRow() {
+      const L = bottomLights("side"), edge = lineLightAt(L, SIDE_EVEN_Z) / lineLightAt(L, 0);
+      return ["Side lights along the scan line", "a bottom face " + SIDE_EVEN_Z + " mm from the belt centre gets " + edge.toFixed(1) + "× the light at the centre (without shadows)", chk(edge <= 2, edge <= 4)];
+    }
     function windowRow(c, o) {
       const w = windowOptics(c, o.fnum), name = "Window optics, " + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "° camera";
       if (w.housed === 1) return [name, "too steep: the camera can't see through it", chk(false)];
@@ -3074,11 +3222,13 @@ void main() {
         ["Touching pallets come apart by", "about " + Math.round((sectionFactor - 1) * L) + " mm (longest type)", chk((sectionFactor - 1) * L >= 50, (sectionFactor - 1) * L >= 20)]] : []),
       ["… less gap sticking (" + st.perPallet.toFixed(2) + " × " + st.meanStall.toFixed(0) + " mm per pallet, model)", Math.round(capStick) + " pallets/h", chk(capStick >= TARGET_PER_H)],
       ["Bottom line-scan, " + cams.length + " × " + cams[0].PX + " px" + (sectionFactor > 1.001 ? ", at the middle-section speed" : "")],
-      ["Line rate", Math.round(lineRate) + " lines/s, " + (1000 / lineRate).toFixed(2) + " ms per line", ""],
+      ["Line rate", Math.round(lineRate) + " lines/s, " + (1000 / lineRate).toFixed(2) + " ms per line" + (linesPerImage(o) > 1 ? " (the lights alternate: each image every other line)" : ""), ""],
       ["Exposure", Math.round(le.t) + " µs" + (o.expUs > le.tMax ? " (capped at the line period)" : ""), chk(o.expUs <= le.tMax, true)],
       ["Motion blur along travel", fmtBlur(le.blur, pitch), chk(le.blur / pitch <= 0.5, le.blur / pitch <= 1)],
       ...(o.louvre ? [["LED bar louvre ±" + o.louvre + "° along the bar", "passes " + Math.round(pass * 100) + "% of the bar's light to the scan line at the belt centre", chk(pass >= 0.8, pass >= 0.4)]] : []),
-      ["Signal at mid-grey", signal(sl), snrChk(sl)],
+      ["Signal at mid-grey" + (o.lightSetup === "alternate" ? ", evenly lit image (bar)" : ""), signal(sl), snrChk(sl)],
+      ...(o.lightSetup === "alternate" ? [["Signal at mid-grey, raking image (side lights)", signal(sensorAt(lineSignalK(o, "side"))), snrChk(sensorAt(lineSignalK(o, "side")))]] : []),
+      ...(o.lightSetup === "alternate" || o.lightSetup === "side" ? [sideEvenRow()] : []),
       ["Light flicker between lines: " + flickRow(flickLine)[0], flickRow(flickLine)[1], flickRow(flickLine)[2]],
       ["Brightest surface not clipped", kLine <= 2 ? "everything up to reference white" : Math.round(200 / kLine) + "% of reference white", chk(kLine <= 2, kLine <= 4)],
       ["Data rate", lineCamMBs.toFixed(1) + " MB/s per camera → " + linkFor(lineCamMBs), ""],
@@ -3094,7 +3244,7 @@ void main() {
       ["Signal at mid-grey (" + ae.t.toFixed(1) + " ms)", signal(sa), snrChk(sa)],
       ["Light flicker between snapshots: " + flickRow(flickArea)[0], flickRow(flickArea)[1], flickRow(flickArea)[2]],
       ["Service state"],
-      ["Since service", service.months + " months: light output " + Math.round(age * 100) + "%, dust on the LED bar −" + Math.round(service.barDust() * 100) + "%, window dirt " + Math.round(o.dirt * 100) + "%, " + service.specks() + " specks per bottom window", chk(age >= 0.9 && o.dirt <= 0.5, age >= 0.8 && o.dirt <= 0.75)],
+      ["Since service", service.months + " months: light output " + Math.round(age * 100) + "%, dust on the LED bar −" + Math.round(service.barDust(o.lightSetup === "beside") * 100) + "%, window dirt " + Math.round(o.dirt * 100) + "%, " + service.specks() + " specks per bottom window", chk(age >= 0.9 && o.dirt <= 0.5, age >= 0.8 && o.dirt <= 0.75)],
       ["Debris on the bottom windows", service.specks() + " specks of grit" + (o.splinter && !service.gritSlides() ? " and a splinter" : "") + ": darkens the image columns by about " + Math.round(debrisShare(o) * 100) + "% on average (estimate)", chk(debrisShare(o) <= 0.02, debrisShare(o) <= 0.1)],
       ["Bottom windows", winAngleText(service.winAngle) + " from horizontal" + (service.gritSlides() ? ", grit slides off" : "") +
         (service.purge ? "; air purge: about " + WINDOW_WEAR.purgeAirM3h * cams.length + " m³/h of compressed air (assumed)" : ""), ""],
@@ -3145,11 +3295,12 @@ void main() {
     out.innerHTML = "";
     const areaTile = (c, label) => tiles.push({ cam: c, ctx: add(c.w, c.h, label), s: -c.trigger(p, 0) });   // triggers are cx + constant
     if (view === "station") AREA_CAMS.forEach((c) => areaTile(c, c.name));
-    if (view === "bottom") cams.forEach((cam) => {
-      const rows = Math.ceil((2 * p.reach + 400) / pitch);
-      const ctx = add(cam.PX, rows, camLabel(cam), (cam.PX * cam.mmPerPx).toFixed(0) + " / " + (rows * pitch).toFixed(0));
-      for (let r = 0; r < rows; r += MAXROWS) tiles.push({ cam: cam, ctx: ctx, r: r, n: Math.min(MAXROWS, rows - r), s0: -p.reach - 200 + r * pitch });
-    });
+    const images = opts().lightSetup === "alternate" ? [["", undefined], [" · raking light", "side"]] : [["", undefined]];
+    if (view === "bottom") images.forEach(([suffix, which]) => cams.forEach((cam) => {
+      const rows = Math.ceil((2 * p.reach + 400) / pitch), lights = which && lightsFor(cams, "line", which);
+      const ctx = add(cam.PX, rows, camLabel(cam) + suffix, (cam.PX * cam.mmPerPx).toFixed(0) + " / " + (rows * pitch).toFixed(0));
+      for (let r = 0; r < rows; r += MAXROWS) tiles.push({ cam: cam, ctx: ctx, r: r, n: Math.min(MAXROWS, rows - r), s0: -p.reach - 200 + r * pitch, lights: lights });
+    }));
     const what = p.type.name + ": " + (p.damages.length ? p.damages.map((d) => d[0]).join(", ") : "intact");
     photoJob = { pals: [p], what: what, tiles: tiles, ti: 0, pass: 0, N: +$("ph-n").value, t0: performance.now() };
   }
@@ -3160,7 +3311,7 @@ void main() {
       const t = j.tiles[j.ti], show = j.pass === j.N - 1 || k === photoPasses - 1;
       const po = { still: true, pass: j.pass, noPost: !show, seed: 1 + j.pass * 1.618, fnum: o.fnum };
       if (t.cam.kind === "line") {
-        traceLines(t.cam, t.s0, pitch, t.n, Object.assign(po, lineExposure(o), { rect: o.rect, dirt: o.dirt, noise: 1, rowBase: t.r, sky: HALL_SKY, lightJit: [40, 15, 120] }));
+        traceLines(t.cam, t.s0, pitch, t.n, Object.assign(po, lineExposure(o), { rect: o.rect, dirt: o.dirt, noise: 1, rowBase: t.r, sky: HALL_SKY, lightJit: [40, 15, 120], lights: t.lights }));
         if (show) t.ctx.drawImage(glc, 0, 0, t.cam.PX, t.n, 0, t.r, t.cam.PX, t.n);
       } else {
         const ov = !!t.cam.photo;
@@ -3243,7 +3394,7 @@ void main() {
   });
   // pallets that have not reached the gap yet take the new conditions; the others keep their path
   function rebuildUpcoming() { feed.forEach((p, i) => { if (palletX(p, lastLine) < -(p.reach + 200)) p.motion = buildMotion(p, gap, p.touching ? feed[i - 1] : null); }); sceneKey = ""; }
-  ["sensor", "fnum", "opt-fit", "opt-rect", "opt-light"].forEach((id) => $(id).addEventListener("change", restart));
+  ["sensor", "fnum", "opt-fit", "opt-rect", "opt-light", "light-setup"].forEach((id) => $(id).addEventListener("change", restart));
   $("opt-station").addEventListener("change", buildStationRig);
   $("opt-fans").addEventListener("change", applyFans);
   $("exp").addEventListener("input", () => { $("exp-out").textContent = Math.round(Math.pow(10, +$("exp").value)) + " µs"; updateBudget(); });
@@ -3297,7 +3448,7 @@ void main() {
 
   // ---------------- shareable settings ----------------
   // Every control as a short code; "Load settings…" accepts the code or a link ending in #s=<code>.
-  const SETTING_IDS = ["tilt", "side", "gap", "sensor", "fnum", "opt-fit", "opt-rect", "opt-light", "exp", "light", "aexp", "dirt", "belt", "section",
+  const SETTING_IDS = ["tilt", "side", "gap", "sensor", "fnum", "opt-fit", "opt-rect", "opt-light", "light-setup", "exp", "light", "aexp", "dirt", "belt", "section",
     "speed", "damage", "scatter", "opt-transport", "opt-unusual", "opt-station", "months", "f-bar", "f-lamp", "f-enc",
     "louvre", "dust", "opt-glare", "driver", "lightcol", "daylight", "vib", "shutter", "f-uncal", "f-splinter", "f-fog",
     "win-angle", "win-purge", "side-h", "side-x", "opt-indirect"];
@@ -3635,7 +3786,8 @@ void main() {
       ["Pixel pitch", () => PIXEL_UM + " µm", "typical", "lens focal length, aperture, debris on the window"],
       ["Sensor full well; read noise", () => SENSOR.fullWell + " e⁻; " + SENSOR.readNoise + " e⁻", "typical", "signal-to-noise"],
       ["Reference exposure", () => "100 µs at f/4 with the LED bar at 100% fills mid-grey to half the full well", "assumed", "every brightness and noise result"],
-      ["LED bar", () => (-cams[0].lightPos[1]) + " mm below the belt, 1 m long, sampled as " + cams[0].lights.length + " points", "assumed", "light through the gap, glare, louvre"],
+      ["LED bar", () => "1 m long, sampled as 4 points; under the gap " + BAR_REF_MM + " mm below the belt, or beside each camera " + BESIDE_MM + " mm from its lens (the same bar, so less light)", "assumed", "light through the gap, glare, louvre"],
+      ["Side lights", () => "one per belt side, " + (-SIDE_LIGHT.y) + " mm below the belt and " + SIDE_LIGHT.z + " mm from its centre, aimed along the gap at the belt centre, each as bright as the whole bar; no dust on them", "assumed", "raking-light image"],
       ["LED bar against the station lamps", () => BAR_VS_LAMPS + "× as bright (100 µs line exposure vs 1 ms area exposure, similar lenses)", "estimate", "glare in the station cameras, lamps in the bottom images"],
       ["Window in front of the lens", () => WINDOW_MM + " mm along the lens axis, outer face turned the way the camera looks", "assumed", "how debris on it shows, window size"],
       ["Window glass", () => "plain, uncoated, " + GLASS.thickMm + " mm, index " + GLASS.n + " (BK7-like); housing behind it matt black, so the window reflects nothing into the lens", "assumed", "light lost at steep windows, shift of the view"],
@@ -3721,7 +3873,7 @@ void main() {
     }
     lineWin.push([t, lines]); while (lineWin.length && t - lineWin[0][0] > 1000) lineWin.shift();
     const lps = lineWin.reduce((a, b) => a + b[1], 0), mps = lps * pitch / 1000;
-    $("st-rate").textContent = paused ? "–" : lps.toLocaleString() + " lines/s";
+    $("st-rate").textContent = paused ? "–" : (lps * linesPerImage(opts())).toLocaleString() + " lines/s";   // the camera's lines: twice the image's when the lights alternate
     $("st-speed").textContent = paused ? "paused" : mps.toFixed(mps < 0.1 ? 3 : 2) + " m/s" + (speed > 0.3 && mps < scanSpeed() / 1000 * speed * 0.9 ? (softGL ? " (no GPU: slowed)" : " (GPU-limited)") : "");
     let current = null;
     feed.forEach((p) => {

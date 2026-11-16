@@ -44,7 +44,7 @@ const setControls = (p, o) => p.evaluate((o) => {
 }, o);
 // The controls the checks below change, at their defaults, so each check starts from the same state.
 const DEFAULTS = { "f-splinter": false, "f-fog": false, driver: "dc", vib: "0.1", "f-uncal": false, lightcol: "matched", shutter: "global",
-  daylight: "none", "win-angle": "0", "win-purge": false, "f-bar": false, "side-h": "260", "side-x": "0", louvre: "0", "opt-indirect": false, months: "0" };
+  daylight: "none", "light-setup": "gap", "win-angle": "0", "win-purge": false, "f-bar": false, "side-h": "260", "side-x": "0", louvre: "0", "opt-indirect": false, months: "0" };
 // Photo render of a view with the feed paused; keeps each image's pixels in the page under tag.
 async function render(p, tag, view, settings) {
   await setControls(p, Object.assign({}, DEFAULTS, settings || {}, { "ph-view": view, "ph-n": "16" }));
@@ -152,6 +152,27 @@ try {
       expect(mid < 0.95, "camera " + i + ": the middle keeps " + mid.toFixed(2) + " of its light");
       expect(ends < mid - 0.02, "camera " + i + ": the ends keep " + ends.toFixed(2) + ", the middle " + mid.toFixed(2));
     }
+  });
+  await check("an LED bar beside the cameras lights the scan line less than one under the gap", async () => {
+    await render(p, "bar beside", "bottom", { "light-setup": "beside" });
+    for (const i of [0, 1]) { const r = (await ratios(p, "base", "bar beside", i)).all; expect(r < 0.9, "camera " + i + " keeps " + r.toFixed(2) + " of the light"); }
+  });
+  await check("side lights light the ends of the scan line far more than its middle", async () => {
+    await render(p, "side lights", "bottom", { "light-setup": "side" });
+    const L = (span) => p.evaluate((tag, LINEAR, span) => {
+      const img = window.__imgs[tag][0], lin = eval(LINEAR)(img), x0 = Math.floor(span[0] * img.width), x1 = Math.ceil(span[1] * img.width); let s = 0, n = 0;
+      for (let y = 0; y < img.height; y++) for (let x = x0; x < x1; x++) { s += lin[y * img.width + x]; n++; }
+      return s / n;
+    }, "side lights", LINEAR, span);
+    const mid = await L([0.45, 0.55]), ends = (await L([0.05, 0.15]) + await L([0.85, 0.95])) / 2;
+    expect(ends > 3 * mid, "ends " + ends.toFixed(4) + " vs middle " + mid.toFixed(4));
+  });
+  await check("alternating lights give each bottom camera a second, raking-light image", async () => {
+    expect(await render(p, "alternating", "bottom", { "light-setup": "alternate" }) === 4, "not four bottom images");
+    expect(await diff(p, "alternating", "alternating", 0) === 0 && await p.evaluate(() => {
+      const a = window.__imgs.alternating[0].data, b = window.__imgs.alternating[2].data; let d = 0;
+      for (let k = 0; k < a.length; k += 4) d += Math.abs(a[k] - b[k]); return d / (a.length / 4) > 2;
+    }), "the raking image looks like the evenly lit one");
   });
   // The budget and the stand-in classifier use script copies of three shader formulas (flicker, louvre, window
   // debris); each check compares the copy's number in the Timing & data tab with the same quantity in the image.
@@ -267,7 +288,7 @@ try {
     expect(rows.some((r) => /window optics/i.test(r) && /short/.test(r)), "no window optics row marked short");
   });
   await check("a settings code restores the controls", async () => {
-    const want = { gap: "150", louvre: "30", driver: "pwm", "side-h": "100", "f-fog": true, "opt-indirect": true, "win-angle": "60", "win-purge": true };
+    const want = { gap: "150", louvre: "30", driver: "pwm", "side-h": "100", "f-fog": true, "opt-indirect": true, "win-angle": "60", "win-purge": true, "light-setup": "alternate" };
     await setControls(p, want);
     await p.evaluate(() => document.getElementById("set-copy").click());
     const code = await p.evaluate(() => document.getElementById("set-code").value);

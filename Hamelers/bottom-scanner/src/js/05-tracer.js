@@ -121,8 +121,9 @@
   }
   // Reading the WebGL canvas back is slow in some browsers (about 2 ms per copy in Firefox), so each frame's renders
   // go to separate rows of it and are read back once, by queueCopy/flushCopies. Rows: bottom camera k at k × MAXROWS,
-  // then the top camera's strip, then a station snapshot strip.
-  const OUT_TOP = 2 * MAXROWS, OUT_SNAP = () => OUT_TOP + TOP_LIVE.h;
+  // its raking-light image (alternating lights) at (2 + k) × MAXROWS, then the top camera's strip, then a station
+  // snapshot strip.
+  const OUT_RAKING = 2 * MAXROWS, OUT_TOP = 4 * MAXROWS, OUT_SNAP = () => OUT_TOP + TOP_LIVE.h;
   const stage = document.createElement("canvas"), stageCtx = stage.getContext("2d");
   const strip = document.createElement("canvas"), stripCtx = strip.getContext("2d");   // see flushCopies
   const copyQueue = [], afterCopy = [];
@@ -185,7 +186,7 @@
   }
   const palA = new Float32Array(24), palB = new Float32Array(24), bbLo = new Float32Array(24), bbHi = new Float32Array(24);
   const rollArr = new Float32Array(40);
-  const MAX_LAMPS = 12, lampLo = new Float32Array(MAX_LAMPS * 4), lampHi = new Float32Array(MAX_LAMPS * 4);
+  const MAX_LAMPS = 16, lampLo = new Float32Array(MAX_LAMPS * 4), lampHi = new Float32Array(MAX_LAMPS * 4);
   // The lamp faces, for mirror reflections: box, base radiance (lo.w) and whether it is the LED bar (hi.w).
   function lampUniforms(U) {
     const lamps = worldFor(sceneGap, cams).parts.filter((q) => q.mat === "lamp");
@@ -218,7 +219,8 @@
     const lights = L.lights;
     if (lights.length > MAX_LIGHTS) throw new Error(lights.length + " lights; the tracer takes " + MAX_LIGHTS + ". Raise MAX_LIGHTS and uLights[] together.");
     const a = new Float32Array(MAX_LIGHTS * 4); lights.forEach((l, i) => a.set(l, i * 4));
-    gl.uniform4fv(U.uLights, a); gl.uniform1i(U.uNL, lights.length); gl.uniform1i(U.uNBar, L.nBars); gl.uniform1f(U.uAmbient, ambient * (1 + 0.6 * L.day));
+    gl.uniform4fv(U.uLights, a); gl.uniform1i(U.uNL, lights.length); gl.uniform1i(U.uNBar, L.nBars); gl.uniform1i(U.uNSide, L.nSide);
+    gl.uniform1f(U.uBarWin, L.barWin); gl.uniform2f(U.uGlass, GLASS.n, GLASS.thickMm); gl.uniform1f(U.uAmbient, ambient * (1 + 0.6 * L.day));
     gl.uniform3fv(U.uBgUp, HALL.map((v) => v * L.hall * (1 + L.day))); gl.uniform2f(U.uFace, L.barFace, L.lampFace);
     gl.uniform3fv(U.uBarCol, L.barCol); gl.uniform3fv(U.uLampCol, L.lampCol);
     gl.uniform1f(U.uLouvreTan, L.louvreTan); gl.uniform1f(U.uBarHalf, BAR_SEGMENT_HALF); gl.uniform1f(U.uDust, L.dust);

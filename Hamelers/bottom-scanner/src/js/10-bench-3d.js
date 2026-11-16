@@ -104,11 +104,17 @@
       // stands, as in the traced scene (rigParts): one under each camera, two under each LED bar
       const standM = M(css("--steel"), { metalness: 0.4, roughness: 0.5 }), stand = (x, top, z, w) => rig.add(tip(box(w, top + 0.6, w, standM, x, (top - 0.6) / 2, z), "Stand on the floor, 0.6 m below the belt."));
       stand(C.x, C.y - 0.045, C.z, 0.03);
-      if (!leds.has(c.lightPos.join(","))) [-0.45, 0.45].forEach((z) => stand(c.lightPos[0] / 1000, c.lightPos[1] / 1000 - 0.03, z, 0.024));
+      const lk = String(c.lightPos), newBar = c.lightPos && !leds.has(lk);
+      if (newBar) [-0.45, 0.45].forEach((z) => stand(c.lightPos[0] / 1000, c.lightPos[1] / 1000 - 0.03, z, 0.024));
       rig.add(tip(body, "Line-scan camera " + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "°" + (c.spec.z ? ", " + Math.abs(c.spec.z) + " mm " + (c.spec.z < 0 ? "left" : "right") : ", centred") +
         ". FOV " + ((c.phi1 - c.phi0) * 180 / Math.PI).toFixed(0) + "°, " + c.PX + " px over " + Math.round(c.z1 - c.z0) + " mm; lens " + c.focal.toFixed(0) + " mm focused at " + Math.round(c.focus) + " mm."));
-      const lk = c.lightPos.join(",");
-      if (!leds.has(lk)) { leds.add(lk); rig.add(tip(box(0.05, 0.03, 1.0, ledM, c.lightPos[0] / 1000, c.lightPos[1] / 1000, 0), "LED line light, 1 m bar, " + Math.round(-c.lightPos[1]) + " mm below the belt" + (c.lightPos[0] === 0 ? ", centred under the gap." : "."))); }
+      if (newBar) {
+        leds.add(lk);
+        const beside = opts().lightSetup === "beside";
+        rig.add(tip(box(0.05, 0.03, 1.0, ledM, c.lightPos[0] / 1000, c.lightPos[1] / 1000, 0), "LED line light, 1 m bar, " + Math.round(-c.lightPos[1]) + " mm below the belt" +
+          (beside ? ", beside the camera behind its own window." : c.lightPos[0] === 0 ? ", centred under the gap." : ".")));
+        if (beside) rig.add(barWindowMesh(c.lightPos));
+      }
       const pts = [C]; const N = 20;
       for (let i = 0; i <= N; i++) {
         const phi = c.phi0 + (c.phi1 - c.phi0) * i / N;
@@ -118,7 +124,21 @@
       const geo = new THREE.BufferGeometry().setFromPoints(pts); const idx = []; for (let i = 1; i <= N; i++) idx.push(0, i, i + 1); geo.setIndex(idx);
       const fan = new THREE.Mesh(geo, beam); fan.userData.kind = "line"; rig.add(tip(fan, "Scan plane of the " + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "° camera; it passes through the gap line.")); fans.push(fan);
     });
+    if (opts().lightSetup === "side" || opts().lightSetup === "alternate") sideLights().forEach(([x, y, z]) => {
+      rig.add(tip(box(0.1, 0.04, 0.03, ledM, x / 1000, y / 1000, (z + Math.sign(z) * 18) / 1000), "Side light, " + (-y) + " mm below the belt, aimed along the gap at the belt centre (raking light)."));
+    });
     applyFans();
+  }
+  // An LED bar's own window (bar beside its camera): a 1 m pane above the bar at the window angle, turned toward the
+  // scan line, as in the tracer (barWeight).
+  function barWindowMesh(lp) {
+    const ang = service.winAngle * Math.PI / 180, s = lp[0] > 0 ? -1 : 1;
+    const n = new THREE.Vector3(s * Math.sin(ang), Math.cos(ang), 0), a = new THREE.Vector3(0, 0, 1), b = n.clone().cross(a);
+    const g = new THREE.Group(); g.matrixAutoUpdate = false;
+    g.matrix.makeBasis(b, a, n).setPosition(lp[0] / 1000, (lp[1] + 30) / 1000, 0);
+    g.add(tip(box(0.07, 1.02, GLASS.thickMm / 1000, M("#a8d8ea", { transparent: true, opacity: 0.5, roughness: 0.05, depthWrite: false }), 0, 0, 0),
+      "The LED bar's own window, plain glass " + GLASS.thickMm + " mm, " + winAngleText(service.winAngle) + " from horizontal."));
+    return g;
   }
   // Camera c's window, as a pane of the glass it needs, and the air purge collar along its upper edge when on.
   function windowMesh(c) {

@@ -3,14 +3,18 @@
   // the full well. Longer exposure or more light raises k (brighter surfaces clip); less lowers it (more gain, more noise).
   const SENSOR = { fullWell: 10000, readNoise: 12 };   // electrons per pixel, typical industrial CMOS (assumed)
   function lineExposure(o) {
-    const tMax = pitch / scanSpeed() * 1e6, t = Math.min(o.expUs, tMax);   // a line can't integrate longer than its period
+    const tMax = pitch / scanSpeed() * 1e6 / linesPerImage(o), t = Math.min(o.expUs, tMax);   // a line can't integrate longer than its period
     return { t: t, tMax: tMax, k: t / 100 * (o.light / 100) * Math.pow(4 / (o.fnum || 4), 2), blur: scanSpeed() * t * 1e-6 };
   }
   const areaExposure = (o) => ({ t: o.aexpMs, k: o.aexpMs, blur: scanSpeed() * o.aexpMs / 1000 });
-  // The line cameras' signal relative to the reference: the exposure, with everything that dims the bar's light on
-  // the scan line (louvre, LED ageing, dust on the bar, a failed bar leaving only stray light from the lamps) and on
-  // the way back through the camera's window.
-  const lineSignalK = (o) => lineExposure(o).k * louvrePass(o.louvre) * service.lightFactor() * (1 - service.barDust()) * (service.barOut ? 0.1 : 1) * windowPass();
+  // The line cameras' signal in image which (see lightsFor) relative to the reference: the exposure, with everything
+  // that changes the light on the scan line (the setup's lights, LED ageing; for the bar its louvre, dust on it, a
+  // failure leaving only stray light from the lamps) and on the way back through the camera's window.
+  function lineSignalK(o, which) {
+    const barLit = bottomLights(which).nBars > 0;
+    const barLoss = barLit ? louvrePass(o.louvre) * (1 - service.barDust(o.lightSetup === "beside")) * (service.barOut ? 0.1 : 1) : 1;
+    return lineExposure(o).k * setupLight(o, which) * barLoss * service.lightFactor() * windowPass();
+  }
   const significantBlur = (mm, mmPerPx) => ((mm || 0) >= 0.25 * mmPerPx ? mm : 0);   // below a quarter pixel: not worth the samples
   function sensorUniforms(P, o) { gl.uniform1f(P.uK, o.k || 1); gl.uniform1f(P.uFullWell, SENSOR.fullWell); gl.uniform1f(P.uReadNoise, SENSOR.readNoise); }
 
@@ -44,7 +48,7 @@
     gl.uniform3fv(U.uAxis, cam.axis); gl.uniform1f(U.uFocus, cam.focus); gl.uniform1f(U.uAperture, fnum > 0 ? cam.focal / fnum : 0); gl.uniform1i(U.uDof, fnum > 0 ? LENS_SAMPLES : 0);
     gl.uniform1f(U.uPixAng, cam.dphi); gl.uniform1f(U.uBlur, significantBlur(o.blur, pitch));
     const win = windowFor(cam);
-    gl.uniform3fv(U.uWinN, win.n); gl.uniform3fv(U.uWinO, win.o); gl.uniform2f(U.uGlass, GLASS.n, GLASS.thickMm);
+    gl.uniform3fv(U.uWinN, win.n); gl.uniform3fv(U.uWinO, win.o);
     beginStill(U, o);
     gl.uniform1i(U.uIndirect, o.indirect && !o.still && !o.id ? INDIRECT_SAMPLES : 0);
     if (o.indirect && !o.still) gl.uniform3fv(U.uSky, HALL_SKY.map((v) => v * L.hall * (1 + L.day)));
