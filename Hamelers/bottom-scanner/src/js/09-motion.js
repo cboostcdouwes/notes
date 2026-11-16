@@ -37,7 +37,7 @@
     const edges = [], front = (p.orient.yaw ? p.W : p.L) / 2;
     p.parts.forEach((q) => {
       const [, y0, x1, y1] = beltBox(q, p);
-      if (y0 > 0.5 || (y1 < 3 && q.mat !== "steel") || q.mat === "wrap") return;   // what it stands on, plus nails dragging below
+      if (y0 > 0.5 || (y1 < 3 && q.mat !== "steel") || q.mat === "wrap" || q.flexible) return;   // what it stands on, plus nails dragging below
       const freeEnd = /\(piece\)/.test(q.name) && x1 < front - 5;
       const extra = freeEnd ? 3 : Math.max(0, -y0), k = edges.findIndex((x) => Math.abs(x[0] - x1) < 30);
       if (k < 0) edges.push([x1, extra]); else edges[k][1] = Math.max(edges[k][1], extra);
@@ -47,8 +47,9 @@
   const edgeDroop = (warp, extra, k, g) => Math.min(8, warp * gapDroop(g) * (k === 0 ? 1 : 0.6) + extra * Math.min(1, gapDroop(g) + 0.3));
   // The stall is a time to climb over the roller, so its length in belt travel grows with the speed at the gap,
   // and the snag's jolt (the turn) grows with the square root of speed. Reference speed 0.44 m/s. Assumed.
-  const stallOf = (delta, r) => Math.min(90, (delta - CATCH_MM) * 6 * (0.6 + 0.8 * r) * scanSpeed() / 440);
-  const kickScale = () => Math.sqrt(scanSpeed() / 440);
+  const STALL = { mmPerMm: 6, refSpeed: 440 };   // stall travel per mm of droop over the catch threshold, at refSpeed mm/s
+  const stallOf = (delta, r) => Math.min(90, (delta - CATCH_MM) * STALL.mmPerMm * (0.6 + 0.8 * r) * scanSpeed() / STALL.refSpeed);
+  const kickScale = () => Math.sqrt(scanSpeed() / STALL.refSpeed);
   function solveU(xAt, target) {   // xAt is non-decreasing in u
     let a = MOTION_U0, b = MOTION_U0 + MOTION_DU * (MOTION_N - 1);
     for (let i = 0; i < 40; i++) { const c = (a + b) / 2; if (xAt(c) < target) a = c; else b = c; }
@@ -121,10 +122,11 @@
     m.hesitations = J.hesitations.length;
     return m;
   }
+  const HESITATION_MM = 10000;   // mean belt travel between short hesitations (roller friction)
   // Per-pallet random draws, made once, so a gap change re-derives the same pallet's motion.
   function jostleDraws(p) {
     const hes = [];
-    for (let u = -3500 + -Math.log(1 - rnd()) * 10000; u < 3500; u += -Math.log(1 - rnd()) * 10000)   // ~1 per 10 m
+    for (let u = -3500 + -Math.log(1 - rnd()) * HESITATION_MM; u < 3500; u += -Math.log(1 - rnd()) * HESITATION_MM)
       hes.push({ u0: u, dur: 2 + rnd() * 8, kick: (rnd() - 0.5) * 0.002 });
     return { warp: warpOf(p.type.id, rnd()) + (p.verdict === "usable" ? 0 : 0.8), hesitations: hes,
       wanderZ: 2 + rnd() * 4, wanderYaw: (0.1 + rnd() * 0.2) * Math.PI / 180, ph: [rnd() * 6.28, rnd() * 6.28],

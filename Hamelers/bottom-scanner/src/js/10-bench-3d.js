@@ -123,6 +123,10 @@
     for (let i = fans.length - 1; i >= 0; i--) if (fans[i].userData.kind === "area") fans.splice(i, 1);
     const camM = M(css("--cam"), { roughness: 0.35 });
     const beam = new THREE.MeshBasicMaterial({ color: new THREE.Color(css("--cam")), transparent: true, opacity: 0.08, side: THREE.DoubleSide, depthWrite: false });
+    stationCamParts().filter((q) => q.name !== "station camera").forEach((q) => {   // the mounts, as traced
+      const s = [0, 1, 2].map((i) => (q.hi[i] - q.lo[i]) / 1000), c = [0, 1, 2].map((i) => (q.lo[i] + q.hi[i]) / 2000);
+      stationRig.add(tip(box(s[0], s[1], s[2], M("#4d4f54"), c[0], c[1], c[2]), "Camera mount (assumed), traced."));
+    });
     AREA_CAMS.forEach((c, ci) => {
       if (ci > 0 && !$("opt-station").checked) return;
       const C = new THREE.Vector3(c.C[0] / 1000, c.C[1] / 1000, c.C[2] / 1000), F = new THREE.Vector3(...c.F), R = new THREE.Vector3(...c.R), U = new THREE.Vector3(...c.U);
@@ -138,9 +142,14 @@
   function palletMesh(p) {
     const g = new THREE.Group();
     p.parts.forEach((pt) => {
-      const sx = (pt.hi[0] - pt.lo[0]) / 1000, sy = (pt.hi[1] - pt.lo[1]) / 1000, sz = (pt.hi[2] - pt.lo[2]) / 1000;
-      const m = box(sx, sy, sz, partMaterial(pt), (pt.lo[0] + pt.hi[0]) / 2000, (pt.lo[1] + pt.hi[1]) / 2000, (pt.lo[2] + pt.hi[2]) / 2000);
-      if (TEX_OF[pt.mat]) grainUVs(m.geometry, pt, TEX_OF[pt.mat][1], pt.mat === "oak");
+      const shape = pt.turn ? Object.assign({}, pt, { lo: pt.turn.lo, hi: pt.turn.hi }) : pt;   // a turned board: its own box, turned below
+      const sx = (shape.hi[0] - shape.lo[0]) / 1000, sy = (shape.hi[1] - shape.lo[1]) / 1000, sz = (shape.hi[2] - shape.lo[2]) / 1000;
+      const m = box(sx, sy, sz, partMaterial(pt), (shape.lo[0] + shape.hi[0]) / 2000, (shape.lo[1] + shape.hi[1]) / 2000, (shape.lo[2] + shape.hi[2]) / 2000);
+      if (pt.turn) {   // about its pivot, as turnedPart (three.js turns +y the other way)
+        const { pivot: [px, pz], angle: a } = pt.turn, cx = m.position.x * 1000 - px, cz = m.position.z * 1000 - pz;
+        m.position.x = (px + cx * Math.cos(a) - cz * Math.sin(a)) / 1000; m.position.z = (pz + cx * Math.sin(a) + cz * Math.cos(a)) / 1000; m.rotation.y = -a;
+      }
+      if (TEX_OF[pt.mat]) grainUVs(m.geometry, shape, TEX_OF[pt.mat][1], pt.mat === "oak");
       if (pt.taper) {   // narrower at the bottom
         const pos = m.geometry.attributes.position;
         for (let i = 0; i < pos.count; i++) if (pos.getY(i) < 0) { pos.setX(i, pos.getX(i) * pt.taper[0]); pos.setZ(i, pos.getZ(i) * pt.taper[1]); }

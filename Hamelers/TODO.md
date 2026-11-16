@@ -16,8 +16,21 @@ Hamelers: pallet classifier. Most important first. Research log: `pallet-classif
   gives only 978 pallets/h; needs >= 0.45 m/s or less spacing (simulator, Timing & data tab).
 - **Test-conveyor measurements** for the simulator: pallet warp and catch rate at candidate gaps, wood colour, light
   falloff; until then its sticking and image numbers are assumptions. Simulator: `bottom-scanner/` (edit `src/`, run
-  `python3 build.py`, share `index.html`).
+  `python3 build.py`, check with `node tests/run.mjs`, share `index.html`).
 - **Light requirements for the station spec**: flicker-free (DC) drivers for the LED bar and the station lamps
   (PWM or mains ripple bands the 100 us line exposures); matched colour temperatures or per-camera white balance.
 - **Protect the bottom windows and LED bar** from debris falling through the gap (splinters, grit, meltwater):
-  slanted window, air knife, shield, or cameras looking in from beside the gap. Compare in the simulator first.
+  slanted covers or an air knife (both in the simulator, rates assumed); needs real deposition rates from a test.
+- **Place the side station cameras ~150 mm along the belt from the scan line**: there they no longer see the LED bar
+  down the gap (simulator v29), with no light lost.
+- **Simulator: centred 0 deg camera with one light** puts the LED bar under a roller at a 100 mm gap (the 80 mm offset
+  dates from the 350 mm gap). Choose the offset from the gap, or drop the 0 deg preset.
+- **Simulator: the LED bar is 4 point lights**, so its light ripples about ±8% along the bar (22-35% with a louvre).
+  More points or a line-light integral would smooth it, at some frame-rate cost.
+- **Damage frequencies**: the simulator draws every damage of a type equally often; real shares from the customer's
+  graders would make the Batch results meaningful.
+- **Simulator: loose boards hanging, the full model.** Now a loose board only turns flat (2-15°, static). In reality its
+  free end also hangs down; the rollers push it back up except over the scan gap, where it drops in and can catch (likely
+  the worst sticking case). Needs per-part motion (the board's angle following the pallet's position over the rollers)
+  in the motion model and the shader, and six cutting planes per part instead of four for turning and hanging at once.
+  Roughly a day; worth it if catching at the gap matters on the test conveyor.

@@ -159,8 +159,9 @@
     set(7, q.mark[0], q.mark[1], q.mark[2], q.mark[3]);
     if (q.sub) { set(8, q.sub[0][0], q.sub[0][1], q.sub[0][2], 1); set(9, q.sub[1][0], q.sub[1][1], q.sub[1][2], 0); }
     q.planes.slice(0, 4).forEach((pl, j) => set(10 + j, pl[0], pl[1], pl[2], pl[3]));
-    set(14, q.nailPat ? q.nailPat[0] : 45, q.nailPat ? q.nailPat[1] : 3, 0, 0);
-    set(15, q.snow || 0, q.ice || 0, 0, 0);
+    const s = q.soil || { kind: 0, x: 0, z: 0, r: 0 };
+    set(14, q.nailPat ? q.nailPat[0] : 45, q.nailPat ? q.nailPat[1] : 3, s.x, s.z);
+    set(15, q.snow || 0, q.ice || 0, s.kind, s.r);
   }
   let sceneKey = "", sceneSlots = [], sceneGap = gap;   // slots: [{pal (null = world), start, count}]
   function uploadScene(pals, g) {

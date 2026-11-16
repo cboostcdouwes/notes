@@ -2,7 +2,8 @@
   // Every control as a short code; "Load settings…" accepts the code or a link ending in #s=<code>.
   const SETTING_IDS = ["tilt", "side", "gap", "sensor", "fnum", "opt-fit", "opt-rect", "opt-light", "exp", "light", "aexp", "dirt", "belt", "section",
     "speed", "damage", "scatter", "opt-transport", "opt-unusual", "opt-station", "months", "f-bar", "f-lamp", "f-enc",
-    "louvre", "dust", "opt-glare", "driver", "lightcol", "daylight", "vib", "shutter", "f-uncal", "f-splinter", "f-fog"];
+    "louvre", "dust", "opt-glare", "driver", "lightcol", "daylight", "vib", "shutter", "f-uncal", "f-splinter", "f-fog",
+    "protect", "side-h", "side-x", "opt-indirect"];
   const SETTINGS_PREFIX = "pbs1.";
   let applyingSettings = false, restartWanted = false;
   function settingsCode() {

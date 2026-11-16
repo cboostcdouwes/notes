@@ -21,6 +21,7 @@ uniform float uVib;             // bottom camera vibration amplitude, mm
 uniform float uSpeed;           // belt speed over the scanner, mm/s (encoder position to time)
 uniform float uDistort;         // uncorrected barrel distortion of the lens; 0: calibrated
 uniform float uRollMM;          // rolling shutter: belt travel during the readout from the first row to the last
+uniform int uIndirect;          // outside photo mode: bounce samples of indirect light per pixel (0: a constant fill instead)
 uniform vec3 uBgUp;             // what rays escaping upward see: the lit hall above the station
 uniform vec3 uC; uniform vec3 uD0; uniform vec3 uE; uniform float uPhi0; uniform float uDphi; uniform float uAxisPhi;
 uniform float uS0; uniform float uPitch; uniform int uH;
@@ -316,6 +317,32 @@ vec3 albedo(int k, vec3 p, inout vec3 n, float foot, out float spec) {
     float im = smoothstep(0.3, 0.7, n1(p.x * 0.01 + seed * 2.1) + n1(p.z * 0.013 + seed) - 0.6 + sw.y * 0.4);
     col = mix(col, col * 0.75 + vec3(0.03, 0.05, 0.07), im); spec += 0.5 * im;
   }
+  int soil = int(sw.z);
+  if (soil > 0) {   // contamination and defects in a patch of radius sw.w around (x, z) = P(k, 14).zw; see addSoil
+    vec4 sl = P(k, 14);
+    float rr = length(vec2(p.x - sl.z, p.z - sl.w)) / max(sw.w, 1.0);
+    float inside = 1.0 - smoothstep(0.8, 1.0, rr + 0.3 * (n1(p.x * 0.05 + seed) + n1(p.z * 0.06 + seed * 1.3) - 1.0));   // ragged outline
+    if (soil == 1) { col *= mix(1.0, 0.3, inside); spec += 0.2 * inside; }   // oil soaked in: dark, faintly glossy
+    else if (soil == 2) {   // paint splashes: a sharp-edged patch and droplets around it
+      vec3 pc = h11(seed) < 0.33 ? vec3(0.82, 0.82, 0.78) : (h11(seed) < 0.66 ? vec3(0.8, 0.55, 0.03) : vec3(0.55, 0.06, 0.04));
+      float drop = step(0.97, h31(floor(p / 3.0))) * (1.0 - step(1.6, rr));
+      float pm = max(step(0.5, inside), drop); col = mix(col, pc, pm); spec = mix(spec, 0.12, pm);
+    }
+    else if (soil == 3) {   // mould: dark grey-green specks at random spots in a 3 mm cell grid, dense in irregular clusters
+      vec2 uv = fa == 0 ? p.zy : (fa == 1 ? p.xz : p.xy), c = floor(uv / 3.0);
+      vec2 at = (c + 0.2 + 0.6 * vec2(h11(c.x * 7.1 + c.y * 3.7 + seed), h11(c.x * 2.3 + c.y * 9.1 + seed))) * 3.0;
+      float cluster = smoothstep(0.35, 0.75, 0.5 * n1(uv.x * 0.06 + seed) + 0.5 * n1(uv.y * 0.07 + seed * 1.7));
+      float speck = step(h11(c.x * 13.0 + c.y * 5.0 + seed), cluster) * (1.0 - smoothstep(0.5, 1.1, length(uv - at)));
+      col = mix(col * mix(vec3(1.0), vec3(0.72, 0.78, 0.7), 0.6 * cluster * inside), vec3(0.06, 0.08, 0.06), 0.85 * speck * inside);   // with a diffuse grey-green stain
+    }
+    else if (soil == 4) col = mix(col, vec3(0.20, 0.17, 0.13) * (0.6 + 0.4 * n1(along * 0.08 + across * 0.9 + seed)), inside);   // rot: grey-brown, fibrous
+    else if (soil == 5) {   // woodworm exit holes, ~2 mm, in the face's own plane
+      vec2 uv = fa == 0 ? p.zy : (fa == 1 ? p.xz : p.xy), c = floor(uv / 6.0);
+      if (h11(c.x * 17.0 + c.y * 31.0 + seed) > 0.8 && length(uv - (c + 0.5) * 6.0) < 1.1) col *= 1.0 - 0.9 * inside;
+    }
+    else if (soil == 6 && max(abs(n.x), max(abs(n.y), abs(n.z))) < 0.9 && sign(n.z) == sl.z)   // wane: the bark left on a slanted edge
+      col = vec3(0.24, 0.19, 0.14) * (0.7 + 0.3 * n1(along * 0.15 + seed));
+  }
   vec4 mk = P(k, 7);
   if (mk.x > 0.5) {   // marks: 1 burnt EPAL oval, 2 IPPC stamp, 3 paper label with barcode
     float nsg = fa == 0 ? n.x : (fa == 1 ? n.y : n.z);
@@ -359,6 +386,7 @@ vec3 lampGlint(vec3 wp, vec3 r, float rough) {
 }
 // Surfaces at least this shiny (spec) reflect the lamps as mirror images (lampGlint) instead of highlights.
 const float MIRROR_SPEC = 0.1;
+const float METAL_F0 = 0.5, DIELECTRIC_F0 = 0.04;   // head-on reflectance: zinc and steel (assumed), water, ice and plastic
 
 const float BEVEL[13] = float[13](2.5, 2.0, 1.2, 2.5, 6.0, 4.0, 4.0, 0.0, 0.0, 1.0, 0.0, 0.5, 0.0);   // edge radius per material, mm
 
@@ -405,7 +433,7 @@ vec3 shade(Hit h, float s, float foot, out vec3 alb, out vec3 wn) {
   vec3 c = alb * (uAmbient * uLampCol + irr) + sp * 0.5;
   if (mirror) {   // Fresnel (Schlick): zinc and steel reflect ~50% head-on, water, ice and plastic ~4%, all more at grazing angles
     bool metal = h.roller >= 0 || int(P(h.k, 0).w) == 9;
-    float F0 = metal ? 0.5 : 0.04, F = F0 + (1.0 - F0) * pow(1.0 - clamp(dot(-h.ld, n), 0.0, 1.0), 5.0);
+    float F0 = metal ? METAL_F0 : DIELECTRIC_F0, F = F0 + (1.0 - F0) * pow(1.0 - clamp(dot(-h.ld, n), 0.0, 1.0), 5.0);
     float rough = mix(0.25, 0.02, smoothstep(MIRROR_SPEC, 0.6, spec)) + (metal ? 0.08 : 0.0);   // spread angle, rad
     vec3 r = reflect(h.ld, n);
     c += F * lampGlint(wp, movable ? worldD(q, r) : r, rough);
@@ -414,6 +442,7 @@ vec3 shade(Hit h, float s, float foot, out vec3 alb, out vec3 wn) {
 }
 
 // Photo mode: one cosine-weighted bounce of indirect light; rays that escape see the hall (uSky).
+const float BOUNCE_MAX = 3.0;   // a few times a well-lit surface
 vec3 bounce(Hit h, float s, vec3 wn) {
   bool movable = h.p >= 0 && uPalB[h.p].y > 0.5;
   vec3 wp = toWorld(movable ? h.p : -1, s, h.pl, true) + wn * 0.1;
@@ -424,7 +453,8 @@ vec3 bounce(Hit h, float s, vec3 wn) {
   if (h2.k < 0 && h2.roller < 0) return uSky * uLampCol * (0.35 + 0.65 * max(d.y, 0.0));
   if (h2.k >= 0 && int(P(h2.k, 0).w) == 12) return vec3(0.0);   // lamps are already counted as direct light
   vec3 a2, n2;
-  return shade(h2, s, h2.t * uPixAng * 8.0 + 2.0, a2, n2);
+  // capped: a rare bounce onto a glint or a brightly lit spot would otherwise show as a speckle until many passes average it
+  return min(shade(h2, s, h2.t * uPixAng * 8.0 + 2.0, a2, n2), vec3(BOUNCE_MAX));
 }
 
 // Light scattered toward the camera by dust in the air along the ray from o (direction d) to distance tEnd: single
@@ -454,10 +484,11 @@ vec3 dustGlow(vec3 o, vec3 d, float tEnd, float s) {
 
 // The bottom camera's stand shaking with the conveyor at time t s: two assumed modes, 24 and 61 Hz across the belt
 // and 31 Hz along it, amplitude uVib mm.
+const vec3 VIB_HZ = vec3(24.0, 31.0, 61.0);
 vec3 vibration(float t) {
   if (uVib <= 0.0) return vec3(0.0);
   float w = 6.2831853 * t;
-  return uVib * vec3(0.5 * sin(31.0 * w + 0.4), 0.0, 0.8 * sin(24.0 * w) + 0.3 * sin(61.0 * w + 1.3));
+  return uVib * vec3(0.5 * sin(VIB_HZ.y * w + 0.4), 0.0, 0.8 * sin(VIB_HZ.x * w) + 0.3 * sin(VIB_HZ.z * w + 1.3));
 }
 
 void main() {
@@ -504,7 +535,14 @@ void main() {
     Hit h = trace(oo, dd, sk);
     vec3 alb, wn;
     vec3 c = shade(h, sk, h.t * uPixAng, alb, wn) + dustGlow(oo, dd, h.k < 0 && h.roller < 0 ? 8000.0 : h.t, sk);
-    if (uStill == 1 && (h.k >= 0 || h.roller >= 0)) c += alb * bounce(h, sk, wn);
+    if (h.k >= 0 || h.roller >= 0) {
+      if (uStill == 1) c += alb * bounce(h, sk, wn);
+      else if (uIndirect > 0) {
+        vec3 b = vec3(0.0);
+        for (int j = 0; j < 8; j++) { if (j >= uIndirect) break; b += bounce(h, sk, wn); }
+        c += alb * b / float(uIndirect);
+      }
+    }
     acc += c;
   }
   vec3 c = acc / float(ns) * uExposure * vig;

@@ -2,15 +2,24 @@
   const BELT_W = 1300, WD = 600, HALF_FOV = 42 * Math.PI / 180;
   // Wear and faults between services (assumed rates): LEDs lose ~2% output per month in 24/7 use, the camera window
   // collects ~6% dirt per month; faults switch a light off or make the encoder under-count travel.
-  // Dust also settles on the LED bar's upward face under the gap, ~4% less light per month, unevenly (barDust: mean loss).
-  const service = { months: 0, barOut: false, lampOut: false, encErr: 0,
-    lightFactor() { return 1 - 0.02 * this.months; }, extraDirt() { return 0.06 * this.months; }, barDust() { return Math.min(0.7, 0.04 * this.months); },
-    specks() { return Math.min(10, Math.floor(1.5 * this.months)); } };   // grit on each bottom window, ~1.5 per month
+  // Dust also settles on the LED bar's upward face under the gap, unevenly (barDust: mean loss), and grit on each
+  // bottom window. Rates per month in 24/7 use; protect: the share that stays (see PROTECTION).
+  const WEAR = { ledLoss: 0.02, windowDirt: 0.06, barDust: 0.04, specks: 1.5 };
+  const service = { months: 0, barOut: false, lampOut: false, encErr: 0, protect: 1,
+    lightFactor() { return 1 - WEAR.ledLoss * this.months; }, extraDirt() { return WEAR.windowDirt * this.months * this.protect; },
+    barDust() { return Math.min(0.7, WEAR.barDust * this.months * this.protect); },
+    specks() { return Math.min(10, Math.floor(WEAR.specks * this.months * this.protect)); } };
+  // Protection of the bottom windows and the LED bar from what falls through the gap: the share of grit, dust and dirt
+  // that stays (assumed). A slanted cover lets grit slide off; an air knife blows it away, a splinter too.
+  const PROTECTION = { none: 1, slanted: 0.4, airknife: 0.1 };
   let beltSpeed = 450;   // real infeed conveyor speed, mm/s (the Playback slider only runs the simulation faster or slower)
   // The middle section, |x| < SECTION_HALF around the scanner, can run faster than the infeed so touching pallets
   // separate. Its encoder drives the line-scan cameras and the tracker, so encoder position s is in middle-section mm.
   let sectionFactor = 1.1;
   const SECTION_HALF = 2000;   // the section covers the top camera's view
+  // The feed (assumed): share of pallets that arrive touching the one ahead, and of those, the share the detector sees
+  // as one object with it.
+  const FEED = { touching: 0.15, mergeProne: 0.5 };
   const scanSpeed = () => beltSpeed * sectionFactor;   // mm/s over the scanner
   const PIXEL_UM = 7;                      // line-scan pixel pitch
   const MAXROWS = 256, TEXW = 16, TEXH = 768, MAXPAL = 5;

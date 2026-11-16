@@ -36,6 +36,13 @@
   $("dust").addEventListener("input", () => { $("dust-out").textContent = $("dust").value + " mg/m³"; });
   $("louvre").addEventListener("change", updateBudget);
   $("driver").addEventListener("change", updateBudget);
+  $("protect").addEventListener("change", () => { service.protect = PROTECTION[$("protect").value]; updateBudget(); });
+  $("f-splinter").addEventListener("change", updateBudget);
+  ["side-h", "side-x"].forEach((id) => {
+    $(id).addEventListener("input", () => { $(id + "-out").textContent = $(id).value + " mm"; });
+    $(id).addEventListener("change", () => { sideCam.height = +$("side-h").value; sideCam.along = +$("side-x").value; AREA_CAMS.splice(1, 2, ...sideCams()); buildStationRig(); sceneKey = ""; });
+  });
+  $("opt-station").addEventListener("change", () => { sceneKey = ""; });   // the traced world holds the station cameras
   $("vib").addEventListener("input", () => { $("vib-out").textContent = (+$("vib").value).toFixed(2) + " mm"; });
   const sectionText = (f) => (f > 1.001 ? "+" + Math.round((f - 1) * 100) + "% faster" : "same speed");
   $("section").addEventListener("input", () => { $("section-out").textContent = sectionText(+$("section").value); });

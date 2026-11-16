@@ -1,5 +1,5 @@
   // ---------------- timing and data budget ----------------
-  const TARGET_PER_H = 1000, SPACING = 400;   // R1 peak rate; mm between pallets in the feed (as spawn)
+  const TARGET_PER_H = 1000, SPACING = 400;   // peak rate; mm between pallets in the feed (as spawn)
   const AREA_REAL = { topMP: 2.3, topPx: 1920, topField: 2600, stationMP: 5, stationMmPx: 0.6 };   // real-camera equivalents (assumed)
   const LINKS = [["GigE", 115], ["2.5GigE", 290], ["5GigE", 580], ["10GigE", 1150], ["CoaXPress-12 ×2", 2500]];   // usable MB/s
   const linkFor = (mbs) => (LINKS.find((l) => l[1] >= mbs * 1.25) || ["more than one link"])[0];
@@ -17,7 +17,7 @@
     const capacity = v * 3600 / beltPitch, capStick = v * 3600 / (beltPitch + lost);
     const vs = scanSpeed(), le = lineExposure(o), ae = areaExposure(o), lineRate = vs / pitch;
     const pass = louvrePass(o.louvre), kLine = le.k * pass;
-    const age = service.lightFactor(), sl = sensorAt(kLine * age * (1 - service.barDust()) * (service.barOut ? 0.1 : 1)), sa = sensorAt(ae.k * age);   // bar out: only stray light from the lamps above
+    const age = service.lightFactor(), sl = sensorAt(lineSignalK(o)), sa = sensorAt(ae.k * age);
     const driver = DRIVERS[$("driver").value], driverName = $("driver").selectedOptions[0].textContent;
     const flickLine = flickerSpread(driver, le.t * 1e-6), flickArea = flickerSpread(driver, ae.t * 1e-3);
     const flickRow = (spread) => [driverName, spread ? "brightness differs up to " + Math.round(spread * 100) + "% between exposures" : "steady", chk(spread <= 0.02, spread <= 0.1)];
@@ -44,7 +44,7 @@
       ["Line rate", Math.round(lineRate) + " lines/s, " + (1000 / lineRate).toFixed(2) + " ms per line", ""],
       ["Exposure", Math.round(le.t) + " µs" + (o.expUs > le.tMax ? " (capped at the line period)" : ""), chk(o.expUs <= le.tMax, true)],
       ["Motion blur along travel", fmtBlur(le.blur, pitch), chk(le.blur / pitch <= 0.5, le.blur / pitch <= 1)],
-      ...(o.louvre ? [["LED bar louvre ±" + o.louvre + "° along the bar", "passes " + Math.round(pass * 100) + "% of the bar's light to the scan line", chk(pass >= 0.8, pass >= 0.4)]] : []),
+      ...(o.louvre ? [["LED bar louvre ±" + o.louvre + "° along the bar", "passes " + Math.round(pass * 100) + "% of the bar's light to the scan line at the belt centre", chk(pass >= 0.8, pass >= 0.4)]] : []),
       ["Signal at mid-grey", signal(sl), snrChk(sl)],
       ["Light flicker between lines: " + flickRow(flickLine)[0], flickRow(flickLine)[1], flickRow(flickLine)[2]],
       ["Brightest surface not clipped", kLine <= 2 ? "everything up to reference white" : Math.round(200 / kLine) + "% of reference white", chk(kLine <= 2, kLine <= 4)],
@@ -62,6 +62,8 @@
       ["Light flicker between snapshots: " + flickRow(flickArea)[0], flickRow(flickArea)[1], flickRow(flickArea)[2]],
       ["Service state"],
       ["Since service", service.months + " months: light output " + Math.round(age * 100) + "%, dust on the LED bar −" + Math.round(service.barDust() * 100) + "%, window dirt " + Math.round(o.dirt * 100) + "%, " + service.specks() + " specks per bottom window", chk(age >= 0.9 && o.dirt <= 0.5, age >= 0.8 && o.dirt <= 0.75)],
+      ["Debris on the bottom windows", service.specks() + " specks of grit" + (o.splinter && service.protect > PROTECTION.airknife ? " and a splinter" : "") + ": darkens the image columns by about " + Math.round(debrisShare(o) * 100) + "% on average (estimate)", chk(debrisShare(o) <= 0.02, debrisShare(o) <= 0.1)],
+      ["Window and bar protection", $("protect").selectedOptions[0].textContent + ($("protect").value === "airknife" ? ": needs compressed air, roughly 40 m³/h (assumed)" : ""), ""],
       ["Faults", [service.barOut && "LED bar out", service.lampOut && "a station lamp out", service.encErr && "encoder reads " + Math.round(service.encErr * 100) + "% short (images " + Math.round(service.encErr * 100) + "% compressed)"].filter(Boolean).join(", ") || "none",
         chk(!service.barOut && !service.lampOut && !service.encErr)],
       ["Totals"],

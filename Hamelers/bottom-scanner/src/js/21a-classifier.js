@@ -18,12 +18,12 @@
   }
   // cm² of belt-plane image that a damage changes, best bottom camera, for the current setup (cached)
   function damageEvidence(type, label) {
-    const o = opts(), key = [type.id, label, gap, rigKey(cams), o.rect].join("|");
+    const o = opts(), key = [type.id, label, gap, rigKey(cams), o.rect, o.indirect].join("|");
     if (evCache.has(key)) return evCache.get(key);
     const dmg = type.damages.find((d) => d[0] === label);
     let cm2 = 0;
     if (dmg) {
-      const intact = analysisPallet(type), damaged = analysisPallet(type, dmg), ro = { fnum: 0, dirt: 0, rect: o.rect, lights: lightsFor(cams, "line") };
+      const intact = analysisPallet(type), damaged = analysisPallet(type, dmg), ro = { fnum: 0, dirt: 0, rect: o.rect, lights: lightsFor(cams, "line"), indirect: o.indirect };
       cams.forEach((c) => {
         const cam = bottomCam(c.spec, 256, Object.assign({}, o, { anyZero: specs.some((s) => s.tilt === 0) })), pit = cam.mmPerPx;
         cm2 = Math.max(cm2, diffCount(renderPass(intact, cam, ro, gap, pit), renderPass(damaged, cam, ro, gap, pit)) * cam.mmPerPx * pit / 100);
@@ -33,10 +33,16 @@
     return cm2;
   }
   // 0..1 for the condition and the type: signal-to-noise, clipping, window dirt; a compressed image misjudges size
+  // Image quality 0..1 for finding damage (cond) and the type (type). Weights assumed: debris costs the columns it
+  // darkens; flicker bands and fog cost contrast; vibration costs detail at the scale of a pixel; an uncalibrated
+  // sensor streaks and an uncalibrated lens distorts the dimensions; an encoder error distorts them along travel.
+  const QUALITY = { dirt: 0.5, debris: 0.8, flicker: 0.8, fog: 0.75, uncalCond: 0.95, uncalType: 0.9, encoder: 4 };
   function imageQuality() {
-    const o = opts(), k = lineExposure(o).k * service.lightFactor() * (service.barOut ? 0.1 : 1), s = sensorAt(k);
-    const snr = Math.min(1, Math.max(0, (s.db - 14) / 20)), clip = k > 2 ? Math.max(0.2, 1 - (k - 2) / 4) : 1, q = snr * clip * (1 - 0.5 * o.dirt);
-    return { cond: q, type: q * Math.max(0, 1 - 4 * service.encErr) };
+    const o = opts(), k = lineSignalK(o), s = sensorAt(k);
+    const snr = Math.min(1, Math.max(0, (s.db - 14) / 20)), clip = k > 2 ? Math.max(0.2, 1 - (k - 2) / 4) : 1;
+    const flick = flickerSpread(DRIVERS[$("driver").value], lineExposure(o).t * 1e-6), shake = o.vib / cams[0].mmPerPx;
+    const Q = QUALITY, cond = snr * clip * (1 - Q.dirt * o.dirt) * (1 - Q.debris * debrisShare(o)) / (1 + Q.flicker * flick) * (o.fog ? Q.fog : 1) / (1 + shake * shake) * (o.uncal ? Q.uncalCond : 1);
+    return { cond: cond, type: cond * Math.max(0, 1 - Q.encoder * service.encErr) * (o.uncal ? Q.uncalType : 1) };
   }
   // The stand-in's decision for one pallet g: condition and type labels, and whether they match the ground truth.
   function decide(g) {

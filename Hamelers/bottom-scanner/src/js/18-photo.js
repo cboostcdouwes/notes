@@ -10,7 +10,10 @@
     const add = (w, h, label, aspect) => {
       const f = document.createElement("figure"), cv = document.createElement("canvas"), cap = document.createElement("figcaption");
       f.style.margin = "0"; cv.width = w; cv.height = h; cv.style.width = "100%"; if (aspect) cv.style.aspectRatio = aspect;
-      cap.className = "cap-dim"; cap.style.fontSize = "0.76rem"; cap.textContent = label; f.append(cv, cap); out.append(f);
+      cap.className = "cap-dim"; cap.style.fontSize = "0.76rem"; cap.textContent = label + " ";
+      const save = document.createElement("button"); save.type = "button"; save.className = "btn"; save.textContent = "Save PNG";
+      save.addEventListener("click", () => saveCanvas(cv, label, $("ph-status"))); cap.append(save);
+      f.append(cv, cap); out.append(f);
       return cv.getContext("2d");
     };
     const tiles = [];

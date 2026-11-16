@@ -171,6 +171,7 @@ dialog::backdrop { background: rgb(0 0 0 / 0.55); }
       <label class="field" for="f-enc"><input type="checkbox" id="f-enc"> Encoder reads 8% short</label>
       <label class="field" for="f-splinter"><input type="checkbox" id="f-splinter"> Splinter on the first bottom camera's window</label>
       <label class="field" for="f-fog"><input type="checkbox" id="f-fog"> Fogged bottom windows</label>
+      <label class="field" for="protect">Window and bar protection <select id="protect"><option value="none" selected>none</option><option value="slanted">slanted covers</option><option value="airknife">air knife</option></select></label>
     </span>
     <span class="grp" aria-label="Conditions">
       <label class="field" for="driver">Light drivers <select id="driver"><option value="dc" selected>DC, flicker-free</option><option value="pwm">PWM 1 kHz (dimmed)</option><option value="ripple">100 Hz ripple (cheap driver)</option></select></label>
@@ -179,6 +180,9 @@ dialog::backdrop { background: rgb(0 0 0 / 0.55); }
       <label class="field" for="vib">Vibration <input id="vib" type="range" min="0" max="1" step="0.05" value="0.1"><output id="vib-out">0.10 mm</output></label>
       <label class="field" for="shutter">Area shutter <select id="shutter"><option value="global" selected>global</option><option value="rolling">rolling, 20 ms readout</option></select></label>
       <label class="field" for="f-uncal"><input type="checkbox" id="f-uncal"> Uncalibrated lenses and sensors</label>
+      <label class="field" for="side-h">Side cameras: height <input id="side-h" type="range" min="30" max="400" step="10" value="260"><output id="side-h-out">260 mm</output></label>
+      <label class="field" for="side-x">along travel <input id="side-x" type="range" min="0" max="500" step="25" value="0"><output id="side-x-out">0 mm</output></label>
+      <label class="field" for="opt-indirect"><input type="checkbox" id="opt-indirect"> Indirect light in Compare and Batch (slower)</label>
     </span>
   </div>
   <div class="types" id="types" aria-label="Pallet types in the feed"></div>
@@ -208,6 +212,7 @@ dialog::backdrop { background: rgb(0 0 0 / 0.55); }
         <button type="button" role="tab" id="tab-photo" aria-selected="false" data-tab="photo">Photo render</button>
         <button type="button" role="tab" id="tab-budget" aria-selected="false" data-tab="budget">Timing &amp; data</button>
         <button type="button" role="tab" id="tab-batch" aria-selected="false" data-tab="batch">Batch</button>
+        <button type="button" role="tab" id="tab-assume" aria-selected="false" data-tab="assume">Assumptions</button>
       </div>
 
       <div id="pane-live" role="tabpanel" aria-labelledby="tab-live" style="display:grid;gap:10px">
@@ -273,6 +278,11 @@ dialog::backdrop { background: rgb(0 0 0 / 0.55); }
         <div class="tablewrap"><table id="batch-table"><thead><tr><th>#</th><th>Setup</th><th>Pallets</th><th>Type labelled</th><th>Type wrong</th><th>Condition labelled</th><th>Condition wrong</th><th>Discards found</th><th>Repairs found</th><th>False alarms</th></tr></thead><tbody><tr><td colspan="10" class="cap-dim">No runs yet.</td></tr></tbody></table></div>
       </div>
 
+      <div id="pane-assume" role="tabpanel" aria-labelledby="tab-assume" hidden style="gap:10px">
+        <p class="cap-dim" id="assume-intro" style="margin:0;font-size:0.8rem"></p>
+        <div class="tablewrap"><table id="assume-table"><thead><tr><th>Assumption</th><th>Value</th><th>Basis</th><th>Affects</th></tr></thead><tbody></tbody></table></div>
+      </div>
+
       <div id="pane-budget" role="tabpanel" aria-labelledby="tab-budget" hidden style="gap:10px">
         <p class="cap-dim" style="margin:0;font-size:0.8rem">Sizing for 1000 pallets/h at the conveyor speed set above, from the current settings, so for the selected sensor. Assumed: 400 mm between pallets; RGB line-scan 3 bytes/px; area cameras raw Bayer 1 byte/px (top 2.3 MP, 1920 px over 2.6 m; station 5 MP, ~0.6 mm/px); sensor full well 10,000 e⁻, read noise 12 e⁻; one link per camera with 25% headroom.</p>
         <div class="tablewrap"><table id="budget"><thead><tr><th>Item</th><th>Value</th><th>Check</th></tr></thead><tbody></tbody></table></div>
@@ -329,7 +339,7 @@ dialog::backdrop { background: rgb(0 0 0 / 0.55); }
 <dialog id="zoom" aria-label="Full-resolution images">
   <div class="row" style="justify-content:space-between"><strong id="zoom-title">Pallet</strong><button type="button" class="btn" id="zoom-close">Close</button></div>
   <div class="cap" id="zoom-cap" style="margin:6px 0"></div>
-  <div class="row" style="margin-bottom:6px"><label class="field" for="zoom-scale">Zoom <select id="zoom-scale"><option value="0.25">25%</option><option value="0.5" selected>50%</option><option value="1">100%</option><option value="2">200%</option></select></label></div>
+  <div class="row" style="margin-bottom:6px"><label class="field" for="zoom-scale">Zoom <select id="zoom-scale"><option value="0.25">25%</option><option value="0.5" selected>50%</option><option value="1">100%</option><option value="2">200%</option></select></label><button type="button" class="btn" id="zoom-save">Save PNG</button></div>
   <div class="zoomwrap"><div id="zoom-imgs" style="display:flex;gap:8px;align-items:flex-start;padding:8px"></div></div>
 </dialog>
 
@@ -360,6 +370,7 @@ uniform float uVib;             // bottom camera vibration amplitude, mm
 uniform float uSpeed;           // belt speed over the scanner, mm/s (encoder position to time)
 uniform float uDistort;         // uncorrected barrel distortion of the lens; 0: calibrated
 uniform float uRollMM;          // rolling shutter: belt travel during the readout from the first row to the last
+uniform int uIndirect;          // outside photo mode: bounce samples of indirect light per pixel (0: a constant fill instead)
 uniform vec3 uBgUp;             // what rays escaping upward see: the lit hall above the station
 uniform vec3 uC; uniform vec3 uD0; uniform vec3 uE; uniform float uPhi0; uniform float uDphi; uniform float uAxisPhi;
 uniform float uS0; uniform float uPitch; uniform int uH;
@@ -655,6 +666,32 @@ vec3 albedo(int k, vec3 p, inout vec3 n, float foot, out float spec) {
     float im = smoothstep(0.3, 0.7, n1(p.x * 0.01 + seed * 2.1) + n1(p.z * 0.013 + seed) - 0.6 + sw.y * 0.4);
     col = mix(col, col * 0.75 + vec3(0.03, 0.05, 0.07), im); spec += 0.5 * im;
   }
+  int soil = int(sw.z);
+  if (soil > 0) {   // contamination and defects in a patch of radius sw.w around (x, z) = P(k, 14).zw; see addSoil
+    vec4 sl = P(k, 14);
+    float rr = length(vec2(p.x - sl.z, p.z - sl.w)) / max(sw.w, 1.0);
+    float inside = 1.0 - smoothstep(0.8, 1.0, rr + 0.3 * (n1(p.x * 0.05 + seed) + n1(p.z * 0.06 + seed * 1.3) - 1.0));   // ragged outline
+    if (soil == 1) { col *= mix(1.0, 0.3, inside); spec += 0.2 * inside; }   // oil soaked in: dark, faintly glossy
+    else if (soil == 2) {   // paint splashes: a sharp-edged patch and droplets around it
+      vec3 pc = h11(seed) < 0.33 ? vec3(0.82, 0.82, 0.78) : (h11(seed) < 0.66 ? vec3(0.8, 0.55, 0.03) : vec3(0.55, 0.06, 0.04));
+      float drop = step(0.97, h31(floor(p / 3.0))) * (1.0 - step(1.6, rr));
+      float pm = max(step(0.5, inside), drop); col = mix(col, pc, pm); spec = mix(spec, 0.12, pm);
+    }
+    else if (soil == 3) {   // mould: dark grey-green specks at random spots in a 3 mm cell grid, dense in irregular clusters
+      vec2 uv = fa == 0 ? p.zy : (fa == 1 ? p.xz : p.xy), c = floor(uv / 3.0);
+      vec2 at = (c + 0.2 + 0.6 * vec2(h11(c.x * 7.1 + c.y * 3.7 + seed), h11(c.x * 2.3 + c.y * 9.1 + seed))) * 3.0;
+      float cluster = smoothstep(0.35, 0.75, 0.5 * n1(uv.x * 0.06 + seed) + 0.5 * n1(uv.y * 0.07 + seed * 1.7));
+      float speck = step(h11(c.x * 13.0 + c.y * 5.0 + seed), cluster) * (1.0 - smoothstep(0.5, 1.1, length(uv - at)));
+      col = mix(col * mix(vec3(1.0), vec3(0.72, 0.78, 0.7), 0.6 * cluster * inside), vec3(0.06, 0.08, 0.06), 0.85 * speck * inside);   // with a diffuse grey-green stain
+    }
+    else if (soil == 4) col = mix(col, vec3(0.20, 0.17, 0.13) * (0.6 + 0.4 * n1(along * 0.08 + across * 0.9 + seed)), inside);   // rot: grey-brown, fibrous
+    else if (soil == 5) {   // woodworm exit holes, ~2 mm, in the face's own plane
+      vec2 uv = fa == 0 ? p.zy : (fa == 1 ? p.xz : p.xy), c = floor(uv / 6.0);
+      if (h11(c.x * 17.0 + c.y * 31.0 + seed) > 0.8 && length(uv - (c + 0.5) * 6.0) < 1.1) col *= 1.0 - 0.9 * inside;
+    }
+    else if (soil == 6 && max(abs(n.x), max(abs(n.y), abs(n.z))) < 0.9 && sign(n.z) == sl.z)   // wane: the bark left on a slanted edge
+      col = vec3(0.24, 0.19, 0.14) * (0.7 + 0.3 * n1(along * 0.15 + seed));
+  }
   vec4 mk = P(k, 7);
   if (mk.x > 0.5) {   // marks: 1 burnt EPAL oval, 2 IPPC stamp, 3 paper label with barcode
     float nsg = fa == 0 ? n.x : (fa == 1 ? n.y : n.z);
@@ -698,6 +735,7 @@ vec3 lampGlint(vec3 wp, vec3 r, float rough) {
 }
 // Surfaces at least this shiny (spec) reflect the lamps as mirror images (lampGlint) instead of highlights.
 const float MIRROR_SPEC = 0.1;
+const float METAL_F0 = 0.5, DIELECTRIC_F0 = 0.04;   // head-on reflectance: zinc and steel (assumed), water, ice and plastic
 
 const float BEVEL[13] = float[13](2.5, 2.0, 1.2, 2.5, 6.0, 4.0, 4.0, 0.0, 0.0, 1.0, 0.0, 0.5, 0.0);   // edge radius per material, mm
 
@@ -744,7 +782,7 @@ vec3 shade(Hit h, float s, float foot, out vec3 alb, out vec3 wn) {
   vec3 c = alb * (uAmbient * uLampCol + irr) + sp * 0.5;
   if (mirror) {   // Fresnel (Schlick): zinc and steel reflect ~50% head-on, water, ice and plastic ~4%, all more at grazing angles
     bool metal = h.roller >= 0 || int(P(h.k, 0).w) == 9;
-    float F0 = metal ? 0.5 : 0.04, F = F0 + (1.0 - F0) * pow(1.0 - clamp(dot(-h.ld, n), 0.0, 1.0), 5.0);
+    float F0 = metal ? METAL_F0 : DIELECTRIC_F0, F = F0 + (1.0 - F0) * pow(1.0 - clamp(dot(-h.ld, n), 0.0, 1.0), 5.0);
     float rough = mix(0.25, 0.02, smoothstep(MIRROR_SPEC, 0.6, spec)) + (metal ? 0.08 : 0.0);   // spread angle, rad
     vec3 r = reflect(h.ld, n);
     c += F * lampGlint(wp, movable ? worldD(q, r) : r, rough);
@@ -753,6 +791,7 @@ vec3 shade(Hit h, float s, float foot, out vec3 alb, out vec3 wn) {
 }
 
 // Photo mode: one cosine-weighted bounce of indirect light; rays that escape see the hall (uSky).
+const float BOUNCE_MAX = 3.0;   // a few times a well-lit surface
 vec3 bounce(Hit h, float s, vec3 wn) {
   bool movable = h.p >= 0 && uPalB[h.p].y > 0.5;
   vec3 wp = toWorld(movable ? h.p : -1, s, h.pl, true) + wn * 0.1;
@@ -763,7 +802,8 @@ vec3 bounce(Hit h, float s, vec3 wn) {
   if (h2.k < 0 && h2.roller < 0) return uSky * uLampCol * (0.35 + 0.65 * max(d.y, 0.0));
   if (h2.k >= 0 && int(P(h2.k, 0).w) == 12) return vec3(0.0);   // lamps are already counted as direct light
   vec3 a2, n2;
-  return shade(h2, s, h2.t * uPixAng * 8.0 + 2.0, a2, n2);
+  // capped: a rare bounce onto a glint or a brightly lit spot would otherwise show as a speckle until many passes average it
+  return min(shade(h2, s, h2.t * uPixAng * 8.0 + 2.0, a2, n2), vec3(BOUNCE_MAX));
 }
 
 // Light scattered toward the camera by dust in the air along the ray from o (direction d) to distance tEnd: single
@@ -793,10 +833,11 @@ vec3 dustGlow(vec3 o, vec3 d, float tEnd, float s) {
 
 // The bottom camera's stand shaking with the conveyor at time t s: two assumed modes, 24 and 61 Hz across the belt
 // and 31 Hz along it, amplitude uVib mm.
+const vec3 VIB_HZ = vec3(24.0, 31.0, 61.0);
 vec3 vibration(float t) {
   if (uVib <= 0.0) return vec3(0.0);
   float w = 6.2831853 * t;
-  return uVib * vec3(0.5 * sin(31.0 * w + 0.4), 0.0, 0.8 * sin(24.0 * w) + 0.3 * sin(61.0 * w + 1.3));
+  return uVib * vec3(0.5 * sin(VIB_HZ.y * w + 0.4), 0.0, 0.8 * sin(VIB_HZ.x * w) + 0.3 * sin(VIB_HZ.z * w + 1.3));
 }
 
 void main() {
@@ -843,7 +884,14 @@ void main() {
     Hit h = trace(oo, dd, sk);
     vec3 alb, wn;
     vec3 c = shade(h, sk, h.t * uPixAng, alb, wn) + dustGlow(oo, dd, h.k < 0 && h.roller < 0 ? 8000.0 : h.t, sk);
-    if (uStill == 1 && (h.k >= 0 || h.roller >= 0)) c += alb * bounce(h, sk, wn);
+    if (h.k >= 0 || h.roller >= 0) {
+      if (uStill == 1) c += alb * bounce(h, sk, wn);
+      else if (uIndirect > 0) {
+        vec3 b = vec3(0.0);
+        for (int j = 0; j < 8; j++) { if (j >= uIndirect) break; b += bounce(h, sk, wn); }
+        c += alb * b / float(uIndirect);
+      }
+    }
     acc += c;
   }
   vec3 c = acc / float(ns) * uExposure * vig;
@@ -920,11 +968,13 @@ float windowT(float f) {
 }
 // A fogged window scatters light along the line: a wide average of it, weighted exp(-distance / FOG_PX).
 const float FOG_PX = 60.0;
+const float FOG_KEEP = 0.85, FOG_SCATTER = 0.5;   // fogged window (assumed): light let through, share of it scattered
 vec3 fogScatter(float f, int row) {
   vec3 s = vec3(0.0); float mx = float(uPX - 1), wsum = 0.0;
   for (int i = -24; i <= 24; i++) { float o = float(i) * 6.0, w = exp(-abs(o) / FOG_PX); s += w * fetchRow(clamp(f + o, 0.0, mx), row); wsum += w; }
   return s / wsum;
 }
+const float PRNU_SPAN = 0.04, DARK_E = 30.0;   // uncalibrated sensor (assumed): pixel gain spread, dark offset up to, e-
 vec3 enc(vec3 c) { c = clamp(c, 0.0, 1.0); return mix(12.92 * c, 1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, c)); }
 void main() {
   int ix = int(gl_FragCoord.x), fy = int(gl_FragCoord.y) + uOutRow, row = uH - 1 - fy;
@@ -938,7 +988,7 @@ void main() {
     }
     c = fetchRow(f, row);
     c.r = 0.6 * c.r + 0.4 * fetchRow(f, row > 0 ? row - 1 : row).r;   // trilinear sensor: R line slightly behind
-    if (uFog > 0.0) c = 0.85 * mix(c, fogScatter(f, row), 0.5);   // fog: some light lost, half of it scattered (assumed)
+    if (uFog > 0.0) c = FOG_KEEP * mix(c, fogScatter(f, row), FOG_SCATTER);
     c *= windowT(f);
   } else if (uVeil > 0.0) {
     ivec2 tp = ivec2(ix, fy - uHdrOff);
@@ -953,7 +1003,7 @@ void main() {
   vec3 e = min(max(c, vec3(0.0)) * uK, vec3(1.0)) * uFullWell, g;
   if (uFpn > 0.0) {   // each pixel's gain differs ±2% and it adds a dark offset; a line sensor repeats its pixels every line, so streaks
     float px = uMode == 0 ? floor(f) : float(ix) + float(row) * 4099.0;
-    e = min(e * (1.0 + 0.04 * (h11(px * 0.731 + uCamSeed) - 0.5)) + 30.0 * h11(px * 1.37 + uCamSeed + 5.0), vec3(uFullWell));
+    e = min(e * (1.0 + PRNU_SPAN * (h11(px * 0.731 + uCamSeed) - 0.5)) + DARK_E * h11(px * 1.37 + uCamSeed + 5.0), vec3(uFullWell));
   }
   for (int j = 0; j < 3; j++) {
     float fj = float(j) * 17.0;
@@ -978,15 +1028,24 @@ void main() {
   const BELT_W = 1300, WD = 600, HALF_FOV = 42 * Math.PI / 180;
   // Wear and faults between services (assumed rates): LEDs lose ~2% output per month in 24/7 use, the camera window
   // collects ~6% dirt per month; faults switch a light off or make the encoder under-count travel.
-  // Dust also settles on the LED bar's upward face under the gap, ~4% less light per month, unevenly (barDust: mean loss).
-  const service = { months: 0, barOut: false, lampOut: false, encErr: 0,
-    lightFactor() { return 1 - 0.02 * this.months; }, extraDirt() { return 0.06 * this.months; }, barDust() { return Math.min(0.7, 0.04 * this.months); },
-    specks() { return Math.min(10, Math.floor(1.5 * this.months)); } };   // grit on each bottom window, ~1.5 per month
+  // Dust also settles on the LED bar's upward face under the gap, unevenly (barDust: mean loss), and grit on each
+  // bottom window. Rates per month in 24/7 use; protect: the share that stays (see PROTECTION).
+  const WEAR = { ledLoss: 0.02, windowDirt: 0.06, barDust: 0.04, specks: 1.5 };
+  const service = { months: 0, barOut: false, lampOut: false, encErr: 0, protect: 1,
+    lightFactor() { return 1 - WEAR.ledLoss * this.months; }, extraDirt() { return WEAR.windowDirt * this.months * this.protect; },
+    barDust() { return Math.min(0.7, WEAR.barDust * this.months * this.protect); },
+    specks() { return Math.min(10, Math.floor(WEAR.specks * this.months * this.protect)); } };
+  // Protection of the bottom windows and the LED bar from what falls through the gap: the share of grit, dust and dirt
+  // that stays (assumed). A slanted cover lets grit slide off; an air knife blows it away, a splinter too.
+  const PROTECTION = { none: 1, slanted: 0.4, airknife: 0.1 };
   let beltSpeed = 450;   // real infeed conveyor speed, mm/s (the Playback slider only runs the simulation faster or slower)
   // The middle section, |x| < SECTION_HALF around the scanner, can run faster than the infeed so touching pallets
   // separate. Its encoder drives the line-scan cameras and the tracker, so encoder position s is in middle-section mm.
   let sectionFactor = 1.1;
   const SECTION_HALF = 2000;   // the section covers the top camera's view
+  // The feed (assumed): share of pallets that arrive touching the one ahead, and of those, the share the detector sees
+  // as one object with it.
+  const FEED = { touching: 0.15, mergeProne: 0.5 };
   const scanSpeed = () => beltSpeed * sectionFactor;   // mm/s over the scanner
   const PIXEL_UM = 7;                      // line-scan pixel pitch
   const MAXROWS = 256, TEXW = 16, TEXH = 768, MAXPAL = 5;
@@ -1018,7 +1077,8 @@ void main() {
   function part(name, lo, hi, mat, axis, extra) {
     const rnd = partRng(name, lo), pick = (a) => a[Math.floor(rnd() * a.length)];
     const p = Object.assign({ name: name, lo: lo, hi: hi, mat: mat, axis: axis, seed: Math.floor(rnd() * 9000) + 1, crack: 1e9, flags: 0, wet: 0, mud: 0,
-      knots: [1e9, 1e9, 1e9, 1e9], stain: [0, 0, 0], silver: 0, nails: null, nailPat: null, mark: [0, 0, 0, 0], sub: null, planes: [], taper: null }, extra || {});
+      knots: [1e9, 1e9, 1e9, 1e9], stain: [0, 0, 0], silver: 0, nails: null, nailPat: null, mark: [0, 0, 0, 0], sub: null, planes: [], taper: null,
+      soil: null, flexible: false }, extra || {});
     if (!p.col) {
       if (mat === "spruce" || mat === "paint") p.col = srgb2lin(pick(WOOD));
       else if (mat === "oak") p.col = srgb2lin(pick(["#9a7550", "#8c6a48", "#a07b55"]));
@@ -1053,35 +1113,66 @@ void main() {
 
   // ---------------- pallet types ----------------
   // Each damage: [label, severity ("discard", "repair", "borderline"), function setting build options].
+  // A board that has worked loose from all blocks but one turns flat about that block's nails. Assumed range, degrees.
+  const LOOSE_TURN_DEG = [2, 15];
+  const looseTurn = () => (LOOSE_TURN_DEG[0] + rnd() * (LOOSE_TURN_DEG[1] - LOOSE_TURN_DEG[0])) * Math.PI / 180;
+  // A board turned flat by angle (rad) about pivot [x, z]: the box around the turned board, trimmed to it by four
+  // upright cuts (the tracer's half-spaces n·p <= w). turn keeps the unturned box and the turn, for the 3D view.
+  function turnedPart(name, lo, hi, pivot, angle, mat, axis, extra) {
+    const c = Math.cos(angle), s = Math.sin(angle), [px, pz] = pivot;
+    const corners = [[lo[0], lo[2]], [hi[0], lo[2]], [hi[0], hi[2]], [lo[0], hi[2]]].map(([x, z]) => [px + (x - px) * c - (z - pz) * s, pz + (x - px) * s + (z - pz) * c]);
+    const xs = corners.map((q) => q[0]), zs = corners.map((q) => q[1]);
+    const uP = c * px + s * pz, vP = -s * px + c * pz;   // the turned board's own axes u = (c, s), v = (-s, c), at the pivot
+    const planes = [[c, 0, s, uP + hi[0] - px], [-c, 0, -s, -uP - (lo[0] - px)], [-s, 0, c, vP + hi[2] - pz], [s, 0, -c, -vP - (lo[2] - pz)]];
+    return part(name, [Math.min(...xs), lo[1], Math.min(...zs)], [Math.max(...xs), hi[1], Math.max(...zs)], mat, axis,
+      Object.assign({}, extra, { planes: planes, turn: { lo: lo, hi: hi, pivot: pivot, angle: angle } }));
+  }
   function blockPallet(o) {
     const L = o.L, W = o.W, parts = [], tb = o.tBottom, hb = o.hBlock, tc = o.tCross, tt = o.tTop, dm = o.dmg;
     const nailP = (p) => { p.nails = [o.cols[0], o.cols[1], o.cols[2], (p.hi[2] - p.lo[2]) * 0.35]; p.nailPat = [45, 3]; return p; };
     const sideName = o.bottom.length === 2 ? ["left", "right"] : ["left", "middle", "right"];
-    o.bottom.forEach(([z, d], bi) => {
-      const nm = "bottom board " + sideName[bi], lo = [-L / 2, 0, z - d / 2], hi = [L / 2, tb, z + d / 2];
+    o.bottom.forEach(([z, d0], bi) => {
+      // a non-standard repair: a thinner, narrower board, nailed up against the blocks so it sits higher than the others
+      const thin = dm.thinBoard === bi, t = thin ? tb - 6 : tb, d = thin ? d0 - 20 : d0, yb = tb - t;
+      const nm = "bottom board " + sideName[bi], lo = [-L / 2, yb, z - d / 2], hi = [L / 2, tb, z + d / 2];
       const ex = {};
       if (dm.crackBoard === bi) ex.crack = dm.crackAt;
       if (o.repaired === bi) { ex.col = srgb2lin("#e2c49a"); ex.silver = 1; }
-      const pl = o.chamfer ? [chamfer(lo, hi, 1, -1, 2, -1, 6), chamfer(lo, hi, 1, -1, 2, 1, 6)] : [];
-      const seg = (a, b, y0, extraName) => nailP(part(nm + (extraName || ""), [a, y0, z - d / 2], [b, y0 + tb, z + d / 2], o.mat, 0, Object.assign({ planes: y0 === 0 ? pl : [] }, ex)));
+      if (thin) ex.col = srgb2lin("#e8cfa6");
+      const pl = o.chamfer && !thin ? [chamfer(lo, hi, 1, -1, 2, -1, 6), chamfer(lo, hi, 1, -1, 2, 1, 6)] : [];
+      const seg = (a, b, y0, extraName) => nailP(part(nm + (extraName || ""), [a, y0 + yb, z - d / 2], [b, y0 + tb, z + d / 2], o.mat, 0, Object.assign({ planes: y0 === 0 ? pl : [] }, ex)));
+      // from a to b, turned by angle about the nails of the block at pivotX, its free end outward (nails pulled: no heads)
+      const turnedSeg = (a, b, pivotX, angle, extraName) => turnedPart(nm + extraName, [a, yb, z - d / 2], [b, tb, z + d / 2], [pivotX, z],
+        angle * Math.sign(z || 1) * Math.sign((a + b) / 2 - pivotX), o.mat, 0, ex);
       if (dm.brokenBoard === bi) {
-        parts.push(seg(-L / 2, dm.breakAt - 80, 0, " (piece)"), seg(dm.breakAt + 80, L / 2, 0, " (piece)"));
+        parts.push(dm.turnPiece ? turnedSeg(-L / 2, dm.breakAt - 80, o.cols[0], dm.turnPiece, " (piece, loose, turned)") : seg(-L / 2, dm.breakAt - 80, 0, " (piece)"),
+          seg(dm.breakAt + 80, L / 2, 0, " (piece)"));
         parts.push(part("splinter at break", [dm.breakAt - 80, 0, z - d / 2], [dm.breakAt - 50, tb * 0.55, z - d / 6], o.mat, 0));
       } else if (dm.sagBoard === bi) {
         const a = -L / 2 + L * 0.3, b = L / 2 - L * 0.3;
         parts.push(seg(-L / 2, a, 0), seg(a, b, -7, " (sagging span)"), seg(b, L / 2, 0));
-      } else parts.push(seg(-L / 2, L / 2, 0));
+      } else if (dm.turnBoard && dm.turnBoard.board === bi) parts.push(turnedSeg(-L / 2, L / 2, o.cols[dm.turnBoard.atFront ? 2 : 0], dm.turnBoard.angle, " (loose, turned)"));
+      else parts.push(seg(-L / 2, L / 2, 0));
     });
+    if (dm.splitNails !== undefined) {   // split along the grain next to the rear block: a gap with two nail shanks in it
+      // the asked-for board, or the first other one still whole (another damage may have broken or turned it)
+      const b = [dm.splitNails, ...sideName.keys()].map((i) => parts.find((q) => q.name === "bottom board " + sideName[i])).find(Boolean);
+      if (!b) throw new Error("no whole bottom board left to split");
+      const x = o.cols[0] + 25, zc = (b.lo[2] + b.hi[2]) / 2;
+      b.sub = [[x - 4, b.lo[1] - 1, b.lo[2] - 1], [x + 4, b.hi[1] + 1, b.hi[2] - 12]];
+      [-25, 10].forEach((dz) => parts.push(part("nail shank", [x - 1.5, b.lo[1] + 3, zc + dz - 1.5], [x + 1.5, b.hi[1], zc + dz + 1.5], "steel", 1, { col: [0.42, 0.43, 0.45] })));
+    }
     if (o.perimeter) [-L / 2 + 50, L / 2 - 50].forEach((x, i) => parts.push(part("perimeter board " + (i ? "front" : "rear"), [x - 50, 0, -W / 2], [x + 50, tb, W / 2], o.mat, 2)));
     const colN = ["rear", "centre", "front"], rowN = ["left", "middle", "right"];
     o.cols.forEach((x, ci) => o.rows.forEach(([z, d], ri) => {
       if ((dm.missing || []).some(([a, b]) => a === ci && b === ri)) return;
-      const lo = [x - o.bw / 2, tb, z - d / 2], hi = [x + o.bw / 2, tb + hb, z + d / 2];
+      const skew = dm.skewBlock && dm.skewBlock[0] === ci && dm.skewBlock[1] === ri ? dm.skewBlock[2] * Math.sign(z || 1) : 0;   // knocked outward
+      const lo = [x - o.bw / 2, tb, z - d / 2 + skew], hi = [x + o.bw / 2, tb + hb, z + d / 2 + skew];
       const ex = { planes: o.chamfer ? [chamfer(lo, hi, 0, -1, 2, -1, 8), chamfer(lo, hi, 0, 1, 2, -1, 8), chamfer(lo, hi, 0, -1, 2, 1, 8), chamfer(lo, hi, 0, 1, 2, 1, 8)] : [] };
       if ((dm.crackBlocks || []).some(([a, b]) => a === ci && b === ri)) ex.crack = x + 10;
       if ((dm.chipBlocks || []).some(([a, b]) => a === ci && b === ri)) ex.sub = [[hi[0] - 40, hi[1] - 35, lo[2] - 1], [hi[0] + 1, hi[1] + 1, lo[2] + 30]];
       else if (o.wearChips && rnd() < 0.15) ex.sub = [[lo[0] - 1, lo[1] - 1, hi[2] - 12], [lo[0] + 14, lo[1] + 18, hi[2] + 1]];
-      if (o.marks && ri !== 1) ex.mark = ci !== 1 ? [1, ri === 0 ? 4 : 5, x, tb + hb / 2] : [2, ri === 0 ? 4 : 5, x, tb + hb / 2];
+      if (o.marks && !dm.noMarks && ri !== 1) ex.mark = ci !== 1 ? [1, ri === 0 ? 4 : 5, x, tb + hb / 2] : [2, ri === 0 ? 4 : 5, x, tb + hb / 2];
       if (o.label === ci * 3 + ri && ri !== 1) ex.mark = [3, ri === 0 ? 4 : 5, x, tb + hb / 2];
       parts.push(part("block " + colN[ci] + " " + rowN[ri], lo, hi, o.blockMat(ri), 1, ex));
     }));
@@ -1090,6 +1181,15 @@ void main() {
     o.top.forEach(([z, d], ti) => { if ((dm.missingTop || []).includes(ti)) return; parts.push(part("top board " + (ti + 1), [-L / 2, y0, z - d / 2], [L / 2, y0 + tt, z + d / 2], o.mat, 0)); });
     return { parts: parts, L: L, W: W, H: y0 + tt };
   }
+  // From the EPAL quality classification for the open exchange pool: what makes a pallet "not usable" until a
+  // licensed repair (contamination that can pass onto goods, rotten elements, inadmissible components such as woodworm,
+  // wane or an under-sized board, a block skewed over 1 cm, more nail shanks visible than allowed, no legible marks),
+  // and adhesions (film, tape, straps) that must be removed before grading. Severity here: "repair" for not usable
+  // until repaired, "flag" for adhesions (remove, then grade).
+  const soilDamage = (label, kind) => [label, "repair", (d) => (d.soils = (d.soils || []).concat([kind]))];
+  const CONTAMINATION = [soilDamage("oil stain (contamination)", "oil"), soilDamage("paint splashes (contamination)", "paint"), soilDamage("mould (contamination)", "mould")];
+  const WOOD_DEFECTS = [soilDamage("rotten wood", "rot"), soilDamage("woodworm holes (inadmissible component)", "woodworm"), soilDamage("wane on a bottom board (inadmissible component)", "wane")];
+  const ADHESIONS = [["strap caught in the pallet", "flag", (d) => (d.strap = true)], ["film or tape stuck on a block", "flag", (d) => (d.film = true)]];
   const NAIL_DAMAGES = [["protruding nail, underside", "repair", (d) => (d.nailOut = "under")], ["protruding nail, top deck", "repair", (d) => (d.nailOut = "top")]];
   const BLOCK_DAMAGES = (nb) => [
     ["missing corner block", "discard", (d) => (d.missing = (d.missing || []).concat([[2, 0]]))],
@@ -1100,26 +1200,32 @@ void main() {
     ["chipped block corner (borderline)", "borderline", (d) => (d.chipBlocks = (d.chipBlocks || []).concat([[2, 2]]))],
     ["sagging bottom board (borderline)", "borderline", (d) => { d.sagBoard = Math.min(1, nb - 1); }],
     ["missing top board", "repair", (d) => (d.missingTop = (d.missingTop || []).concat([1]))],
-    ...NAIL_DAMAGES
+    ["skewed block, over 1 cm overhang", "repair", (d) => (d.skewBlock = [2, 0, 15])],
+    ["split board, nail shanks visible", "repair", (d) => (d.splitNails = 0)],
+    ["loose bottom board, turned", "repair", (d) => (d.turnBoard = { board: 0, atFront: rnd() < 0.5, angle: looseTurn() })],
+    ["broken bottom board, loose piece turned", "repair", (d) => { d.brokenBoard = nb - 1; d.breakAt = -250; d.turnPiece = looseTurn(); }],
+    ["non-standard repair: board too thin", "repair", (d) => (d.thinBoard = nb - 1)],
+    ["markings illegible", "repair", (d) => (d.noMarks = true)],
+    ...NAIL_DAMAGES, ...CONTAMINATION, ...WOOD_DEFECTS, ...ADHESIONS
   ];
   const TYPES = [
     { id: "eur", name: "EUR / EPAL 1200×800", weight: 5, material: "spruce, presswood middle blocks", damages: BLOCK_DAMAGES(3),
       build: (dm, w) => blockPallet(Object.assign({ L: 1200, W: 800, tBottom: 22, hBlock: 78, tCross: 22, tTop: 22, bw: 145, mat: "spruce", chamfer: true, marks: true,
         bottom: [[-350, 100], [0, 145], [350, 100]], rows: [[-350, 100], [0, 145], [350, 100]], cols: [-527.5, 0, 527.5],
         top: [[-327.5, 145], [-163.75, 100], [0, 145], [163.75, 100], [327.5, 145]], blockMat: (ri) => (ri === 1 ? "press" : "spruce") }, w, { dmg: dm })) },
-    { id: "oneway", name: "One-way 1200×800, 2 bottom boards", weight: 2, material: "thin spruce, presswood blocks", damages: BLOCK_DAMAGES(2).filter((x) => !/centre|sagging/.test(x[0])),
+    { id: "oneway", name: "One-way 1200×800, 2 bottom boards", weight: 2, material: "thin spruce, presswood blocks", damages: BLOCK_DAMAGES(2).filter((x) => !/centre|sagging|markings/.test(x[0])),
       build: (dm, w) => blockPallet(Object.assign({ L: 1200, W: 800, tBottom: 15, hBlock: 75, tCross: 15, tTop: 15, bw: 100, mat: "spruce",
         bottom: [[-340, 100], [340, 100]], rows: [[-340, 100], [0, 100], [340, 100]], cols: [-550, 0, 550],
         top: [[-340, 100], [-170, 80], [0, 100], [170, 80], [340, 100]], blockMat: () => "press" }, w, { dmg: dm })) },
-    { id: "ind", name: "Industrial 1200×1000", weight: 2, material: "spruce", damages: BLOCK_DAMAGES(3),
+    { id: "ind", name: "Industrial 1200×1000", weight: 2, material: "spruce", damages: BLOCK_DAMAGES(3).filter((x) => !/markings/.test(x[0])),
       build: (dm, w) => blockPallet(Object.assign({ L: 1200, W: 1000, tBottom: 22, hBlock: 78, tCross: 22, tTop: 22, bw: 145, mat: "spruce", chamfer: true,
         bottom: [[-427.5, 145], [0, 145], [427.5, 145]], rows: [[-427.5, 145], [0, 145], [427.5, 145]], cols: [-527.5, 0, 527.5],
         top: [[-427.5, 145], [-285, 100], [-142.5, 100], [0, 145], [142.5, 100], [285, 100], [427.5, 145]], blockMat: () => "spruce" }, w, { dmg: dm })) },
-    { id: "chep", name: "CHEP 1200×1000, perimeter base", weight: 2, material: "painted spruce (pool blue)", damages: BLOCK_DAMAGES(3).filter((x) => !/sagging/.test(x[0])),
+    { id: "chep", name: "CHEP 1200×1000, perimeter base", weight: 2, material: "painted spruce (pool blue)", damages: BLOCK_DAMAGES(3).filter((x) => !/sagging|markings/.test(x[0])),
       build: (dm, w) => blockPallet(Object.assign({ L: 1200, W: 1000, tBottom: 22, hBlock: 90, tCross: 22, tTop: 22, bw: 145, mat: "paint", perimeter: true,
         bottom: [[-450, 100], [0, 145], [450, 100]], rows: [[-450, 100], [0, 145], [450, 100]], cols: [-527.5, 0, 527.5],
         top: [[-430, 140], [-290, 100], [-145, 100], [0, 140], [145, 100], [290, 100], [430, 140]], blockMat: () => "paint" }, w, { dmg: dm })) },
-    { id: "half", name: "Half pallet 800×600", weight: 1, material: "spruce", damages: BLOCK_DAMAGES(3).filter((x) => !/top board/.test(x[0])),
+    { id: "half", name: "Half pallet 800×600", weight: 1, material: "spruce", damages: BLOCK_DAMAGES(3).filter((x) => !/top board|markings/.test(x[0])),
       build: (dm, w) => blockPallet(Object.assign({ L: 800, W: 600, tBottom: 22, hBlock: 78, tCross: 22, tTop: 22, bw: 120, mat: "spruce",
         bottom: [[-250, 100], [0, 120], [250, 100]], rows: [[-250, 100], [0, 120], [250, 100]], cols: [-340, 0, 340],
         top: [[-245, 110], [-120, 90], [0, 110], [120, 90], [245, 110]], blockMat: () => "spruce" }, w, { dmg: dm })) },
@@ -1127,13 +1233,15 @@ void main() {
       damages: [["broken-off skid piece", "discard", (d) => (d.cutSkid = 2)], ["missing foot", "discard", (d) => (d.missingFoot = 4)], ["cracked deck", "repair", (d) => (d.crackDeck = true)], ["crushed foot corner (borderline)", "borderline", (d) => (d.crushFoot = 0)]],
       build: (dm) => plasticPallet("plasticBlue", true, dm) },
     { id: "nest", name: "Plastic nestable 1200×800, 9 feet", weight: 1, material: "recycled PP, grey",
-      damages: [["missing foot", "discard", (d) => (d.missingFoot = 0)], ["cracked deck", "repair", (d) => (d.crackDeck = true)], ["crushed foot corner (borderline)", "borderline", (d) => (d.crushFoot = 8)]],
+      damages: [["missing foot", "discard", (d) => (d.missingFoot = 0)], ["cracked deck", "repair", (d) => (d.crackDeck = true)], ["crushed foot corner (borderline)", "borderline", (d) => (d.crushFoot = 8)],
+        ...CONTAMINATION.slice(0, 2), ...ADHESIONS],
       build: (dm) => plasticPallet("plasticGrey", false, dm) },
     { id: "gma", name: "US stringer 48×40 (1219×1016)", weight: 1, material: "hardwood",
       damages: [["missing bottom deckboard", "repair", (d) => (d.missingDeck = 2)], ["cracked bottom deckboard", "repair", (d) => (d.crackDeck = 1)], ["broken stringer", "discard", (d) => (d.brokenStringer = 1)], ["chipped deckboard edge (borderline)", "borderline", (d) => (d.chipDeck = 4)], ...NAIL_DAMAGES],
       build: (dm, w) => stringerPallet(dm, w) },
     { id: "moulded", name: "Moulded presswood 1200×800", weight: 1, material: "moulded wood fibre",
-      damages: [["missing foot", "discard", (d) => (d.missingFoot = 8)], ["cracked deck", "repair", (d) => (d.crackDeck = true)], ["crushed foot corner (borderline)", "borderline", (d) => (d.crushFoot = 4)]],
+      damages: [["missing foot", "discard", (d) => (d.missingFoot = 8)], ["cracked deck", "repair", (d) => (d.crackDeck = true)], ["crushed foot corner (borderline)", "borderline", (d) => (d.crushFoot = 4)],
+        ...CONTAMINATION, ...ADHESIONS],
       build: (dm) => mouldedPallet(dm) }
   ];
   function feetGrid(L, W, fw, fd) { const xs = [-L / 2 + fw / 2 + 20, 0, L / 2 - fw / 2 - 20], zs = [-W / 2 + fd / 2 + 20, 0, W / 2 - fd / 2 - 20]; const out = []; xs.forEach((x) => zs.forEach((z) => out.push([x, z]))); return out; }
@@ -1195,6 +1303,45 @@ void main() {
     const y0 = under ? -14 : built.H, y1 = under ? 0 : built.H + 14;
     built.parts.push(part("protruding nail", [x - 1.5, y0, z - 1.5], [x + 1.5, y1, z + 1.5], "steel", 1, { col: [0.42, 0.43, 0.45] }));
   }
+  // A contamination or defect patch on one of the parts the bottom and side cameras see (resting on the belt or just
+  // above). Radii in mm (assumed). Rot also crumbles a lower corner; wane cuts a long lower edge where the bark was.
+  const SOIL_KIND = { oil: 1, paint: 2, mould: 3, rot: 4, woodworm: 5, wane: 6 }, SOIL_R = { oil: [40, 90], paint: [20, 60], mould: [50, 120], rot: [40, 70], woodworm: [30, 60] };
+  function addSoil(built, kind) {
+    const low = (q) => q.lo[1] <= 30 && !q.flexible && !["steel", "wrap", "card"].includes(q.mat);
+    const cands = built.parts.filter(kind === "wane" ? (q) => low(q) && /^bottom (deck)?board/.test(q.name) && !q.sub && !q.turn : low);
+    if (!cands.length) throw new Error("no part to put " + kind + " on");
+    const q = pick(cands);
+    if (kind === "wane") {
+      const side = rnd() < 0.5 ? -1 : 1;
+      q.planes = q.planes.filter((pl) => Math.sign(pl[2]) !== side).concat([chamfer(q.lo, q.hi, 1, -1, 2, side, 18)]);
+      q.soil = { kind: SOIL_KIND.wane, x: side, z: 0, r: 0 };
+      return;
+    }
+    const [r0, r1] = SOIL_R[kind], x = q.lo[0] + rnd() * (q.hi[0] - q.lo[0]), z = q.lo[2] + rnd() * (q.hi[2] - q.lo[2]);
+    q.soil = { kind: SOIL_KIND[kind], x: x, z: z, r: r0 + rnd() * (r1 - r0) };
+    if (kind === "rot" && !q.sub) {
+      const cx = x < (q.lo[0] + q.hi[0]) / 2 ? q.lo[0] : q.hi[0] - 35, cz = z < (q.lo[2] + q.hi[2]) / 2 ? q.lo[2] : q.hi[2] - 30;
+      q.sub = [[cx - 1, q.lo[1] - 1, cz - 1], [cx + 36, q.lo[1] + 12, cz + 31]];
+      q.soil.x = cx + 17; q.soil.z = cz + 15;
+    }
+  }
+  // A strapping band caught in the pallet: up through a gap between the bottom boards, its loose end trailing behind
+  // on the rollers. Flexible, so it never counts as an edge the pallet stands on.
+  function addStrap(built) {
+    const bottoms = built.parts.filter((q) => q.lo[1] <= 0 && q.hi[1] > 5 && !q.flexible && q.mat !== "wrap").sort((a, b) => a.lo[2] - b.lo[2]);
+    let zg = 0;
+    for (let i = 0; i + 1 < bottoms.length; i++) if (bottoms[i + 1].lo[2] - bottoms[i].hi[2] > 30) { zg = (bottoms[i].hi[2] + bottoms[i + 1].lo[2]) / 2; break; }
+    const x = (rnd() - 0.5) * built.L * 0.4, col = pick([[0.02, 0.02, 0.02], [0.75, 0.75, 0.72], [0.05, 0.15, 0.5]]), band = { col: col, flexible: true };
+    built.parts.push(part("strapping band", [x - 6, 0, zg - 0.6], [x + 6, built.H * 0.6, zg + 0.6], "plasticGrey", 0, band));
+    built.parts.push(part("strapping band, loose end", [-built.L / 2 - 250, -1.5, zg - 6], [x + 6, 0, zg + 6], "plasticGrey", 0, band));
+  }
+  // A piece of film or tape stuck to the outer face of a block or foot.
+  function addFilm(built) {
+    const blocks = built.parts.filter((q) => /^(block|foot|skid|stringer)/.test(q.name));
+    if (!blocks.length) throw new Error("no block to stick film on");
+    const b = pick(blocks), out = b.hi[2] > 0, f0 = out ? b.hi[2] : b.lo[2] - 1;
+    built.parts.push(part("film stuck on a block", [b.lo[0] + 8, b.lo[1] + 6, f0], [b.hi[0] - 8, b.hi[1] - 4, f0 + 1], "wrap", 0, { flexible: true }));
+  }
   // A sheet of cardboard stuck to the underside, across one or two bottom boards.
   function addCardboard(built) {
     const bottoms = built.parts.filter((q) => q.lo[1] <= 0 && q.hi[1] > 5 && q.mat !== "wrap"), b = pick(bottoms);
@@ -1207,6 +1354,7 @@ void main() {
     built.parts.slice().forEach((q) => {
       const c = Object.assign({}, q, { name: "upper pallet: " + q.name, lo: [q.lo[0], q.lo[1] + H, q.lo[2]], hi: [q.hi[0], q.hi[1] + H, q.hi[2]], seed: (q.seed * 7 + 13) % 9000 + 1, stain: [0, 0, 0] });
       if (q.sub) c.sub = q.sub.map((v) => [v[0], v[1] + H, v[2]]);
+      if (q.turn) c.turn = Object.assign({}, q.turn, { lo: [q.turn.lo[0], q.turn.lo[1] + H, q.turn.lo[2]], hi: [q.turn.hi[0], q.turn.hi[1] + H, q.turn.hi[2]] });
       c.planes = q.planes.map((pl) => [pl[0], pl[1], pl[2], pl[3] + pl[1] * H]);
       if (q.mark[0] && q.mark[1] !== 2 && q.mark[1] !== 3) c.mark = [q.mark[0], q.mark[1], q.mark[2], q.mark[3] + H];   // side faces: v is height
       built.parts.push(c);
@@ -1233,6 +1381,11 @@ void main() {
       built.parts.push(part("stretch wrap", [x, b.lo[1] - 1.5, b.lo[2] - 2], [x + len, b.hi[1] + 1.5, b.hi[2] + 2], "wrap", 0));
       notes.push("stretch-wrap remnant");
     }
+    const blocks = built.parts.filter((q) => /^block/.test(q.name));
+    if (isWood && blocks.length && rnd() < 0.1) {   // knocked slightly outward: within the 1 cm the EPAL classification allows
+      const b = pick(blocks), s = 6 * Math.sign((b.lo[2] + b.hi[2]) || 1); b.lo[2] += s; b.hi[2] += s;
+      notes.push("slightly skewed block (≤ 1 cm)");
+    }
     if (w.repaired !== undefined) notes.push("repaired board");
     if (w.label !== undefined) notes.push("paper label");
     if (w.wearChips) notes.push("worn block edges");
@@ -1255,6 +1408,9 @@ void main() {
     const w = clean ? {} : { repaired: wood && rnd() < 0.2 ? Math.floor(rnd() * 2) : undefined, label: wood && rnd() < 0.3 ? pick([0, 2, 6, 8]) : undefined, wearChips: wood && rnd() < 0.5 };
     const built = type.build(dm, w), unusual = !clean && unusualOn;
     if (dm.nailOut) addNail(built, dm.nailOut);
+    (dm.soils || []).forEach((k) => addSoil(built, k));
+    if (dm.strap) addStrap(built);
+    if (dm.film) addFilm(built);
     const wear = clean ? [] : addWear(built, w, wood, unusual);
     // Unusual arrivals that the grading rules may or may not cover: flagged rather than judged.
     let orient = { yaw: 0, pitch: 0, dy: 0 };
@@ -1315,10 +1471,29 @@ void main() {
     return out;
   }
   const worlds = new Map();
-  const rigKey = (camList) => camList.map((c) => c.C.map(Math.round).join(",") + "/" + c.lightPos.join(",")).join(";");
+  // Station camera bodies and their mounts (assumed): side, end and fork cameras on posts from the floor, the top
+  // camera hanging from a frame across the station posts' tops. A camera's own rays start inside its body, so it never
+  // sees itself; it does see the others (the side cameras face each other across the belt).
+  function stationCamParts() {
+    const out = [], station = $("opt-station").checked, steel = { col: [0.3, 0.31, 0.33] };
+    AREA_CAMS.forEach((c, ci) => {
+      if (ci > 0 && !station) return;
+      const [x, y, z] = c.C;
+      out.push(part("station camera", [x - 45, y - 45, z - 45], [x + 45, y + 45, z + 45], "steel", 1, { col: [0.06, 0.07, 0.08] }));
+      if (ci > 0) out.push(part("camera post", [x - 15, -600, z - 15], [x + 15, y - 45, z + 15], "steel", 1, steel));
+    });
+    const [tx, ty, tz] = AREA_CAMS[0].C;
+    out.push(part("top camera rod", [tx - 12, ty + 45, tz - 12], [tx + 12, 2170, tz + 12], "steel", 1, steel));
+    out.push(part("top frame", [-1230, 2170, tz - 20], [1230, 2200, tz + 20], "steel", 0, steel));
+    [-1200, 1200].forEach((px) => out.push(part("top frame", [px - 30, 2170, -980], [px + 30, 2200, 980], "steel", 2, steel)));
+    out.forEach((p) => { p.stain = [0, 0, 0]; p.knots = [1e9, 1e9, 1e9, 1e9]; });
+    return out;
+  }
+  const rigKey = (camList) => camList.map((c) => c.C.map(Math.round).join(",") + "/" + c.lightPos.join(",")).join(";") +
+    "|" + $("opt-station").checked + ":" + AREA_CAMS.map((c) => c.C.join(",")).join(";");
   function worldFor(g, camList) {
     const key = g + "|" + rigKey(camList);
-    if (!worlds.has(key)) { const w = worldParts(g); worlds.set(key, { parts: w.parts.concat(rigParts(camList)), bb: w.bb }); }
+    if (!worlds.has(key)) { const w = worldParts(g); worlds.set(key, { parts: w.parts.concat(rigParts(camList), stationCamParts()), bb: w.bb }); }
     return worlds.get(key);
   }
 
@@ -1483,8 +1658,9 @@ void main() {
     set(7, q.mark[0], q.mark[1], q.mark[2], q.mark[3]);
     if (q.sub) { set(8, q.sub[0][0], q.sub[0][1], q.sub[0][2], 1); set(9, q.sub[1][0], q.sub[1][1], q.sub[1][2], 0); }
     q.planes.slice(0, 4).forEach((pl, j) => set(10 + j, pl[0], pl[1], pl[2], pl[3]));
-    set(14, q.nailPat ? q.nailPat[0] : 45, q.nailPat ? q.nailPat[1] : 3, 0, 0);
-    set(15, q.snow || 0, q.ice || 0, 0, 0);
+    const s = q.soil || { kind: 0, x: 0, z: 0, r: 0 };
+    set(14, q.nailPat ? q.nailPat[0] : 45, q.nailPat ? q.nailPat[1] : 3, s.x, s.z);
+    set(15, q.snow || 0, q.ice || 0, s.kind, s.r);
   }
   let sceneKey = "", sceneSlots = [], sceneGap = gap;   // slots: [{pal (null = world), start, count}]
   function uploadScene(pals, g) {
@@ -1578,6 +1754,59 @@ void main() {
   const norm3 = (a) => { const l = Math.hypot(a[0], a[1], a[2]); return [a[0] / l, a[1] / l, a[2] / l]; };
   // Station area cameras (pinhole + thin lens), triggered by pallet position.
   const STATION_LIGHTS = STATION_LAMPS.map((l) => [l[0], l[1], l[2], 0.75 * 2.42 / 10 * 1300 * 1300]);
+  // Every view is lit by everything that is on: the bottom cameras' LED bars (one, or one per camera) and the
+  // station lamps above, which also reach the bottom view through gaps in the pallet. Units: the area cameras' 1 ms
+  // reference exposure. A line camera's exposure k already holds its shorter time and the bar's power, so its view
+  // divides every light by the bar's gain. Also returns what the tracer needs for the bars' optics and the air.
+  function lightsFor(camList, kind) {
+    const bars = [], age = service.lightFactor(), o = opts(), barGain = BAR_VS_LAMPS * o.light / 100, toView = kind === "line" ? 1 / barGain : 1;
+    camList.forEach((c) => c.lights.forEach((l) => { if (!bars.some((b) => b[0] === l[0] && b[1] === l[1] && b[2] === l[2])) bars.push(l); }));
+    const barScale = service.barOut ? 0 : age * barGain * toView, dust = service.barDust();
+    const [kBar, kLamp] = LIGHT_COLOURS[$("lightcol").value], barCol = KELVIN[kBar], lampCol = KELVIN[kLamp];
+    return { lights: bars.map((l, i) => [l[0], l[1], l[2], l[3] * barScale * (1 - dust * BAR_DUST_SPREAD[i % BAR_DUST_SPREAD.length])])
+      .concat(STATION_LIGHTS.map((l, i) => [l[0], l[1], l[2], service.lampOut && i === 0 ? 0 : l[3] * age * toView])),
+      nBars: bars.length, barFace: barScale * (1 - dust), lampFace: age * toView, hall: toView,
+      barCol: barCol, lampCol: lampCol, wb: (kind === "line" ? barCol : lampCol).map((v) => 1 / v),   // each camera is white-balanced to its own light
+      driver: DRIVERS[$("driver").value], day: daylight(lastLine / scanSpeed()),
+      louvreTan: o.louvre ? Math.tan(o.louvre * Math.PI / 180) : 0, dust: o.dust * DUST_SIGMA };
+  }
+  function areaCam(name, C, target, fovDeg, w, h, trigger, tip, aperture, upHint) {
+    const F = norm3(sub3(target, C)); const upH = upHint || (Math.abs(F[1]) > 0.95 ? [1, 0, 0] : [0, 1, 0]);
+    const R = norm3(cross3(F, upH)), U = cross3(R, F);
+    return { kind: "area", name: name, C: C, F: F, R: R, U: U, fx: (w / 2) / Math.tan(fovDeg * Math.PI / 360), w: w, h: h, trigger: trigger, tip: tip,
+      focus: Math.hypot(...sub3(target, C)), aperture: aperture || 1.5 };
+  }
+  // The side cameras, sideCam.height mm up and sideCam.along mm downstream of the scan line; each fires when the pallet
+  // centre passes its own position. At the scan line and well above the belt they look down the gap at the LED bar.
+  const sideCam = { height: 260, along: 0 };
+  function sideCams() {
+    const a = sideCam.along, h = sideCam.height, trig = (p, cx) => cx - a;
+    return [areaCam("Left side", [a, h, -1250], [a, 70, 0], 58, 480, 240, trig, "Left side camera: block faces, burnt EPAL marks, labels, missing outer blocks."),
+      areaCam("Right side", [a, h, 1250], [a, 70, 0], 58, 480, 240, trig, "Right side camera: the other long side.")];
+  }
+  // trigger(p, cx) is a signed distance to the trigger point; the snapshot fires when it crosses zero
+  const AREA_CAMS = [
+    areaCam("Top", [0, 1700, 0], [0, 0, 0], 76, 640, 340, (p, cx) => cx, "Top camera, 1.7 m above the belt, seeing 2.6 m of travel: runs live for the pallet detector that triggers every other camera, and takes the deck snapshot.", 1.5, [0, 0, -1]),
+    ...sideCams(),
+    areaCam("Front end", [1650, 300, 0], [0, 70, 0], 44, 400, 240, (p, cx) => cx + p.reach - 380, "Downstream end camera: the leading face, cross boards and fork openings."),
+    areaCam("Rear end", [-1650, 300, 0], [0, 70, 0], 44, 400, 240, (p, cx) => cx - p.reach + 380, "Upstream end camera: the trailing face as the pallet leaves."),
+    areaCam("Fork opening, oblique", [-780, 75, -900], [-60, 60, 0], 26, 320, 240, (p, cx) => cx, "Angled camera into the left fork opening, aimed at the hidden centre block.")
+  ];
+  // The live feed of the top camera, at a lower resolution than its snapshots.
+  const TOP_LIVE = areaCam("Top", [0, 1700, 0], [0, 0, 0], 76, softGL ? 320 : 480, softGL ? 170 : 255, null, "", 1.5, [0, 0, -1]);
+  // The photo render of the 3D view: a photographer's camera, not a machine camera (filmic tone curve, little noise,
+  // a lens aperture of PHOTO_APERTURE mm focused on the orbit target), at most PHOTO_W × PHOTO_H pixels.
+  const PHOTO_W = 1280, PHOTO_H = 800, PHOTO_APERTURE = 6;
+  function viewCamera() {
+    const aspect = cam3.aspect, w = Math.round(Math.min(PHOTO_W, PHOTO_H * aspect)), h = Math.round(w / aspect);
+    const hfov = 2 * Math.atan(Math.tan(cam3.fov * Math.PI / 360) * aspect) * 180 / Math.PI;
+    const toMm = (v) => v.toArray().map((x) => x * 1000), up = new THREE.Vector3(0, 1, 0).applyQuaternion(cam3.quaternion).toArray();
+    const c = areaCam("Current 3D view", toMm(cam3.position), toMm(controls.target), hfov, w, h, null, "", PHOTO_APERTURE, up);
+    c.photo = true;
+    return c;
+  }
+
+  // ---------------- conditions: light optics, drivers, colours, air, daylight, lens and window flaws ----------------
   // Optics and air (assumed). The LED bar fills a line exposure of 100 µs as the lamps fill an area exposure of 1 ms
   // (see SENSOR), so with similar lenses and pixels the bar is BAR_VS_LAMPS times as bright as the lamps.
   const BAR_VS_LAMPS = 10;
@@ -1605,30 +1834,17 @@ void main() {
   }
   // Daylight in the hall (assumed), as a share d of the hall's lamp-lit brightness added: overcast a steady 1.5,
   // sun with passing clouds between 1 and 5 over tens of seconds. It brightens the hall seen through gaps and the fill.
+  const DAYLIGHT = { overcast: 1.5, cloudLow: 1, cloudHigh: 5 };
   function daylight(t) {
-    const kind = $("daylight").value;
-    if (kind === "overcast") return 1.5;
-    if (kind === "clouds") return 1 + 4 * Math.min(1, Math.max(0, 0.5 + 0.8 * Math.sin(t / 9) * Math.sin(t / 23 + 1)));
+    const kind = $("daylight").value, D = DAYLIGHT;
+    if (kind === "overcast") return D.overcast;
+    if (kind === "clouds") return D.cloudLow + (D.cloudHigh - D.cloudLow) * Math.min(1, Math.max(0, 0.5 + 0.8 * Math.sin(t / 9) * Math.sin(t / 23 + 1)));
     return 0;
   }
-  // Every view is lit by everything that is on: the bottom cameras' LED bars (one, or one per camera) and the
-  // station lamps above, which also reach the bottom view through gaps in the pallet. Units: the area cameras' 1 ms
-  // reference exposure. A line camera's exposure k already holds its shorter time and the bar's power, so its view
-  // divides every light by the bar's gain. Also returns what the tracer needs for the bars' optics and the air.
-  function lightsFor(camList, kind) {
-    const bars = [], age = service.lightFactor(), o = opts(), barGain = BAR_VS_LAMPS * o.light / 100, toView = kind === "line" ? 1 / barGain : 1;
-    camList.forEach((c) => c.lights.forEach((l) => { if (!bars.some((b) => b[0] === l[0] && b[1] === l[1] && b[2] === l[2])) bars.push(l); }));
-    const barScale = service.barOut ? 0 : age * barGain * toView, dust = service.barDust();
-    const [kBar, kLamp] = LIGHT_COLOURS[$("lightcol").value], barCol = KELVIN[kBar], lampCol = KELVIN[kLamp];
-    return { lights: bars.map((l, i) => [l[0], l[1], l[2], l[3] * barScale * (1 - dust * BAR_DUST_SPREAD[i % BAR_DUST_SPREAD.length])])
-      .concat(STATION_LIGHTS.map((l, i) => [l[0], l[1], l[2], service.lampOut && i === 0 ? 0 : l[3] * age * toView])),
-      nBars: bars.length, barFace: barScale * (1 - dust), lampFace: age * toView, hall: toView,
-      barCol: barCol, lampCol: lampCol, wb: (kind === "line" ? barCol : lampCol).map((v) => 1 / v),   // each camera is white-balanced to its own light
-      driver: DRIVERS[$("driver").value], day: daylight(lastLine / scanSpeed()),
-      louvreTan: o.louvre ? Math.tan(o.louvre * Math.PI / 180) : 0, dust: o.dust * DUST_SIGMA };
-  }
-  // Share of the bar's light that the louvre passes to the scan line at the belt centre, for the budget. The same
-  // per-point weighting as barWeight in the tracer.
+
+  // Share of the bar's light that the louvre passes to the scan line at the belt centre, for the budget: onto a bottom
+  // face (facing the bar), so each point's light counts with the face's cosine too. The same per-point weighting as
+  // barWeight in the tracer.
   function louvrePass(deg) {
     if (!deg) return 1;
     const c = cams[0], w = -c.lightPos[1] * Math.tan(deg * Math.PI / 180), h = BAR_SEGMENT_HALF;
@@ -1636,39 +1852,42 @@ void main() {
     let bare = 0, cut = 0;
     c.lights.forEach((l) => {
       const dy = -l[1], d2 = dy * dy + l[2] * l[2], cosT = dy / Math.sqrt(d2);
-      bare += cosT / d2; cut += cosT * (triCum(l[2] + h) - triCum(l[2] - h)) / (2 * h) / d2;
+      const onFace = cosT * cosT / d2;   // emitted at the bar's cosine, received at the face's
+      bare += onFace; cut += onFace * (triCum(l[2] + h) - triCum(l[2] - h)) / (2 * h);
     });
     return cut / bare;
   }
-  function areaCam(name, C, target, fovDeg, w, h, trigger, tip, aperture, upHint) {
-    const F = norm3(sub3(target, C)); const upH = upHint || (Math.abs(F[1]) > 0.95 ? [1, 0, 0] : [0, 1, 0]);
-    const R = norm3(cross3(F, upH)), U = cross3(R, F);
-    return { kind: "area", name: name, C: C, F: F, R: R, U: U, fx: (w / 2) / Math.tan(fovDeg * Math.PI / 360), w: w, h: h, trigger: trigger, tip: tip,
-      focus: Math.hypot(...sub3(target, C)), aperture: aperture || 1.5 };
+  // Lens and sensor flaws that calibration removes, and the bottom cameras' window (assumed):
+  const LENS_DISTORTION = 0.03;   // barrel distortion, ~1% at 35° off axis
+  const ROLLING_S = 0.02;         // rolling-shutter readout, first row to last
+  const WINDOW_MM = 25, PINHOLE_MM = 0.3;   // window in front of the bottom cameras' lens; aperture for the pinhole lens
+  // Debris on a bottom camera's window (assumed): grit settles over the months since service, and a splinter
+  // can lie on the first camera's window. Each: position along the sensor line and across it, radius (mm), opacity.
+  function debrisFor(cam) {
+    const data = new Float32Array(64);   // up to 16: a splinter is 5, specks at most 10
+    let n = 0, seed = (Math.round(cam.spec.tilt * 31 + cam.spec.z) >>> 0) + 7;
+    const r = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+    const add = (u, v, rad, op) => data.set([u, v, rad, op], 4 * n++);
+    if (opts().splinter && service.protect > PROTECTION.airknife && cam.spec.z <= 0) for (let k = 0; k < 5; k++) add(-6 + k * 1.6, -0.8 + k * 0.4, 0.9, 0.95);
+    for (let k = service.specks(); k > 0; k--) add((r() - 0.5) * 30, (r() - 0.5) * 4, 0.15 + 0.35 * r(), 0.6 + 0.4 * r());
+    return { data: data, n: n };
   }
-  // trigger(p, cx) is a signed distance to the trigger point; the snapshot fires when it crosses zero
-  const AREA_CAMS = [
-    areaCam("Top", [0, 1700, 0], [0, 0, 0], 76, 640, 340, (p, cx) => cx, "Top camera, 1.7 m above the belt, seeing 2.6 m of travel: runs live for the pallet detector that triggers every other camera, and takes the deck snapshot.", 1.5, [0, 0, -1]),
-    areaCam("Left side", [0, 260, -1250], [0, 70, 0], 58, 480, 240, (p, cx) => cx, "Left side camera: block faces, burnt EPAL marks, labels, missing outer blocks."),
-    areaCam("Right side", [0, 260, 1250], [0, 70, 0], 58, 480, 240, (p, cx) => cx, "Right side camera: the other long side."),
-    areaCam("Front end", [1650, 300, 0], [0, 70, 0], 44, 400, 240, (p, cx) => cx + p.reach - 380, "Downstream end camera: the leading face, cross boards and fork openings."),
-    areaCam("Rear end", [-1650, 300, 0], [0, 70, 0], 44, 400, 240, (p, cx) => cx - p.reach + 380, "Upstream end camera: the trailing face as the pallet leaves."),
-    areaCam("Fork opening, oblique", [-780, 75, -900], [-60, 60, 0], 26, 320, 240, (p, cx) => cx, "Angled camera into the left fork opening, aimed at the hidden centre block.")
-  ];
-  // The live feed of the top camera, at a lower resolution than its snapshots.
-  const TOP_LIVE = areaCam("Top", [0, 1700, 0], [0, 0, 0], 76, softGL ? 320 : 480, softGL ? 170 : 255, null, "", 1.5, [0, 0, -1]);
-  // The photo render of the 3D view: a photographer's camera, not a machine camera (filmic tone curve, little noise,
-  // a lens aperture of PHOTO_APERTURE mm focused on the orbit target), at most PHOTO_W × PHOTO_H pixels.
-  const PHOTO_W = 1280, PHOTO_H = 800, PHOTO_APERTURE = 6;
-  function viewCamera() {
-    const aspect = cam3.aspect, w = Math.round(Math.min(PHOTO_W, PHOTO_H * aspect)), h = Math.round(w / aspect);
-    const hfov = 2 * Math.atan(Math.tan(cam3.fov * Math.PI / 360) * aspect) * 180 / Math.PI;
-    const toMm = (v) => v.toArray().map((x) => x * 1000), up = new THREE.Vector3(0, 1, 0).applyQuaternion(cam3.quaternion).toArray();
-    const c = areaCam("Current 3D view", toMm(cam3.position), toMm(controls.target), hfov, w, h, null, "", PHOTO_APERTURE, up);
-    c.photo = true;
-    return c;
+  // Share of the bottom images' columns that debris on the windows darkens, averaged over the cameras. Estimate of
+  // windowT in the post shader: each item darkens a band as wide as the aperture disc plus the item, as far as it
+  // covers the disc, if it lies on the disc's path across the window.
+  function debrisShare(o) {
+    let sum = 0;
+    cams.forEach((cam) => {
+      const db = debrisFor(cam), apR = o.fnum > 0 ? cam.focal / o.fnum / 2 : PINHOLE_MM / 2, span = 2 * WINDOW_MM * Math.tan((cam.phi1 - cam.phi0) / 2);
+      let s = 0;
+      for (let i = 0; i < db.n; i++) {
+        const [, v, r, op] = db.data.subarray(4 * i, 4 * i + 4);
+        if (Math.abs(v) < apR + r) s += op * Math.min(1, (r / apR) * (r / apR)) * 2 * (apR + r) / span;
+      }
+      sum += Math.min(1, s);
+    });
+    return sum / cams.length;
   }
-
   // ---------------- draw calls ----------------
   // ---------------- exposure and sensor ----------------
   // Reference (k = 1): line-scan 100 µs at f/4 with the LED bar at 100%, area cameras 1 ms; mid-grey then fills half
@@ -1679,6 +1898,9 @@ void main() {
     return { t: t, tMax: tMax, k: t / 100 * (o.light / 100) * Math.pow(4 / (o.fnum || 4), 2), blur: scanSpeed() * t * 1e-6 };
   }
   const areaExposure = (o) => ({ t: o.aexpMs, k: o.aexpMs, blur: scanSpeed() * o.aexpMs / 1000 });
+  // The line cameras' signal relative to the reference: the exposure, with everything that dims the bar's light on
+  // the scan line (louvre, LED ageing, dust on the bar, a failed bar leaving only stray light from the lamps).
+  const lineSignalK = (o) => lineExposure(o).k * louvrePass(o.louvre) * service.lightFactor() * (1 - service.barDust()) * (service.barOut ? 0.1 : 1);
   const significantBlur = (mm, mmPerPx) => ((mm || 0) >= 0.25 * mmPerPx ? mm : 0);   // below a quarter pixel: not worth the samples
   function sensorUniforms(P, o) { gl.uniform1f(P.uK, o.k || 1); gl.uniform1f(P.uFullWell, SENSOR.fullWell); gl.uniform1f(P.uReadNoise, SENSOR.readNoise); }
 
@@ -1688,27 +1910,13 @@ void main() {
     if (!o.still) return;
     gl.enable(gl.BLEND); gl.blendFunc(gl.CONSTANT_ALPHA, gl.ONE_MINUS_CONSTANT_ALPHA); gl.blendColor(0, 0, 0, 1 / (o.pass + 1));
   }
-  // Lens and sensor flaws that calibration removes, and how the cameras meet the conditions (all assumed):
-  const LENS_DISTORTION = 0.03;   // barrel distortion, ~1% at 35° off axis
-  const ROLLING_S = 0.02;         // rolling-shutter readout, first row to last
-  const WINDOW_MM = 25, PINHOLE_MM = 0.3;   // window in front of the bottom cameras' lens; aperture for the pinhole lens
+  const INDIRECT_SAMPLES = 4;   // bounce samples per pixel when the analysis views trace indirect light
   // Post-pass uniforms for the light (white balance, flicker) and the sensor: t0 and tRow time row 0 and each next row,
   // T the exposure (s); seed tells the cameras' pixel patterns apart.
   function conditionUniforms(P, L, t0, tRow, T, fpn, seed) {
     gl.uniform3fv(P.uWB, L.wb); gl.uniform3f(P.uFlick, L.driver.mode, L.driver.f, L.driver.p);
     gl.uniform1f(P.uT0, t0); gl.uniform1f(P.uTRow, tRow); gl.uniform1f(P.uExpS, T);
     gl.uniform1f(P.uFpn, fpn ? 1 : 0); gl.uniform1f(P.uCamSeed, seed % 997);
-  }
-  // Debris on a bottom camera's window (assumed): grit settles over the months since service, and a splinter
-  // can lie on the first camera's window. Each: position along the sensor line and across it, radius (mm), opacity.
-  function debrisFor(cam) {
-    const data = new Float32Array(64);   // up to 16: a splinter is 5, specks at most 10
-    let n = 0, seed = (Math.round(cam.spec.tilt * 31 + cam.spec.z) >>> 0) + 7;
-    const r = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
-    const add = (u, v, rad, op) => data.set([u, v, rad, op], 4 * n++);
-    if (opts().splinter && cam.spec.z <= 0) for (let k = 0; k < 5; k++) add(-6 + k * 1.6, -0.8 + k * 0.4, 0.9, 0.95);
-    for (let k = service.specks(); k > 0; k--) add((r() - 0.5) * 30, (r() - 0.5) * 4, 0.15 + 0.35 * r(), 0.6 + 0.4 * r());
-    return { data: data, n: n };
   }
   function traceLines(cam, s0, pitch, rows, o) {
     const U = progT.loc; gl.useProgram(progT.p);
@@ -1720,12 +1928,14 @@ void main() {
     gl.uniform1f(U.uPhi0, cam.phi0); gl.uniform1f(U.uDphi, cam.dphi); gl.uniform1f(U.uAxisPhi, cam.axisPhi);
     gl.uniform1f(U.uS0, s0); gl.uniform1f(U.uPitch, pitch); gl.uniform2f(U.uSize, cam.PX, rows);
     const L = o.lights || lightsFor(cams, "line"), c = opts();
-    setLights(U, L, o.still ? 0.008 : 0.035);
+    setLights(U, L, o.still || o.indirect ? 0.008 : 0.035);   // indirect light replaces the constant fill
     gl.uniform1f(U.uVib, o.id ? 0 : c.vib); gl.uniform1f(U.uSpeed, scanSpeed()); gl.uniform1f(U.uDistort, c.uncal ? LENS_DISTORTION : 0); gl.uniform1f(U.uRollMM, 0);
     const fnum = o.id ? 0 : o.fnum;
     gl.uniform3fv(U.uAxis, cam.axis); gl.uniform1f(U.uFocus, cam.focus); gl.uniform1f(U.uAperture, fnum > 0 ? cam.focal / fnum : 0); gl.uniform1i(U.uDof, fnum > 0 ? LENS_SAMPLES : 0);
     gl.uniform1f(U.uPixAng, cam.dphi); gl.uniform1f(U.uBlur, significantBlur(o.blur, pitch));
     beginStill(U, o);
+    gl.uniform1i(U.uIndirect, o.indirect && !o.still && !o.id ? INDIRECT_SAMPLES : 0);
+    if (o.indirect && !o.still) gl.uniform3fv(U.uSky, HALL_SKY.map((v) => v * L.hall * (1 + L.day)));
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.disable(gl.BLEND);
     if (o.id || o.noPost) return;
@@ -1760,6 +1970,7 @@ void main() {
     gl.uniform3fv(U.uAxis, cam.F); gl.uniform1f(U.uFocus, cam.focus); gl.uniform1f(U.uAperture, dof ? cam.aperture : 0); gl.uniform1i(U.uDof, dof ? LENS_SAMPLES : 0);
     gl.uniform1f(U.uPixAng, 1 / cam.fx); gl.uniform1f(U.uBlur, significantBlur(o.blur, cam.focus / cam.fx));
     beginStill(U, o);
+    gl.uniform1i(U.uIndirect, 0);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.disable(gl.BLEND);
     gl.disable(gl.SCISSOR_TEST);
@@ -1829,7 +2040,7 @@ void main() {
     const edges = [], front = (p.orient.yaw ? p.W : p.L) / 2;
     p.parts.forEach((q) => {
       const [, y0, x1, y1] = beltBox(q, p);
-      if (y0 > 0.5 || (y1 < 3 && q.mat !== "steel") || q.mat === "wrap") return;   // what it stands on, plus nails dragging below
+      if (y0 > 0.5 || (y1 < 3 && q.mat !== "steel") || q.mat === "wrap" || q.flexible) return;   // what it stands on, plus nails dragging below
       const freeEnd = /\(piece\)/.test(q.name) && x1 < front - 5;
       const extra = freeEnd ? 3 : Math.max(0, -y0), k = edges.findIndex((x) => Math.abs(x[0] - x1) < 30);
       if (k < 0) edges.push([x1, extra]); else edges[k][1] = Math.max(edges[k][1], extra);
@@ -1839,8 +2050,9 @@ void main() {
   const edgeDroop = (warp, extra, k, g) => Math.min(8, warp * gapDroop(g) * (k === 0 ? 1 : 0.6) + extra * Math.min(1, gapDroop(g) + 0.3));
   // The stall is a time to climb over the roller, so its length in belt travel grows with the speed at the gap,
   // and the snag's jolt (the turn) grows with the square root of speed. Reference speed 0.44 m/s. Assumed.
-  const stallOf = (delta, r) => Math.min(90, (delta - CATCH_MM) * 6 * (0.6 + 0.8 * r) * scanSpeed() / 440);
-  const kickScale = () => Math.sqrt(scanSpeed() / 440);
+  const STALL = { mmPerMm: 6, refSpeed: 440 };   // stall travel per mm of droop over the catch threshold, at refSpeed mm/s
+  const stallOf = (delta, r) => Math.min(90, (delta - CATCH_MM) * STALL.mmPerMm * (0.6 + 0.8 * r) * scanSpeed() / STALL.refSpeed);
+  const kickScale = () => Math.sqrt(scanSpeed() / STALL.refSpeed);
   function solveU(xAt, target) {   // xAt is non-decreasing in u
     let a = MOTION_U0, b = MOTION_U0 + MOTION_DU * (MOTION_N - 1);
     for (let i = 0; i < 40; i++) { const c = (a + b) / 2; if (xAt(c) < target) a = c; else b = c; }
@@ -1913,10 +2125,11 @@ void main() {
     m.hesitations = J.hesitations.length;
     return m;
   }
+  const HESITATION_MM = 10000;   // mean belt travel between short hesitations (roller friction)
   // Per-pallet random draws, made once, so a gap change re-derives the same pallet's motion.
   function jostleDraws(p) {
     const hes = [];
-    for (let u = -3500 + -Math.log(1 - rnd()) * 10000; u < 3500; u += -Math.log(1 - rnd()) * 10000)   // ~1 per 10 m
+    for (let u = -3500 + -Math.log(1 - rnd()) * HESITATION_MM; u < 3500; u += -Math.log(1 - rnd()) * HESITATION_MM)
       hes.push({ u0: u, dur: 2 + rnd() * 8, kick: (rnd() - 0.5) * 0.002 });
     return { warp: warpOf(p.type.id, rnd()) + (p.verdict === "usable" ? 0 : 0.8), hesitations: hes,
       wanderZ: 2 + rnd() * 4, wanderYaw: (0.1 + rnd() * 0.2) * Math.PI / 180, ph: [rnd() * 6.28, rnd() * 6.28],
@@ -2069,6 +2282,10 @@ void main() {
     for (let i = fans.length - 1; i >= 0; i--) if (fans[i].userData.kind === "area") fans.splice(i, 1);
     const camM = M(css("--cam"), { roughness: 0.35 });
     const beam = new THREE.MeshBasicMaterial({ color: new THREE.Color(css("--cam")), transparent: true, opacity: 0.08, side: THREE.DoubleSide, depthWrite: false });
+    stationCamParts().filter((q) => q.name !== "station camera").forEach((q) => {   // the mounts, as traced
+      const s = [0, 1, 2].map((i) => (q.hi[i] - q.lo[i]) / 1000), c = [0, 1, 2].map((i) => (q.lo[i] + q.hi[i]) / 2000);
+      stationRig.add(tip(box(s[0], s[1], s[2], M("#4d4f54"), c[0], c[1], c[2]), "Camera mount (assumed), traced."));
+    });
     AREA_CAMS.forEach((c, ci) => {
       if (ci > 0 && !$("opt-station").checked) return;
       const C = new THREE.Vector3(c.C[0] / 1000, c.C[1] / 1000, c.C[2] / 1000), F = new THREE.Vector3(...c.F), R = new THREE.Vector3(...c.R), U = new THREE.Vector3(...c.U);
@@ -2084,9 +2301,14 @@ void main() {
   function palletMesh(p) {
     const g = new THREE.Group();
     p.parts.forEach((pt) => {
-      const sx = (pt.hi[0] - pt.lo[0]) / 1000, sy = (pt.hi[1] - pt.lo[1]) / 1000, sz = (pt.hi[2] - pt.lo[2]) / 1000;
-      const m = box(sx, sy, sz, partMaterial(pt), (pt.lo[0] + pt.hi[0]) / 2000, (pt.lo[1] + pt.hi[1]) / 2000, (pt.lo[2] + pt.hi[2]) / 2000);
-      if (TEX_OF[pt.mat]) grainUVs(m.geometry, pt, TEX_OF[pt.mat][1], pt.mat === "oak");
+      const shape = pt.turn ? Object.assign({}, pt, { lo: pt.turn.lo, hi: pt.turn.hi }) : pt;   // a turned board: its own box, turned below
+      const sx = (shape.hi[0] - shape.lo[0]) / 1000, sy = (shape.hi[1] - shape.lo[1]) / 1000, sz = (shape.hi[2] - shape.lo[2]) / 1000;
+      const m = box(sx, sy, sz, partMaterial(pt), (shape.lo[0] + shape.hi[0]) / 2000, (shape.lo[1] + shape.hi[1]) / 2000, (shape.lo[2] + shape.hi[2]) / 2000);
+      if (pt.turn) {   // about its pivot, as turnedPart (three.js turns +y the other way)
+        const { pivot: [px, pz], angle: a } = pt.turn, cx = m.position.x * 1000 - px, cz = m.position.z * 1000 - pz;
+        m.position.x = (px + cx * Math.cos(a) - cz * Math.sin(a)) / 1000; m.position.z = (pz + cx * Math.sin(a) + cz * Math.cos(a)) / 1000; m.rotation.y = -a;
+      }
+      if (TEX_OF[pt.mat]) grainUVs(m.geometry, shape, TEX_OF[pt.mat][1], pt.mat === "oak");
       if (pt.taper) {   // narrower at the bottom
         const pos = m.geometry.attributes.position;
         for (let i = 0; i < pos.count; i++) if (pos.getY(i) < 0) { pos.setX(i, pos.getX(i) * pt.taper[0]); pos.setZ(i, pos.getZ(i) * pt.taper[1]); }
@@ -2114,7 +2336,7 @@ void main() {
     fnum: +$("fnum").value, dirt: Math.min(1, +$("dirt").value + service.extraDirt()), transport: $("opt-transport").checked, station: $("opt-station").checked,
     expUs: Math.pow(10, +$("exp").value), light: +$("light").value, aexpMs: Math.pow(10, +$("aexp").value),
     louvre: +$("louvre").value, dust: +$("dust").value, glare: $("opt-glare").checked,
-    vib: +$("vib").value, rolling: $("shutter").value === "rolling", uncal: $("f-uncal").checked, splinter: $("f-splinter").checked, fog: $("f-fog").checked });
+    vib: +$("vib").value, indirect: $("opt-indirect").checked, rolling: $("shutter").value === "rolling", uncal: $("f-uncal").checked, splinter: $("f-splinter").checked, fog: $("f-fog").checked });
   const specsFor = (key) => (key === "dual" ? [{ tilt: 25, z: -sideOffset }, { tilt: -25, z: sideOffset }] : [{ tilt: Number(key), z: 0 }]);
 
   function weightedType() {
@@ -2135,8 +2357,8 @@ void main() {
       p.zoff = (rnd() * 2 - 1) * 80 * scatter; p.yaw = (rnd() * 2 - 1) * 5 * scatter * Math.PI / 180;
       const yawT = p.yaw + p.orient.yaw;
       p.reach = Math.abs(p.L / 2 * Math.cos(yawT)) + Math.abs(p.W / 2 * Math.sin(yawT));
-      p.touching = !!(o.transport && prev && rnd() < 0.15);
-      p.mergeProne = p.touching && rnd() < 0.5;   // the detector sees this touching pair as one object
+      p.touching = !!(o.transport && prev && rnd() < FEED.touching);
+      p.mergeProne = p.touching && rnd() < FEED.mergeProne;   // the detector sees this touching pair as one object
       p.slip = o.transport ? rnd() * 0.03 : 0; p.ripple = o.transport ? rnd() * 12 : 0; p.ripplePh = rnd() * 6.28;
       // nextOff is the previous pallet's upstream edge; touching pallets close the gap and move as one
       p.off = feed.length ? nextOff + sectionFactor * ((p.touching ? 0 : feedGap(p)) + p.reach) : nextOff;
@@ -2316,6 +2538,9 @@ void main() {
   // The detector is simulated: boxes come from the true geometry projected into the top image, with edge jitter,
   // misses, and touching pallets merged into one box. Everything downstream (positions, triggers) uses only the boxes.
   const TOP_FPS = 10, DETECT_S = 0.08;   // top camera frame rate; detector inference latency, s
+  // The simulated detector: share of pallets missed per frame, box edge jitter (share of the box size), and the
+  // smallest visible share of a pallet it still boxes.
+  const DETECTOR = { miss: 0.02, jitter: 0.008, minVisible: 0.15 };
   const FRAME_MM = () => scanSpeed() / TOP_FPS, LAT_MM = () => scanSpeed() * DETECT_S;   // the same, in belt travel
   const H_ASSUMED = 140;    // pallet height the box-to-belt conversion assumes; real types are 120-156 mm
   const TRACK_START = -400; // new tracks start only for pallets entering upstream
@@ -2352,9 +2577,9 @@ void main() {
       a.box = [Math.min(a.box[0], b.box[0]), Math.min(a.box[1], b.box[1]), Math.max(a.box[2], b.box[2]), Math.max(a.box[3], b.box[3])];
       a.gt = a.gt.concat(b.gt); a.merged = true; a.frac = Math.min(a.frac, b.frac); seen.splice(i + 1, 1);
     }
-    return seen.filter((d) => d.frac > 0.15 && drnd() > 0.02).map((d) => {
-      const w = d.box[2] - d.box[0], h = d.box[3] - d.box[1];
-      const box = [d.box[0] + gauss() * 0.008 * w, d.box[1] + gauss() * 0.008 * h, d.box[2] + gauss() * 0.008 * w, d.box[3] + gauss() * 0.008 * h];
+    return seen.filter((d) => d.frac > DETECTOR.minVisible && drnd() > DETECTOR.miss).map((d) => {
+      const w = d.box[2] - d.box[0], h = d.box[3] - d.box[1], j = DETECTOR.jitter;
+      const box = [d.box[0] + gauss() * j * w, d.box[1] + gauss() * j * h, d.box[2] + gauss() * j * w, d.box[3] + gauss() * j * h];
       return { box: box, gt: d.gt, merged: d.merged, clipL: d.box[0] <= 1, clipR: d.box[2] >= cam.w - 1,
         conf: Math.min(0.99, (0.9 + 0.08 * d.frac - 0.04 * drnd()) * (d.merged ? 0.85 : 1)) };
     });
@@ -2610,8 +2835,9 @@ void main() {
     const rows = Math.ceil((2 * p.reach + 400) / pit), cv = document.createElement("canvas"); cv.width = cam.PX; cv.height = rows;
     const ctx = cv.getContext("2d");
     uploadScene([p], g);
-    for (let r = 0; r < rows; r += MAXROWS) {
-      const n = Math.min(MAXROWS, rows - r);
+    const step = o.indirect ? MAXROWS / 8 : MAXROWS;   // indirect light is slow: smaller draws keep the GPU responsive
+    for (let r = 0; r < rows; r += step) {
+      const n = Math.min(step, rows - r);
       traceLines(cam, -p.reach - 200 + r * pit, pit, n, Object.assign({ noise: 0, seed: 7, rowBase: r }, o));
       ctx.drawImage(glc, 0, 0, cam.PX, n, 0, r, cam.PX, n);
     }
@@ -2632,7 +2858,7 @@ void main() {
         const fig = document.createElement("figure"), cap = document.createElement("figcaption"), pair = document.createElement("div");
         cap.className = "cap"; pair.className = "pair"; let changed = 0;
         cs.forEach((cam) => {
-          const ro = Object.assign({ fnum: o.fnum, dirt: o.dirt, rect: o.rect, lights: lightsFor(cs, "line") }, lineExposure(o));
+          const ro = Object.assign({ fnum: o.fnum, dirt: o.dirt, rect: o.rect, lights: lightsFor(cs, "line"), indirect: o.indirect }, lineExposure(o));
           const a = renderPass(intact, cam, ro, g), b = renderPass(damaged, cam, ro, g);
           const A = a.getContext("2d").getImageData(0, 0, a.width, a.height).data, bctx = b.getContext("2d"), B = bctx.getImageData(0, 0, b.width, b.height).data;
           const D = bctx.createImageData(b.width, b.height);
@@ -2655,7 +2881,7 @@ void main() {
   $("cmp-run").addEventListener("click", runCompare);
 
   // ---------------- timing and data budget ----------------
-  const TARGET_PER_H = 1000, SPACING = 400;   // R1 peak rate; mm between pallets in the feed (as spawn)
+  const TARGET_PER_H = 1000, SPACING = 400;   // peak rate; mm between pallets in the feed (as spawn)
   const AREA_REAL = { topMP: 2.3, topPx: 1920, topField: 2600, stationMP: 5, stationMmPx: 0.6 };   // real-camera equivalents (assumed)
   const LINKS = [["GigE", 115], ["2.5GigE", 290], ["5GigE", 580], ["10GigE", 1150], ["CoaXPress-12 ×2", 2500]];   // usable MB/s
   const linkFor = (mbs) => (LINKS.find((l) => l[1] >= mbs * 1.25) || ["more than one link"])[0];
@@ -2673,7 +2899,7 @@ void main() {
     const capacity = v * 3600 / beltPitch, capStick = v * 3600 / (beltPitch + lost);
     const vs = scanSpeed(), le = lineExposure(o), ae = areaExposure(o), lineRate = vs / pitch;
     const pass = louvrePass(o.louvre), kLine = le.k * pass;
-    const age = service.lightFactor(), sl = sensorAt(kLine * age * (1 - service.barDust()) * (service.barOut ? 0.1 : 1)), sa = sensorAt(ae.k * age);   // bar out: only stray light from the lamps above
+    const age = service.lightFactor(), sl = sensorAt(lineSignalK(o)), sa = sensorAt(ae.k * age);
     const driver = DRIVERS[$("driver").value], driverName = $("driver").selectedOptions[0].textContent;
     const flickLine = flickerSpread(driver, le.t * 1e-6), flickArea = flickerSpread(driver, ae.t * 1e-3);
     const flickRow = (spread) => [driverName, spread ? "brightness differs up to " + Math.round(spread * 100) + "% between exposures" : "steady", chk(spread <= 0.02, spread <= 0.1)];
@@ -2700,7 +2926,7 @@ void main() {
       ["Line rate", Math.round(lineRate) + " lines/s, " + (1000 / lineRate).toFixed(2) + " ms per line", ""],
       ["Exposure", Math.round(le.t) + " µs" + (o.expUs > le.tMax ? " (capped at the line period)" : ""), chk(o.expUs <= le.tMax, true)],
       ["Motion blur along travel", fmtBlur(le.blur, pitch), chk(le.blur / pitch <= 0.5, le.blur / pitch <= 1)],
-      ...(o.louvre ? [["LED bar louvre ±" + o.louvre + "° along the bar", "passes " + Math.round(pass * 100) + "% of the bar's light to the scan line", chk(pass >= 0.8, pass >= 0.4)]] : []),
+      ...(o.louvre ? [["LED bar louvre ±" + o.louvre + "° along the bar", "passes " + Math.round(pass * 100) + "% of the bar's light to the scan line at the belt centre", chk(pass >= 0.8, pass >= 0.4)]] : []),
       ["Signal at mid-grey", signal(sl), snrChk(sl)],
       ["Light flicker between lines: " + flickRow(flickLine)[0], flickRow(flickLine)[1], flickRow(flickLine)[2]],
       ["Brightest surface not clipped", kLine <= 2 ? "everything up to reference white" : Math.round(200 / kLine) + "% of reference white", chk(kLine <= 2, kLine <= 4)],
@@ -2718,6 +2944,8 @@ void main() {
       ["Light flicker between snapshots: " + flickRow(flickArea)[0], flickRow(flickArea)[1], flickRow(flickArea)[2]],
       ["Service state"],
       ["Since service", service.months + " months: light output " + Math.round(age * 100) + "%, dust on the LED bar −" + Math.round(service.barDust() * 100) + "%, window dirt " + Math.round(o.dirt * 100) + "%, " + service.specks() + " specks per bottom window", chk(age >= 0.9 && o.dirt <= 0.5, age >= 0.8 && o.dirt <= 0.75)],
+      ["Debris on the bottom windows", service.specks() + " specks of grit" + (o.splinter && service.protect > PROTECTION.airknife ? " and a splinter" : "") + ": darkens the image columns by about " + Math.round(debrisShare(o) * 100) + "% on average (estimate)", chk(debrisShare(o) <= 0.02, debrisShare(o) <= 0.1)],
+      ["Window and bar protection", $("protect").selectedOptions[0].textContent + ($("protect").value === "airknife" ? ": needs compressed air, roughly 40 m³/h (assumed)" : ""), ""],
       ["Faults", [service.barOut && "LED bar out", service.lampOut && "a station lamp out", service.encErr && "encoder reads " + Math.round(service.encErr * 100) + "% short (images " + Math.round(service.encErr * 100) + "% compressed)"].filter(Boolean).join(", ") || "none",
         chk(!service.barOut && !service.lampOut && !service.encErr)],
       ["Totals"],
@@ -2741,7 +2969,10 @@ void main() {
     const add = (w, h, label, aspect) => {
       const f = document.createElement("figure"), cv = document.createElement("canvas"), cap = document.createElement("figcaption");
       f.style.margin = "0"; cv.width = w; cv.height = h; cv.style.width = "100%"; if (aspect) cv.style.aspectRatio = aspect;
-      cap.className = "cap-dim"; cap.style.fontSize = "0.76rem"; cap.textContent = label; f.append(cv, cap); out.append(f);
+      cap.className = "cap-dim"; cap.style.fontSize = "0.76rem"; cap.textContent = label + " ";
+      const save = document.createElement("button"); save.type = "button"; save.className = "btn"; save.textContent = "Save PNG";
+      save.addEventListener("click", () => saveCanvas(cv, label, $("ph-status"))); cap.append(save);
+      f.append(cv, cap); out.append(f);
       return cv.getContext("2d");
     };
     const tiles = [];
@@ -2799,10 +3030,39 @@ void main() {
   // ---------------- tabs ----------------
   document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => {
     document.querySelectorAll(".tabs button").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
-    ["live", "vis", "cmp", "photo", "budget", "batch"].forEach((t) => { const el = $("pane-" + t); el.hidden = t !== b.dataset.tab; el.style.display = el.hidden ? "none" : "grid"; });
+    ["live", "vis", "cmp", "photo", "budget", "batch", "assume"].forEach((t) => { const el = $("pane-" + t); el.hidden = t !== b.dataset.tab; el.style.display = el.hidden ? "none" : "grid"; });
     setVisMode(b.dataset.tab === "vis" && visGroup.children.length > 0);
   }));
 
+  // ---------------- saving images ----------------
+  // Published on claude.ai, the page offers a file through the viewer's save prompt (downloads capability); opened
+  // as a local file, it falls back to a plain browser download.
+  const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
+  function saveCanvas(cv, name, statusEl) {
+    cv.toBlob(async (blob) => {
+      const filename = "pallet-scanner-" + slug(name) + ".png";
+      const downloads = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
+      if (downloads) {
+        try { await downloads.save({ filename: filename, data: blob }); }
+        catch (e) { if (e.code !== "declined") statusEl.textContent = "Not saved: " + (e.message || e.code) + "."; }
+        return;
+      }
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = filename; document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    }, "image/png");
+  }
+  // The pallet in the zoom view: its full-resolution images side by side in one PNG.
+  $("zoom-save").addEventListener("click", () => {
+    const imgs = [...$("zoom-imgs").querySelectorAll("canvas")];
+    if (!imgs.length) return;
+    const GAP = 8, out = document.createElement("canvas");
+    out.width = imgs.reduce((s, c) => s + c.width + GAP, -GAP); out.height = Math.max(...imgs.map((c) => c.height));
+    const ctx = out.getContext("2d"); ctx.fillStyle = "#000"; ctx.fillRect(0, 0, out.width, out.height);
+    let x = 0;
+    imgs.forEach((c) => { ctx.drawImage(c, x, 0); x += c.width + GAP; });
+    saveCanvas(out, $("zoom-title").textContent, $("zoom-cap"));
+  });
   // ---------------- controls ----------------
   const typesEl = $("types");
   TYPES.forEach((t) => {
@@ -2841,6 +3101,13 @@ void main() {
   $("dust").addEventListener("input", () => { $("dust-out").textContent = $("dust").value + " mg/m³"; });
   $("louvre").addEventListener("change", updateBudget);
   $("driver").addEventListener("change", updateBudget);
+  $("protect").addEventListener("change", () => { service.protect = PROTECTION[$("protect").value]; updateBudget(); });
+  $("f-splinter").addEventListener("change", updateBudget);
+  ["side-h", "side-x"].forEach((id) => {
+    $(id).addEventListener("input", () => { $(id + "-out").textContent = $(id).value + " mm"; });
+    $(id).addEventListener("change", () => { sideCam.height = +$("side-h").value; sideCam.along = +$("side-x").value; AREA_CAMS.splice(1, 2, ...sideCams()); buildStationRig(); sceneKey = ""; });
+  });
+  $("opt-station").addEventListener("change", () => { sceneKey = ""; });   // the traced world holds the station cameras
   $("vib").addEventListener("input", () => { $("vib-out").textContent = (+$("vib").value).toFixed(2) + " mm"; });
   const sectionText = (f) => (f > 1.001 ? "+" + Math.round((f - 1) * 100) + "% faster" : "same speed");
   $("section").addEventListener("input", () => { $("section-out").textContent = sectionText(+$("section").value); });
@@ -2877,7 +3144,8 @@ void main() {
   // Every control as a short code; "Load settings…" accepts the code or a link ending in #s=<code>.
   const SETTING_IDS = ["tilt", "side", "gap", "sensor", "fnum", "opt-fit", "opt-rect", "opt-light", "exp", "light", "aexp", "dirt", "belt", "section",
     "speed", "damage", "scatter", "opt-transport", "opt-unusual", "opt-station", "months", "f-bar", "f-lamp", "f-enc",
-    "louvre", "dust", "opt-glare", "driver", "lightcol", "daylight", "vib", "shutter", "f-uncal", "f-splinter", "f-fog"];
+    "louvre", "dust", "opt-glare", "driver", "lightcol", "daylight", "vib", "shutter", "f-uncal", "f-splinter", "f-fog",
+    "protect", "side-h", "side-x", "opt-indirect"];
   const SETTINGS_PREFIX = "pbs1.";
   let applyingSettings = false, restartWanted = false;
   function settingsCode() {
@@ -2995,12 +3263,12 @@ void main() {
   }
   // cm² of belt-plane image that a damage changes, best bottom camera, for the current setup (cached)
   function damageEvidence(type, label) {
-    const o = opts(), key = [type.id, label, gap, rigKey(cams), o.rect].join("|");
+    const o = opts(), key = [type.id, label, gap, rigKey(cams), o.rect, o.indirect].join("|");
     if (evCache.has(key)) return evCache.get(key);
     const dmg = type.damages.find((d) => d[0] === label);
     let cm2 = 0;
     if (dmg) {
-      const intact = analysisPallet(type), damaged = analysisPallet(type, dmg), ro = { fnum: 0, dirt: 0, rect: o.rect, lights: lightsFor(cams, "line") };
+      const intact = analysisPallet(type), damaged = analysisPallet(type, dmg), ro = { fnum: 0, dirt: 0, rect: o.rect, lights: lightsFor(cams, "line"), indirect: o.indirect };
       cams.forEach((c) => {
         const cam = bottomCam(c.spec, 256, Object.assign({}, o, { anyZero: specs.some((s) => s.tilt === 0) })), pit = cam.mmPerPx;
         cm2 = Math.max(cm2, diffCount(renderPass(intact, cam, ro, gap, pit), renderPass(damaged, cam, ro, gap, pit)) * cam.mmPerPx * pit / 100);
@@ -3010,10 +3278,16 @@ void main() {
     return cm2;
   }
   // 0..1 for the condition and the type: signal-to-noise, clipping, window dirt; a compressed image misjudges size
+  // Image quality 0..1 for finding damage (cond) and the type (type). Weights assumed: debris costs the columns it
+  // darkens; flicker bands and fog cost contrast; vibration costs detail at the scale of a pixel; an uncalibrated
+  // sensor streaks and an uncalibrated lens distorts the dimensions; an encoder error distorts them along travel.
+  const QUALITY = { dirt: 0.5, debris: 0.8, flicker: 0.8, fog: 0.75, uncalCond: 0.95, uncalType: 0.9, encoder: 4 };
   function imageQuality() {
-    const o = opts(), k = lineExposure(o).k * service.lightFactor() * (service.barOut ? 0.1 : 1), s = sensorAt(k);
-    const snr = Math.min(1, Math.max(0, (s.db - 14) / 20)), clip = k > 2 ? Math.max(0.2, 1 - (k - 2) / 4) : 1, q = snr * clip * (1 - 0.5 * o.dirt);
-    return { cond: q, type: q * Math.max(0, 1 - 4 * service.encErr) };
+    const o = opts(), k = lineSignalK(o), s = sensorAt(k);
+    const snr = Math.min(1, Math.max(0, (s.db - 14) / 20)), clip = k > 2 ? Math.max(0.2, 1 - (k - 2) / 4) : 1;
+    const flick = flickerSpread(DRIVERS[$("driver").value], lineExposure(o).t * 1e-6), shake = o.vib / cams[0].mmPerPx;
+    const Q = QUALITY, cond = snr * clip * (1 - Q.dirt * o.dirt) * (1 - Q.debris * debrisShare(o)) / (1 + Q.flicker * flick) * (o.fog ? Q.fog : 1) / (1 + shake * shake) * (o.uncal ? Q.uncalCond : 1);
+    return { cond: cond, type: cond * Math.max(0, 1 - Q.encoder * service.encErr) * (o.uncal ? Q.uncalType : 1) };
   }
   // The stand-in's decision for one pallet g: condition and type labels, and whether they match the ground truth.
   function decide(g) {
@@ -3106,7 +3380,10 @@ void main() {
   let batchBusy = false;
   function setupSummary() {
     const o = opts(), cam = presetKey === "dual" ? "dual ±25° at ±" + sideOffset + " mm" : (+presetKey > 0 ? "+" : "") + presetKey + "° centred";
-    const faults = [service.barOut && "LED bar out", service.lampOut && "lamp out", service.encErr && "encoder 8% short"].filter(Boolean);
+    const faults = [service.barOut && "LED bar out", service.lampOut && "lamp out", service.encErr && "encoder 8% short",
+      o.louvre && "louvre ±" + o.louvre + "°", $("protect").value !== "none" && $("protect").selectedOptions[0].textContent, o.splinter && "splinter on a window",
+      o.fog && "fogged windows", $("driver").value !== "dc" && $("driver").selectedOptions[0].textContent, o.vib > 0 && "vibration " + o.vib.toFixed(2) + " mm",
+      o.uncal && "uncalibrated", o.indirect && "indirect light"].filter(Boolean);
     return [cam, "gap " + gap + " mm", PX / 1024 + "k px", o.fnum ? "f/" + o.fnum : "pinhole", Math.round(o.expUs) + " µs", "LED " + o.light + "%",
       "dirt " + Math.round(o.dirt * 100) + "%", service.months + " mo", (beltSpeed / 1000).toFixed(2) + " m/s", sectionText(sectionFactor)].concat(faults).join(", ");
   }
@@ -3122,7 +3399,7 @@ void main() {
     const step = () => {
       const liveRs = rs; rs = batchRs;   // the batch has its own draws, so the live feed's sequence is untouched
       for (let i = 0; i < BATCH_CHUNK && drawn < total; i++, drawn++) {
-        const g = makePallet(weightedType(), rnd() < damageShare), touching = transport && prev && rnd() < 0.15, mergeProne = touching && rnd() < 0.5;
+        const g = makePallet(weightedType(), rnd() < damageShare), touching = transport && prev && rnd() < FEED.touching, mergeProne = touching && rnd() < FEED.mergeProne;
         if (mergeProne && (sectionFactor - 1) * prev.L < MERGE_GAP_MM) { stats.n++; prev = g; continue; }   // hidden behind the pallet ahead
         const res = decide(g);
         tally(stats, res, 1);
@@ -3165,6 +3442,97 @@ void main() {
       .then(() => { $("batch-status").textContent = "CSV copied (" + batchRuns.length + " runs)."; },
         () => { $("batch-status").textContent = "The clipboard is blocked here; select and copy the CSV below."; $("batch-status").insertAdjacentHTML("beforeend", '<textarea readonly style="width:100%;height:120px;font:0.72rem var(--font-data)">' + csv + "</textarea>"); });
   });
+  // ---------------- the assumptions list ----------------
+  // Every value the simulation assumes, read from the constants the code uses (and, for the tracer's own, from the
+  // shader source), so the list cannot disagree with the model. Basis: "assumed" (a guess, not measured), "typical"
+  // (a usual value for such equipment, not this one's), "physics", "given" (from the brief), "standard" (a pallet
+  // standard), "estimate" (derived from other assumptions).
+  const shaderText = () => $("fs-trace").textContent + $("fs-post").textContent;
+  function shaderFloat(name) {
+    const m = new RegExp("\\b" + name + " = (-?[\\d.]+(?:e-?\\d+)?)").exec(shaderText());
+    if (!m) throw new Error("the shader has no constant " + name + "; update the assumptions list");
+    return +m[1];
+  }
+  function shaderVec3(name) {
+    const m = new RegExp("\\b" + name + " = vec3\\(([^)]*)\\)").exec(shaderText());
+    if (!m) throw new Error("the shader has no vec3 constant " + name + "; update the assumptions list");
+    return m[1].split(",").map(Number);
+  }
+  const pct = (v, d) => (v * 100).toFixed(d || 0) + "%";
+  const range = (lo, hi, unit) => lo.toFixed(1) + "–" + hi.toFixed(1) + " " + unit;
+  const ASSUMPTIONS = [
+    ["Conveyor and feed", [
+      ["Peak rate", () => TARGET_PER_H + " pallets/h", "given", "belt speed needed, Timing & data"],
+      ["Space between pallets in the feed", () => SPACING + " mm", "assumed", "capacity, belt speed needed"],
+      ["Belt width; rollers", () => BELT_W + " mm; Ø" + 2 * ROLL_R + " mm at " + ROLL_PITCH + " mm pitch", "assumed", "gap geometry, light through the gap, sticking"],
+      ["Pallets arriving touching the one ahead", () => pct(FEED.touching) + ", of which " + pct(FEED.mergeProne) + " look like one object to the detector", "assumed", "merged boxes, hidden pallets"],
+      ["Faster middle section extent", () => "±" + SECTION_HALF / 1000 + " m around the scan line", "assumed", "how touching pallets separate"],
+      ["Slip as a pallet changes speed", () => "relaxes over " + SLIP_MM + " mm of travel", "assumed", "separation, tracking"],
+      ["Hesitations (roller friction)", () => "one per " + HESITATION_MM / 1000 + " m of travel on average", "assumed", "tracking error"]]],
+    ["Pallets crossing the gap", [
+      ["Edge droop scale over the gap", () => [40, 100, 350].map((g) => gapDroop(g).toFixed(2) + " at " + g + " mm").join(", "), "assumed", "sticking at the gap"],
+      ["Warp of the bottom edges", () => "wood " + range(warpOf("eur", 0), warpOf("eur", 1), "mm") + ", plastic " + range(warpOf("plastic3", 0), warpOf("plastic3", 1), "mm") + ", moulded " + range(warpOf("moulded", 0), warpOf("moulded", 1), "mm"), "assumed", "sticking at the gap"],
+      ["Droop the far roller still lifts over", () => CATCH_MM + " mm", "assumed", "how often pallets catch"],
+      ["Stall length", () => STALL.mmPerMm + " mm of travel per mm of droop over that, at " + STALL.refSpeed / 1000 + " m/s; longer when faster", "assumed", "sticking, image stretch, capacity"],
+      ["Nose bounce after landing", () => BOUNCE_HZ + " Hz, decaying over ~3 cycles", "assumed", "bottom image geometry"]]],
+    ["Bottom line-scan cameras", [
+      ["Working distance", () => WD + " mm", "assumed", "field of view, resolution"],
+      ["Pixel pitch", () => PIXEL_UM + " µm", "typical", "lens focal length, aperture, debris on the window"],
+      ["Sensor full well; read noise", () => SENSOR.fullWell + " e⁻; " + SENSOR.readNoise + " e⁻", "typical", "signal-to-noise"],
+      ["Reference exposure", () => "100 µs at f/4 with the LED bar at 100% fills mid-grey to half the full well", "assumed", "every brightness and noise result"],
+      ["LED bar", () => (-cams[0].lightPos[1]) + " mm below the belt, 1 m long, sampled as " + cams[0].lights.length + " points", "assumed", "light through the gap, glare, louvre"],
+      ["LED bar against the station lamps", () => BAR_VS_LAMPS + "× as bright (100 µs line exposure vs 1 ms area exposure, similar lenses)", "estimate", "glare in the station cameras, lamps in the bottom images"],
+      ["Window in front of the lens", () => WINDOW_MM + " mm", "assumed", "how debris on it shows"],
+      ["Louvre film leak beyond its cut-off", () => pct(shaderFloat("LOUVRE_LEAK"), 1), "typical", "glare with a louvre"]]],
+    ["Station and top cameras", [
+      ["Top camera", () => AREA_REAL.topMP + " MP, " + AREA_REAL.topPx + " px over " + AREA_REAL.topField / 1000 + " m, " + TOP_FPS + " fps", "assumed", "tracking, data rate"],
+      ["Station cameras", () => AREA_REAL.stationMP + " MP, " + AREA_REAL.stationMmPx + " mm/px", "assumed", "motion blur, data per pallet"],
+      ["Detector", () => DETECT_S * 1000 + " ms latency; misses " + pct(DETECTOR.miss) + " of frames; box edges ±" + pct(DETECTOR.jitter, 1) + "; needs " + pct(DETECTOR.minVisible) + " of a pallet in view", "assumed", "tracking, trigger accuracy"],
+      ["Pallet height assumed by the tracker", () => H_ASSUMED + " mm (real types 120–156 mm)", "assumed", "trigger accuracy"],
+      ["Rolling-shutter readout", () => ROLLING_S * 1000 + " ms", "typical", "skew with a rolling shutter"]]],
+    ["Lens and light effects", [
+      ["Lens veiling glare; ghost", () => pct(GLARE.veil) + " of the light spread over the frame; " + pct(GLARE.ghost, 1) + " in one ghost", "typical", "glare from the LED bar and lamps"],
+      ["Head-on reflectance", () => "zinc and steel " + pct(shaderFloat("METAL_F0")) + ", water, ice and plastic " + pct(shaderFloat("DIELECTRIC_F0")), "physics", "glints on rollers and wet wood"],
+      ["Light drivers", () => "PWM " + DRIVERS.pwm.f + " Hz at " + pct(DRIVERS.pwm.p) + " duty; cheap driver " + DRIVERS.ripple.f + " Hz ripple of ±" + pct(DRIVERS.ripple.p), "typical", "flicker bands"],
+      ["Light colours", () => Object.keys(KELVIN).join(", ") + " K as linear RGB of white LEDs", "typical", "colour casts with mixed lights"],
+      ["Lens distortion when uncalibrated", () => "barrel, " + LENS_DISTORTION + " (about 1% at 35° off axis)", "typical", "dimensions when uncalibrated"],
+      ["Sensor flaws when uncalibrated", () => "pixel gain ±" + pct(shaderFloat("PRNU_SPAN") / 2) + ", dark offset up to " + shaderFloat("DARK_E") + " e⁻", "typical", "streaks in the bottom images"]]],
+    ["Air, daylight, vibration", [
+      ["Dust in the air", () => "scatters " + DUST_SIGMA * 1e6 + " per m per mg/m³ (~0.5 m²/g, coarse wood dust), mostly forward (g = " + shaderFloat("DUST_G") + ")", "assumed", "haze, glow above the gap"],
+      ["Daylight in the hall", () => "overcast adds " + DAYLIGHT.overcast + "× the lamp-lit hall; sun with clouds " + DAYLIGHT.cloudLow + "–" + DAYLIGHT.cloudHigh + "×", "assumed", "station and top images"],
+      ["Vibration of the bottom camera stands", () => shaderVec3("VIB_HZ").join(", ") + " Hz", "assumed", "wavy edges in the bottom images"],
+      ["Fogged window", () => "lets through " + pct(shaderFloat("FOG_KEEP")) + ", scatters " + pct(shaderFloat("FOG_SCATTER")) + " of it along the line", "assumed", "contrast in the bottom images"]]],
+    ["Wear and service", [
+      ["LED output loss", () => pct(WEAR.ledLoss) + " per month", "typical", "signal over time"],
+      ["Dirt on the bottom windows", () => pct(WEAR.windowDirt) + " per month", "assumed", "signal and contrast over time"],
+      ["Dust on the LED bar", () => pct(WEAR.barDust) + " less light per month, uneven along the bar", "assumed", "signal over time"],
+      ["Grit on each bottom window", () => WEAR.specks + " specks per month (up to 10)", "assumed", "dark bands in the bottom images"],
+      ["Protection: share of grit and dirt that stays", () => "slanted covers " + pct(PROTECTION.slanted) + ", air knife " + pct(PROTECTION.airknife) + " (and no splinter)", "assumed", "service interval"],
+      ["Air knife consumption", () => "roughly 40 m³/h of compressed air", "typical", "running cost"]]],
+    ["Damage catalogue", [
+      ["What makes a pallet need repair or count as unusual", () => "EPAL quality classification for the open exchange pool (contamination, rot, inadmissible components, skewed blocks over 1 cm, visible nail shanks, illegible marks; adhesions removed first)", "standard", "which damages exist and their severity"],
+      ["Loose board turned flat", () => LOOSE_TURN_DEG[0] + "–" + LOOSE_TURN_DEG[1] + "° about the last block's nails, free end outward", "assumed", "how far it sticks out"],
+      ["How often each damage occurs", () => "every damage of a type equally likely on a damaged pallet", "assumed", "Batch results, live labels"],
+      ["Contamination and defect patch sizes", () => Object.entries(SOIL_R).map(([k, [a, b]]) => k + " " + a + "–" + b + " mm").join(", ") + " (radius)", "assumed", "how visible they are"]]],
+    ["Stand-in classifier (not a real model)", [
+      ["Damage found", () => "half the time at " + CLS.findCm2 + " cm² of changed image, borderline damage at " + CLS.borderCm2 + " cm²", "assumed", "every Batch and live label"],
+      ["Undecided", () => "when the draw is within " + CLS.closeCall + " of the decision", "assumed", "share labelled"],
+      ["False alarms on intact pallets", () => pct(CLS.falseAlarm), "assumed", "false alarm rate"],
+      ["Image quality weights", () => "dirt " + QUALITY.dirt + ", debris " + QUALITY.debris + ", flicker " + QUALITY.flicker + ", fog ×" + QUALITY.fog + ", uncalibrated ×" + QUALITY.uncalCond + " (type ×" + QUALITY.uncalType + "), encoder error ×" + QUALITY.encoder, "assumed", "how conditions change the labels"],
+      ["Changed-pixel threshold", () => DIFF_LEVEL + " of 765 summed RGB", "assumed", "damage evidence, Compare"],
+      ["Targets", () => "at least " + CLS.labelTarget + "% labelled, at most " + CLS.wrongLimit + "% wrong", "given", "ok / short marks"]]]
+  ];
+  function renderAssumptions() {
+    let n = 0, assumed = 0;
+    const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+    $("assume-table").querySelector("tbody").innerHTML = ASSUMPTIONS.map(([group, rows]) =>
+      '<tr><th colspan="4" style="text-align:left">' + esc(group) + "</th></tr>" + rows.map(([what, value, basis, affects]) => {
+        n++; if (basis === "assumed") assumed++;
+        return "<tr><td>" + esc(what) + '</td><td style="white-space:normal">' + esc(value()) + "</td><td>" + basis + '</td><td class="cap-dim" style="white-space:normal">' + esc(affects) + "</td></tr>";
+      }).join("")).join("");
+    $("assume-intro").textContent = n + " values the simulation rests on; " + assumed + " are plain assumptions, not measured. Basis: assumed (a guess), typical (a usual value for such equipment, not this one's), estimate (derived from others), physics, given (from the brief). Measuring the ones a sensitivity sweep shows to matter most is the next step.";
+  }
+  $("tab-assume").addEventListener("click", renderAssumptions);
   // ---------------- main loop ----------------
   let fpsDrawn = 0;
   const nowEl = $("now"); let lastT = performance.now(), fpsN = 0, fpsT = lastT, lastNow = "", lineWin = [], fps = 0;

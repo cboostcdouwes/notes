@@ -2,6 +2,9 @@
   // The detector is simulated: boxes come from the true geometry projected into the top image, with edge jitter,
   // misses, and touching pallets merged into one box. Everything downstream (positions, triggers) uses only the boxes.
   const TOP_FPS = 10, DETECT_S = 0.08;   // top camera frame rate; detector inference latency, s
+  // The simulated detector: share of pallets missed per frame, box edge jitter (share of the box size), and the
+  // smallest visible share of a pallet it still boxes.
+  const DETECTOR = { miss: 0.02, jitter: 0.008, minVisible: 0.15 };
   const FRAME_MM = () => scanSpeed() / TOP_FPS, LAT_MM = () => scanSpeed() * DETECT_S;   // the same, in belt travel
   const H_ASSUMED = 140;    // pallet height the box-to-belt conversion assumes; real types are 120-156 mm
   const TRACK_START = -400; // new tracks start only for pallets entering upstream
@@ -38,9 +41,9 @@
       a.box = [Math.min(a.box[0], b.box[0]), Math.min(a.box[1], b.box[1]), Math.max(a.box[2], b.box[2]), Math.max(a.box[3], b.box[3])];
       a.gt = a.gt.concat(b.gt); a.merged = true; a.frac = Math.min(a.frac, b.frac); seen.splice(i + 1, 1);
     }
-    return seen.filter((d) => d.frac > 0.15 && drnd() > 0.02).map((d) => {
-      const w = d.box[2] - d.box[0], h = d.box[3] - d.box[1];
-      const box = [d.box[0] + gauss() * 0.008 * w, d.box[1] + gauss() * 0.008 * h, d.box[2] + gauss() * 0.008 * w, d.box[3] + gauss() * 0.008 * h];
+    return seen.filter((d) => d.frac > DETECTOR.minVisible && drnd() > DETECTOR.miss).map((d) => {
+      const w = d.box[2] - d.box[0], h = d.box[3] - d.box[1], j = DETECTOR.jitter;
+      const box = [d.box[0] + gauss() * j * w, d.box[1] + gauss() * j * h, d.box[2] + gauss() * j * w, d.box[3] + gauss() * j * h];
       return { box: box, gt: d.gt, merged: d.merged, clipL: d.box[0] <= 1, clipR: d.box[2] >= cam.w - 1,
         conf: Math.min(0.99, (0.9 + 0.08 * d.frac - 0.04 * drnd()) * (d.merged ? 0.85 : 1)) };
     });

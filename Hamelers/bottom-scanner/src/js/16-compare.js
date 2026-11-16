@@ -13,8 +13,9 @@
     const rows = Math.ceil((2 * p.reach + 400) / pit), cv = document.createElement("canvas"); cv.width = cam.PX; cv.height = rows;
     const ctx = cv.getContext("2d");
     uploadScene([p], g);
-    for (let r = 0; r < rows; r += MAXROWS) {
-      const n = Math.min(MAXROWS, rows - r);
+    const step = o.indirect ? MAXROWS / 8 : MAXROWS;   // indirect light is slow: smaller draws keep the GPU responsive
+    for (let r = 0; r < rows; r += step) {
+      const n = Math.min(step, rows - r);
       traceLines(cam, -p.reach - 200 + r * pit, pit, n, Object.assign({ noise: 0, seed: 7, rowBase: r }, o));
       ctx.drawImage(glc, 0, 0, cam.PX, n, 0, r, cam.PX, n);
     }
@@ -35,7 +36,7 @@
         const fig = document.createElement("figure"), cap = document.createElement("figcaption"), pair = document.createElement("div");
         cap.className = "cap"; pair.className = "pair"; let changed = 0;
         cs.forEach((cam) => {
-          const ro = Object.assign({ fnum: o.fnum, dirt: o.dirt, rect: o.rect, lights: lightsFor(cs, "line") }, lineExposure(o));
+          const ro = Object.assign({ fnum: o.fnum, dirt: o.dirt, rect: o.rect, lights: lightsFor(cs, "line"), indirect: o.indirect }, lineExposure(o));
           const a = renderPass(intact, cam, ro, g), b = renderPass(damaged, cam, ro, g);
           const A = a.getContext("2d").getImageData(0, 0, a.width, a.height).data, bctx = b.getContext("2d"), B = bctx.getImageData(0, 0, b.width, b.height).data;
           const D = bctx.createImageData(b.width, b.height);

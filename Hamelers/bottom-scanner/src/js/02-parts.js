@@ -14,7 +14,8 @@
   function part(name, lo, hi, mat, axis, extra) {
     const rnd = partRng(name, lo), pick = (a) => a[Math.floor(rnd() * a.length)];
     const p = Object.assign({ name: name, lo: lo, hi: hi, mat: mat, axis: axis, seed: Math.floor(rnd() * 9000) + 1, crack: 1e9, flags: 0, wet: 0, mud: 0,
-      knots: [1e9, 1e9, 1e9, 1e9], stain: [0, 0, 0], silver: 0, nails: null, nailPat: null, mark: [0, 0, 0, 0], sub: null, planes: [], taper: null }, extra || {});
+      knots: [1e9, 1e9, 1e9, 1e9], stain: [0, 0, 0], silver: 0, nails: null, nailPat: null, mark: [0, 0, 0, 0], sub: null, planes: [], taper: null,
+      soil: null, flexible: false }, extra || {});
     if (!p.col) {
       if (mat === "spruce" || mat === "paint") p.col = srgb2lin(pick(WOOD));
       else if (mat === "oak") p.col = srgb2lin(pick(["#9a7550", "#8c6a48", "#a07b55"]));

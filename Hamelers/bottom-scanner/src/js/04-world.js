@@ -41,10 +41,29 @@
     return out;
   }
   const worlds = new Map();
-  const rigKey = (camList) => camList.map((c) => c.C.map(Math.round).join(",") + "/" + c.lightPos.join(",")).join(";");
+  // Station camera bodies and their mounts (assumed): side, end and fork cameras on posts from the floor, the top
+  // camera hanging from a frame across the station posts' tops. A camera's own rays start inside its body, so it never
+  // sees itself; it does see the others (the side cameras face each other across the belt).
+  function stationCamParts() {
+    const out = [], station = $("opt-station").checked, steel = { col: [0.3, 0.31, 0.33] };
+    AREA_CAMS.forEach((c, ci) => {
+      if (ci > 0 && !station) return;
+      const [x, y, z] = c.C;
+      out.push(part("station camera", [x - 45, y - 45, z - 45], [x + 45, y + 45, z + 45], "steel", 1, { col: [0.06, 0.07, 0.08] }));
+      if (ci > 0) out.push(part("camera post", [x - 15, -600, z - 15], [x + 15, y - 45, z + 15], "steel", 1, steel));
+    });
+    const [tx, ty, tz] = AREA_CAMS[0].C;
+    out.push(part("top camera rod", [tx - 12, ty + 45, tz - 12], [tx + 12, 2170, tz + 12], "steel", 1, steel));
+    out.push(part("top frame", [-1230, 2170, tz - 20], [1230, 2200, tz + 20], "steel", 0, steel));
+    [-1200, 1200].forEach((px) => out.push(part("top frame", [px - 30, 2170, -980], [px + 30, 2200, 980], "steel", 2, steel)));
+    out.forEach((p) => { p.stain = [0, 0, 0]; p.knots = [1e9, 1e9, 1e9, 1e9]; });
+    return out;
+  }
+  const rigKey = (camList) => camList.map((c) => c.C.map(Math.round).join(",") + "/" + c.lightPos.join(",")).join(";") +
+    "|" + $("opt-station").checked + ":" + AREA_CAMS.map((c) => c.C.join(",")).join(";");
   function worldFor(g, camList) {
     const key = g + "|" + rigKey(camList);
-    if (!worlds.has(key)) { const w = worldParts(g); worlds.set(key, { parts: w.parts.concat(rigParts(camList)), bb: w.bb }); }
+    if (!worlds.has(key)) { const w = worldParts(g); worlds.set(key, { parts: w.parts.concat(rigParts(camList), stationCamParts()), bb: w.bb }); }
     return worlds.get(key);
   }
 

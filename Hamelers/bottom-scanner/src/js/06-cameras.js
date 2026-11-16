@@ -25,39 +25,6 @@
   const norm3 = (a) => { const l = Math.hypot(a[0], a[1], a[2]); return [a[0] / l, a[1] / l, a[2] / l]; };
   // Station area cameras (pinhole + thin lens), triggered by pallet position.
   const STATION_LIGHTS = STATION_LAMPS.map((l) => [l[0], l[1], l[2], 0.75 * 2.42 / 10 * 1300 * 1300]);
-  // Optics and air (assumed). The LED bar fills a line exposure of 100 µs as the lamps fill an area exposure of 1 ms
-  // (see SENSOR), so with similar lenses and pixels the bar is BAR_VS_LAMPS times as bright as the lamps.
-  const BAR_VS_LAMPS = 10;
-  const GLARE = { veil: 0.03, ghost: 0.002 };   // share of the light the lens spreads over the frame; one ghost reflection
-  const DUST_SIGMA = 5e-7;   // scattering per mm for 1 mg/m³ of coarse wood dust (~0.5 m²/g)
-  const BAR_DUST_SPREAD = [1.3, 0.5, 0.9, 1.3];   // dust on the bar along its length, relative to the mean
-  // Linear RGB of white LEDs by colour temperature, at luminance 1; 6500 K is the cameras' default white.
-  const KELVIN = { 6500: [1, 1, 1], 5000: [1.231, 0.955, 0.76], 4000: [1.439, 0.917, 0.527], 3000: [1.82, 0.83, 0.27] };
-  const LIGHT_COLOURS = { matched: [6500, 6500], mixed: [6500, 4000], warm: [5000, 3000] };   // [LED bar, station lamps]
-  // Light drivers (assumed): mode 0 steady, 1 PWM on/off (p: duty), 2 ripple on the rectified mains (p: depth).
-  const DRIVERS = { dc: { mode: 0, f: 0, p: 0 }, pwm: { mode: 1, f: 1000, p: 0.5 }, ripple: { mode: 2, f: 100, p: 0.3 } };
-  // Light output averaged over an exposure of T s from t s, relative to the mean (as flicker() in the post shader).
-  function flickerAvg(dr, t, T) {
-    if (!dr.mode) return 1;
-    const a = t * dr.f, b = (t + T) * dr.f;
-    if (dr.mode === 1) { const G = (x) => Math.floor(x) * dr.p + Math.min(x - Math.floor(x), dr.p); return (G(b) - G(a)) / (dr.p * (b - a)); }
-    return 1 + dr.p * (Math.sin(2 * Math.PI * b) - Math.sin(2 * Math.PI * a)) / (2 * Math.PI * (b - a));
-  }
-  // largest difference in brightness between exposures of T s taken at any moment
-  function flickerSpread(dr, T) {
-    if (!dr.mode) return 0;
-    let lo = Infinity, hi = 0;
-    for (let i = 0; i < 200; i++) { const v = flickerAvg(dr, i / 200 / dr.f, T); lo = Math.min(lo, v); hi = Math.max(hi, v); }
-    return hi - lo;
-  }
-  // Daylight in the hall (assumed), as a share d of the hall's lamp-lit brightness added: overcast a steady 1.5,
-  // sun with passing clouds between 1 and 5 over tens of seconds. It brightens the hall seen through gaps and the fill.
-  function daylight(t) {
-    const kind = $("daylight").value;
-    if (kind === "overcast") return 1.5;
-    if (kind === "clouds") return 1 + 4 * Math.min(1, Math.max(0, 0.5 + 0.8 * Math.sin(t / 9) * Math.sin(t / 23 + 1)));
-    return 0;
-  }
   // Every view is lit by everything that is on: the bottom cameras' LED bars (one, or one per camera) and the
   // station lamps above, which also reach the bottom view through gaps in the pallet. Units: the area cameras' 1 ms
   // reference exposure. A line camera's exposure k already holds its shorter time and the bar's power, so its view
@@ -74,30 +41,24 @@
       driver: DRIVERS[$("driver").value], day: daylight(lastLine / scanSpeed()),
       louvreTan: o.louvre ? Math.tan(o.louvre * Math.PI / 180) : 0, dust: o.dust * DUST_SIGMA };
   }
-  // Share of the bar's light that the louvre passes to the scan line at the belt centre, for the budget. The same
-  // per-point weighting as barWeight in the tracer.
-  function louvrePass(deg) {
-    if (!deg) return 1;
-    const c = cams[0], w = -c.lightPos[1] * Math.tan(deg * Math.PI / 180), h = BAR_SEGMENT_HALF;
-    const triCum = (x) => { x = Math.max(-w, Math.min(w, x)); return x < 0 ? (x + w) * (x + w) / (2 * w) : w - (w - x) * (w - x) / (2 * w); };
-    let bare = 0, cut = 0;
-    c.lights.forEach((l) => {
-      const dy = -l[1], d2 = dy * dy + l[2] * l[2], cosT = dy / Math.sqrt(d2);
-      bare += cosT / d2; cut += cosT * (triCum(l[2] + h) - triCum(l[2] - h)) / (2 * h) / d2;
-    });
-    return cut / bare;
-  }
   function areaCam(name, C, target, fovDeg, w, h, trigger, tip, aperture, upHint) {
     const F = norm3(sub3(target, C)); const upH = upHint || (Math.abs(F[1]) > 0.95 ? [1, 0, 0] : [0, 1, 0]);
     const R = norm3(cross3(F, upH)), U = cross3(R, F);
     return { kind: "area", name: name, C: C, F: F, R: R, U: U, fx: (w / 2) / Math.tan(fovDeg * Math.PI / 360), w: w, h: h, trigger: trigger, tip: tip,
       focus: Math.hypot(...sub3(target, C)), aperture: aperture || 1.5 };
   }
+  // The side cameras, sideCam.height mm up and sideCam.along mm downstream of the scan line; each fires when the pallet
+  // centre passes its own position. At the scan line and well above the belt they look down the gap at the LED bar.
+  const sideCam = { height: 260, along: 0 };
+  function sideCams() {
+    const a = sideCam.along, h = sideCam.height, trig = (p, cx) => cx - a;
+    return [areaCam("Left side", [a, h, -1250], [a, 70, 0], 58, 480, 240, trig, "Left side camera: block faces, burnt EPAL marks, labels, missing outer blocks."),
+      areaCam("Right side", [a, h, 1250], [a, 70, 0], 58, 480, 240, trig, "Right side camera: the other long side.")];
+  }
   // trigger(p, cx) is a signed distance to the trigger point; the snapshot fires when it crosses zero
   const AREA_CAMS = [
     areaCam("Top", [0, 1700, 0], [0, 0, 0], 76, 640, 340, (p, cx) => cx, "Top camera, 1.7 m above the belt, seeing 2.6 m of travel: runs live for the pallet detector that triggers every other camera, and takes the deck snapshot.", 1.5, [0, 0, -1]),
-    areaCam("Left side", [0, 260, -1250], [0, 70, 0], 58, 480, 240, (p, cx) => cx, "Left side camera: block faces, burnt EPAL marks, labels, missing outer blocks."),
-    areaCam("Right side", [0, 260, 1250], [0, 70, 0], 58, 480, 240, (p, cx) => cx, "Right side camera: the other long side."),
+    ...sideCams(),
     areaCam("Front end", [1650, 300, 0], [0, 70, 0], 44, 400, 240, (p, cx) => cx + p.reach - 380, "Downstream end camera: the leading face, cross boards and fork openings."),
     areaCam("Rear end", [-1650, 300, 0], [0, 70, 0], 44, 400, 240, (p, cx) => cx - p.reach + 380, "Upstream end camera: the trailing face as the pallet leaves."),
     areaCam("Fork opening, oblique", [-780, 75, -900], [-60, 60, 0], 26, 320, 240, (p, cx) => cx, "Angled camera into the left fork opening, aimed at the hidden centre block.")

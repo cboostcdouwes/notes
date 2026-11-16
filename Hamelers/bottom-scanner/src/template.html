@@ -64,6 +64,7 @@
       <label class="field" for="f-enc"><input type="checkbox" id="f-enc"> Encoder reads 8% short</label>
       <label class="field" for="f-splinter"><input type="checkbox" id="f-splinter"> Splinter on the first bottom camera's window</label>
       <label class="field" for="f-fog"><input type="checkbox" id="f-fog"> Fogged bottom windows</label>
+      <label class="field" for="protect">Window and bar protection <select id="protect"><option value="none" selected>none</option><option value="slanted">slanted covers</option><option value="airknife">air knife</option></select></label>
     </span>
     <span class="grp" aria-label="Conditions">
       <label class="field" for="driver">Light drivers <select id="driver"><option value="dc" selected>DC, flicker-free</option><option value="pwm">PWM 1 kHz (dimmed)</option><option value="ripple">100 Hz ripple (cheap driver)</option></select></label>
@@ -72,6 +73,9 @@
       <label class="field" for="vib">Vibration <input id="vib" type="range" min="0" max="1" step="0.05" value="0.1"><output id="vib-out">0.10 mm</output></label>
       <label class="field" for="shutter">Area shutter <select id="shutter"><option value="global" selected>global</option><option value="rolling">rolling, 20 ms readout</option></select></label>
       <label class="field" for="f-uncal"><input type="checkbox" id="f-uncal"> Uncalibrated lenses and sensors</label>
+      <label class="field" for="side-h">Side cameras: height <input id="side-h" type="range" min="30" max="400" step="10" value="260"><output id="side-h-out">260 mm</output></label>
+      <label class="field" for="side-x">along travel <input id="side-x" type="range" min="0" max="500" step="25" value="0"><output id="side-x-out">0 mm</output></label>
+      <label class="field" for="opt-indirect"><input type="checkbox" id="opt-indirect"> Indirect light in Compare and Batch (slower)</label>
     </span>
   </div>
   <div class="types" id="types" aria-label="Pallet types in the feed"></div>
@@ -101,6 +105,7 @@
         <button type="button" role="tab" id="tab-photo" aria-selected="false" data-tab="photo">Photo render</button>
         <button type="button" role="tab" id="tab-budget" aria-selected="false" data-tab="budget">Timing &amp; data</button>
         <button type="button" role="tab" id="tab-batch" aria-selected="false" data-tab="batch">Batch</button>
+        <button type="button" role="tab" id="tab-assume" aria-selected="false" data-tab="assume">Assumptions</button>
       </div>
 
       <div id="pane-live" role="tabpanel" aria-labelledby="tab-live" style="display:grid;gap:10px">
@@ -166,6 +171,11 @@
         <div class="tablewrap"><table id="batch-table"><thead><tr><th>#</th><th>Setup</th><th>Pallets</th><th>Type labelled</th><th>Type wrong</th><th>Condition labelled</th><th>Condition wrong</th><th>Discards found</th><th>Repairs found</th><th>False alarms</th></tr></thead><tbody><tr><td colspan="10" class="cap-dim">No runs yet.</td></tr></tbody></table></div>
       </div>
 
+      <div id="pane-assume" role="tabpanel" aria-labelledby="tab-assume" hidden style="gap:10px">
+        <p class="cap-dim" id="assume-intro" style="margin:0;font-size:0.8rem"></p>
+        <div class="tablewrap"><table id="assume-table"><thead><tr><th>Assumption</th><th>Value</th><th>Basis</th><th>Affects</th></tr></thead><tbody></tbody></table></div>
+      </div>
+
       <div id="pane-budget" role="tabpanel" aria-labelledby="tab-budget" hidden style="gap:10px">
         <p class="cap-dim" style="margin:0;font-size:0.8rem">Sizing for 1000 pallets/h at the conveyor speed set above, from the current settings, so for the selected sensor. Assumed: 400 mm between pallets; RGB line-scan 3 bytes/px; area cameras raw Bayer 1 byte/px (top 2.3 MP, 1920 px over 2.6 m; station 5 MP, ~0.6 mm/px); sensor full well 10,000 e⁻, read noise 12 e⁻; one link per camera with 25% headroom.</p>
         <div class="tablewrap"><table id="budget"><thead><tr><th>Item</th><th>Value</th><th>Check</th></tr></thead><tbody></tbody></table></div>
@@ -222,7 +232,7 @@
 <dialog id="zoom" aria-label="Full-resolution images">
   <div class="row" style="justify-content:space-between"><strong id="zoom-title">Pallet</strong><button type="button" class="btn" id="zoom-close">Close</button></div>
   <div class="cap" id="zoom-cap" style="margin:6px 0"></div>
-  <div class="row" style="margin-bottom:6px"><label class="field" for="zoom-scale">Zoom <select id="zoom-scale"><option value="0.25">25%</option><option value="0.5" selected>50%</option><option value="1">100%</option><option value="2">200%</option></select></label></div>
+  <div class="row" style="margin-bottom:6px"><label class="field" for="zoom-scale">Zoom <select id="zoom-scale"><option value="0.25">25%</option><option value="0.5" selected>50%</option><option value="1">100%</option><option value="2">200%</option></select></label><button type="button" class="btn" id="zoom-save">Save PNG</button></div>
   <div class="zoomwrap"><div id="zoom-imgs" style="display:flex;gap:8px;align-items:flex-start;padding:8px"></div></div>
 </dialog>
 

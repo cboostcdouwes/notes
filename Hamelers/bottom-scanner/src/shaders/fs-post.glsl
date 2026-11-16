@@ -63,11 +63,13 @@ float windowT(float f) {
 }
 // A fogged window scatters light along the line: a wide average of it, weighted exp(-distance / FOG_PX).
 const float FOG_PX = 60.0;
+const float FOG_KEEP = 0.85, FOG_SCATTER = 0.5;   // fogged window (assumed): light let through, share of it scattered
 vec3 fogScatter(float f, int row) {
   vec3 s = vec3(0.0); float mx = float(uPX - 1), wsum = 0.0;
   for (int i = -24; i <= 24; i++) { float o = float(i) * 6.0, w = exp(-abs(o) / FOG_PX); s += w * fetchRow(clamp(f + o, 0.0, mx), row); wsum += w; }
   return s / wsum;
 }
+const float PRNU_SPAN = 0.04, DARK_E = 30.0;   // uncalibrated sensor (assumed): pixel gain spread, dark offset up to, e-
 vec3 enc(vec3 c) { c = clamp(c, 0.0, 1.0); return mix(12.92 * c, 1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, c)); }
 void main() {
   int ix = int(gl_FragCoord.x), fy = int(gl_FragCoord.y) + uOutRow, row = uH - 1 - fy;
@@ -81,7 +83,7 @@ void main() {
     }
     c = fetchRow(f, row);
     c.r = 0.6 * c.r + 0.4 * fetchRow(f, row > 0 ? row - 1 : row).r;   // trilinear sensor: R line slightly behind
-    if (uFog > 0.0) c = 0.85 * mix(c, fogScatter(f, row), 0.5);   // fog: some light lost, half of it scattered (assumed)
+    if (uFog > 0.0) c = FOG_KEEP * mix(c, fogScatter(f, row), FOG_SCATTER);
     c *= windowT(f);
   } else if (uVeil > 0.0) {
     ivec2 tp = ivec2(ix, fy - uHdrOff);
@@ -96,7 +98,7 @@ void main() {
   vec3 e = min(max(c, vec3(0.0)) * uK, vec3(1.0)) * uFullWell, g;
   if (uFpn > 0.0) {   // each pixel's gain differs ±2% and it adds a dark offset; a line sensor repeats its pixels every line, so streaks
     float px = uMode == 0 ? floor(f) : float(ix) + float(row) * 4099.0;
-    e = min(e * (1.0 + 0.04 * (h11(px * 0.731 + uCamSeed) - 0.5)) + 30.0 * h11(px * 1.37 + uCamSeed + 5.0), vec3(uFullWell));
+    e = min(e * (1.0 + PRNU_SPAN * (h11(px * 0.731 + uCamSeed) - 0.5)) + DARK_E * h11(px * 1.37 + uCamSeed + 5.0), vec3(uFullWell));
   }
   for (int j = 0; j < 3; j++) {
     float fj = float(j) * 17.0;

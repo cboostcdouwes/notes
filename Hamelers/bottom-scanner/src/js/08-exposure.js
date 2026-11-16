@@ -7,6 +7,9 @@
     return { t: t, tMax: tMax, k: t / 100 * (o.light / 100) * Math.pow(4 / (o.fnum || 4), 2), blur: scanSpeed() * t * 1e-6 };
   }
   const areaExposure = (o) => ({ t: o.aexpMs, k: o.aexpMs, blur: scanSpeed() * o.aexpMs / 1000 });
+  // The line cameras' signal relative to the reference: the exposure, with everything that dims the bar's light on
+  // the scan line (louvre, LED ageing, dust on the bar, a failed bar leaving only stray light from the lamps).
+  const lineSignalK = (o) => lineExposure(o).k * louvrePass(o.louvre) * service.lightFactor() * (1 - service.barDust()) * (service.barOut ? 0.1 : 1);
   const significantBlur = (mm, mmPerPx) => ((mm || 0) >= 0.25 * mmPerPx ? mm : 0);   // below a quarter pixel: not worth the samples
   function sensorUniforms(P, o) { gl.uniform1f(P.uK, o.k || 1); gl.uniform1f(P.uFullWell, SENSOR.fullWell); gl.uniform1f(P.uReadNoise, SENSOR.readNoise); }
 
@@ -16,27 +19,13 @@
     if (!o.still) return;
     gl.enable(gl.BLEND); gl.blendFunc(gl.CONSTANT_ALPHA, gl.ONE_MINUS_CONSTANT_ALPHA); gl.blendColor(0, 0, 0, 1 / (o.pass + 1));
   }
-  // Lens and sensor flaws that calibration removes, and how the cameras meet the conditions (all assumed):
-  const LENS_DISTORTION = 0.03;   // barrel distortion, ~1% at 35° off axis
-  const ROLLING_S = 0.02;         // rolling-shutter readout, first row to last
-  const WINDOW_MM = 25, PINHOLE_MM = 0.3;   // window in front of the bottom cameras' lens; aperture for the pinhole lens
+  const INDIRECT_SAMPLES = 4;   // bounce samples per pixel when the analysis views trace indirect light
   // Post-pass uniforms for the light (white balance, flicker) and the sensor: t0 and tRow time row 0 and each next row,
   // T the exposure (s); seed tells the cameras' pixel patterns apart.
   function conditionUniforms(P, L, t0, tRow, T, fpn, seed) {
     gl.uniform3fv(P.uWB, L.wb); gl.uniform3f(P.uFlick, L.driver.mode, L.driver.f, L.driver.p);
     gl.uniform1f(P.uT0, t0); gl.uniform1f(P.uTRow, tRow); gl.uniform1f(P.uExpS, T);
     gl.uniform1f(P.uFpn, fpn ? 1 : 0); gl.uniform1f(P.uCamSeed, seed % 997);
-  }
-  // Debris on a bottom camera's window (assumed): grit settles over the months since service, and a splinter
-  // can lie on the first camera's window. Each: position along the sensor line and across it, radius (mm), opacity.
-  function debrisFor(cam) {
-    const data = new Float32Array(64);   // up to 16: a splinter is 5, specks at most 10
-    let n = 0, seed = (Math.round(cam.spec.tilt * 31 + cam.spec.z) >>> 0) + 7;
-    const r = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
-    const add = (u, v, rad, op) => data.set([u, v, rad, op], 4 * n++);
-    if (opts().splinter && cam.spec.z <= 0) for (let k = 0; k < 5; k++) add(-6 + k * 1.6, -0.8 + k * 0.4, 0.9, 0.95);
-    for (let k = service.specks(); k > 0; k--) add((r() - 0.5) * 30, (r() - 0.5) * 4, 0.15 + 0.35 * r(), 0.6 + 0.4 * r());
-    return { data: data, n: n };
   }
   function traceLines(cam, s0, pitch, rows, o) {
     const U = progT.loc; gl.useProgram(progT.p);
@@ -48,12 +37,14 @@
     gl.uniform1f(U.uPhi0, cam.phi0); gl.uniform1f(U.uDphi, cam.dphi); gl.uniform1f(U.uAxisPhi, cam.axisPhi);
     gl.uniform1f(U.uS0, s0); gl.uniform1f(U.uPitch, pitch); gl.uniform2f(U.uSize, cam.PX, rows);
     const L = o.lights || lightsFor(cams, "line"), c = opts();
-    setLights(U, L, o.still ? 0.008 : 0.035);
+    setLights(U, L, o.still || o.indirect ? 0.008 : 0.035);   // indirect light replaces the constant fill
     gl.uniform1f(U.uVib, o.id ? 0 : c.vib); gl.uniform1f(U.uSpeed, scanSpeed()); gl.uniform1f(U.uDistort, c.uncal ? LENS_DISTORTION : 0); gl.uniform1f(U.uRollMM, 0);
     const fnum = o.id ? 0 : o.fnum;
     gl.uniform3fv(U.uAxis, cam.axis); gl.uniform1f(U.uFocus, cam.focus); gl.uniform1f(U.uAperture, fnum > 0 ? cam.focal / fnum : 0); gl.uniform1i(U.uDof, fnum > 0 ? LENS_SAMPLES : 0);
     gl.uniform1f(U.uPixAng, cam.dphi); gl.uniform1f(U.uBlur, significantBlur(o.blur, pitch));
     beginStill(U, o);
+    gl.uniform1i(U.uIndirect, o.indirect && !o.still && !o.id ? INDIRECT_SAMPLES : 0);
+    if (o.indirect && !o.still) gl.uniform3fv(U.uSky, HALL_SKY.map((v) => v * L.hall * (1 + L.day)));
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.disable(gl.BLEND);
     if (o.id || o.noPost) return;
@@ -88,6 +79,7 @@
     gl.uniform3fv(U.uAxis, cam.F); gl.uniform1f(U.uFocus, cam.focus); gl.uniform1f(U.uAperture, dof ? cam.aperture : 0); gl.uniform1i(U.uDof, dof ? LENS_SAMPLES : 0);
     gl.uniform1f(U.uPixAng, 1 / cam.fx); gl.uniform1f(U.uBlur, significantBlur(o.blur, cam.focus / cam.fx));
     beginStill(U, o);
+    gl.uniform1i(U.uIndirect, 0);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.disable(gl.BLEND);
     gl.disable(gl.SCISSOR_TEST);

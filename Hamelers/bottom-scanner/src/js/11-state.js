@@ -12,7 +12,7 @@
     fnum: +$("fnum").value, dirt: Math.min(1, +$("dirt").value + service.extraDirt()), transport: $("opt-transport").checked, station: $("opt-station").checked,
     expUs: Math.pow(10, +$("exp").value), light: +$("light").value, aexpMs: Math.pow(10, +$("aexp").value),
     louvre: +$("louvre").value, dust: +$("dust").value, glare: $("opt-glare").checked,
-    vib: +$("vib").value, rolling: $("shutter").value === "rolling", uncal: $("f-uncal").checked, splinter: $("f-splinter").checked, fog: $("f-fog").checked });
+    vib: +$("vib").value, indirect: $("opt-indirect").checked, rolling: $("shutter").value === "rolling", uncal: $("f-uncal").checked, splinter: $("f-splinter").checked, fog: $("f-fog").checked });
   const specsFor = (key) => (key === "dual" ? [{ tilt: 25, z: -sideOffset }, { tilt: -25, z: sideOffset }] : [{ tilt: Number(key), z: 0 }]);
 
   function weightedType() {
@@ -33,8 +33,8 @@
       p.zoff = (rnd() * 2 - 1) * 80 * scatter; p.yaw = (rnd() * 2 - 1) * 5 * scatter * Math.PI / 180;
       const yawT = p.yaw + p.orient.yaw;
       p.reach = Math.abs(p.L / 2 * Math.cos(yawT)) + Math.abs(p.W / 2 * Math.sin(yawT));
-      p.touching = !!(o.transport && prev && rnd() < 0.15);
-      p.mergeProne = p.touching && rnd() < 0.5;   // the detector sees this touching pair as one object
+      p.touching = !!(o.transport && prev && rnd() < FEED.touching);
+      p.mergeProne = p.touching && rnd() < FEED.mergeProne;   // the detector sees this touching pair as one object
       p.slip = o.transport ? rnd() * 0.03 : 0; p.ripple = o.transport ? rnd() * 12 : 0; p.ripplePh = rnd() * 6.28;
       // nextOff is the previous pallet's upstream edge; touching pallets close the gap and move as one
       p.off = feed.length ? nextOff + sectionFactor * ((p.touching ? 0 : feedGap(p)) + p.reach) : nextOff;
