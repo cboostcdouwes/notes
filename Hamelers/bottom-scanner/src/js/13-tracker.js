@@ -12,7 +12,6 @@
   const pending = [], trigErrs = [];
   let ds = 7; const drnd = () => { ds = (ds * 1664525 + 1013904223) >>> 0; return ds / 4294967296; };
   const gauss = () => Math.sqrt(-2 * Math.log(1 - drnd())) * Math.cos(6.2831853 * drnd());
-  const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
   const toImage = (cam, P) => { const v = sub3(P, cam.C), z = dot3(v, cam.F); return [cam.w / 2 + dot3(v, cam.R) / z * cam.fx, cam.h / 2 - dot3(v, cam.U) / z * cam.fx]; };
   function beltXAt(cam, u, y) {   // travel position where the ray through image column u meets height y
     const d = [0, 1, 2].map((i) => cam.F[i] + (u - cam.w / 2) / cam.fx * cam.R[i]);

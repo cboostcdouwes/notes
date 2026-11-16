@@ -31,6 +31,8 @@ uniform vec3 uBg; uniform float uExposure; uniform float uDirt; uniform float uS
 uniform highp sampler2DArray uAlb; uniform highp sampler2DArray uNor; uniform int uTex; uniform float uPixAng; uniform float uTexSize;
 uniform int uStill; uniform vec3 uSky; uniform vec3 uLightJit;   // photo mode: indirect light, soft lights
 uniform float uBlur;            // encoder travel during one exposure, mm: samples spread over it (motion blur)
+uniform vec3 uWinN; uniform vec3 uWinO;   // line-scan: the window's outward normal, where the lens axis crosses it
+uniform vec2 uGlass;            // the window glass: index, thickness (mm)
 out vec4 outColor;
 
 uint rngS;
@@ -491,6 +493,23 @@ vec3 vibration(float t) {
   return uVib * vec3(0.5 * sin(VIB_HZ.y * w + 0.4), 0.0, 0.8 * sin(VIB_HZ.x * w) + 0.3 * sin(VIB_HZ.z * w + 1.3));
 }
 
+// The bottom camera's window, a parallel glass plate: the ray from o leaves it in its own direction d, shifted
+// sideways (o moves to the shifted line, so distances still count from the camera, and each aperture sample shifts
+// on its own: astigmatism). Returns the share of the light let through: both faces reflect, by Fresnel for each
+// polarisation, and the light bouncing between them comes out too (as glassPass in the page script). A ray that
+// doesn't cross the window outward ends on the black housing.
+float throughWindow(inout vec3 o, vec3 d) {
+  float c = dot(d, uWinN), n = uGlass.x;
+  if (c <= 0.0) return 0.0;
+  vec3 p1 = o + d * (dot(uWinO - o, uWinN) / c), r = refract(d, -uWinN, 1.0 / n);
+  float ct = dot(r, uWinN);
+  vec3 w = p1 + r * (uGlass.y / ct) - o;
+  o += w - d * dot(w, d);
+  float rs = (c - n * ct) / (c + n * ct), rp = (n * c - ct) / (n * c + ct);
+  rs *= rs; rp *= rp;
+  return 0.5 * ((1.0 - rs) / (1.0 + rs) + (1.0 - rp) / (1.0 + rp));
+}
+
 void main() {
   int ix = int(gl_FragCoord.x); int row = uH - 1 - int(gl_FragCoord.y);
   rngS = uint(ix) * 1973u + uint(row) * 9277u + uint(uSeed * 977.0) * 26699u + 1u;
@@ -509,6 +528,7 @@ void main() {
     d = normalize(uF + pc.x / uFoc.x * uR - pc.y / uFoc.y * uU); vig = pow(max(dot(d, uF), 0.0), 4.0) / 0.93;
   }
   if (uMode >= 2) {   // ids for the visibility map: part, face, distance
+    if (uMode == 2 && throughWindow(o, d) <= 0.0) { outColor = vec4(0.0); return; }
     Hit h = trace(o, d, s);
     if (h.k < 0) { outColor = vec4(0.0); return; }
     int id = h.k + 1;
@@ -518,6 +538,7 @@ void main() {
     return;
   }
   vec3 acc = vec3(0.0);
+  float seen = 0.0;   // samples that cross the window: only they see the dirt on it
   int ns = uStill == 1 ? 1 : max(uDof, uBlur > 0.05 ? 4 : 1);
   vec3 up = abs(uAxis.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
   vec3 b1 = normalize(cross(uAxis, up)), b2 = cross(uAxis, b1);
@@ -532,6 +553,9 @@ void main() {
     }
     // the scene moves during the exposure: each sample sees it at its own point within the exposure
     float sk = s + (uStill == 1 ? rnd() - 0.5 : (float(k) + h11(float(ix) * 2.3 + float(row) * 1.1 + uSeed)) / float(ns) - 0.5) * uBlur;
+    float glass = uMode == 0 ? throughWindow(oo, dd) : 1.0;
+    if (glass <= 0.0) continue;
+    seen += 1.0;
     Hit h = trace(oo, dd, sk);
     vec3 alb, wn;
     vec3 c = shade(h, sk, h.t * uPixAng, alb, wn) + dustGlow(oo, dd, h.k < 0 && h.roller < 0 ? 8000.0 : h.t, sk);
@@ -543,12 +567,12 @@ void main() {
         c += alb * b / float(uIndirect);
       }
     }
-    acc += c;
+    acc += c * glass;
   }
   vec3 c = acc / float(ns) * uExposure * vig;
   if (uMode == 0) {   // dirty camera window: blotchy transmission loss plus veiling glare
     float bl = smoothstep(0.55, 0.85, n1(float(ix) / (uSize.x / 60.0)));
-    c = c * (1.0 - uDirt * 0.6 * bl) + uDirt * 0.02;
+    c = c * (1.0 - uDirt * 0.6 * bl) + uDirt * 0.02 * seen / float(ns);
   }
   outColor = vec4(c, 1.0);
 }

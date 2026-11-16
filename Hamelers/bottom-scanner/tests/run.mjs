@@ -44,7 +44,7 @@ const setControls = (p, o) => p.evaluate((o) => {
 }, o);
 // The controls the checks below change, at their defaults, so each check starts from the same state.
 const DEFAULTS = { "f-splinter": false, "f-fog": false, driver: "dc", vib: "0.1", "f-uncal": false, lightcol: "matched", shutter: "global",
-  daylight: "none", protect: "none", "f-bar": false, "side-h": "260", "side-x": "0", louvre: "0", "opt-indirect": false, months: "0" };
+  daylight: "none", "win-angle": "0", "win-purge": false, "f-bar": false, "side-h": "260", "side-x": "0", louvre: "0", "opt-indirect": false, months: "0" };
 // Photo render of a view with the feed paused; keeps each image's pixels in the page under tag.
 async function render(p, tag, view, settings) {
   await setControls(p, Object.assign({}, DEFAULTS, settings || {}, { "ph-view": view, "ph-n": "16" }));
@@ -136,9 +136,22 @@ try {
   await check("a splinter darkens the bottom image", async () => {
     expect(await mean(p, "a splinter on the window") < await mean(p, "base") - 1, "not darker");
   });
-  await check("an air knife keeps the splinter off the window", async () => {
-    await render(p, "airknife", "bottom", { "f-splinter": true, protect: "airknife" });
-    expect(await diff(p, "base", "airknife") < 0.5, "differs from the clean window by " + (await diff(p, "base", "airknife")).toFixed(2));
+  await check("a splinter slides off a steep window", async () => {
+    await render(p, "steep", "bottom", { "win-angle": "40" }); await render(p, "steep, splinter", "bottom", { "win-angle": "40", "f-splinter": true });
+    expect(await diff(p, "steep", "steep, splinter") < 0.5, "differs from the clean window by " + (await diff(p, "steep", "steep, splinter")).toFixed(2));
+  });
+  await check("an air purge keeps the windows from fogging", async () => {
+    await render(p, "purged", "bottom", { "win-purge": true }); await render(p, "purged, fog", "bottom", { "win-purge": true, "f-fog": true });
+    expect(await diff(p, "purged", "purged, fog") < 0.5, "differs from the clear window by " + (await diff(p, "purged", "purged, fog")).toFixed(2));
+  });
+  await check("a vertical window costs the ±25° cameras light, most at the ends of the line", async () => {
+    await render(p, "vertical", "bottom", { "win-angle": "90" });
+    for (const i of [0, 1]) {
+      const mid = (await ratios(p, "base", "vertical", i, [0.4, 0.6])).all;
+      const ends = ((await ratios(p, "base", "vertical", i, [0, 0.1])).all + (await ratios(p, "base", "vertical", i, [0.9, 1])).all) / 2;
+      expect(mid < 0.95, "camera " + i + ": the middle keeps " + mid.toFixed(2) + " of its light");
+      expect(ends < mid - 0.02, "camera " + i + ": the ends keep " + ends.toFixed(2) + ", the middle " + mid.toFixed(2));
+    }
   });
   // The budget and the stand-in classifier use script copies of three shader formulas (flicker, louvre, window
   // debris); each check compares the copy's number in the Timing & data tab with the same quantity in the image.
@@ -202,6 +215,10 @@ try {
     const clean = await batch(p), poor = await batch(p, { "f-splinter": true, driver: "pwm", "f-fog": true });
     expect(poor.condWrong > clean.condWrong + 5, "condition wrong " + clean.condWrong + "% clean vs " + poor.condWrong + "% with them");
   });
+  await check("an air purge keeps the windows clean enough for better condition labels after a year", async () => {
+    const flat = await batch(p, { months: "12" }), purged = await batch(p, { months: "12", "win-purge": true });
+    expect(flat.condWrong > purged.condWrong + 5, "condition wrong " + flat.condWrong + "% flat vs " + purged.condWrong + "% purged");
+  });
   await check("Compare runs with indirect light", async () => {
     await setControls(p, Object.assign({}, DEFAULTS, { "opt-indirect": true }));
     await p.evaluate(() => { document.getElementById("tab-cmp").click(); document.getElementById("cmp-out").innerHTML = ""; document.getElementById("cmp-run").click(); });
@@ -238,8 +255,19 @@ try {
     console.log("      not seen by the bottom cameras: " + (unseen.join("; ") || "none"));
     expect(!p.errors.length, p.errors.join("; "));
   });
+  await check("a vertical window blinds the 0° camera, and the Timing & data tab says so", async () => {
+    const q = await open(browser);
+    await q.evaluate(() => { document.querySelector('#presets button[data-cams="0"]').click(); document.getElementById("pause").click(); });
+    await render(q, "0° flat", "bottom"); await render(q, "0° vertical", "bottom", { "win-angle": "90" });
+    const flat = await mean(q, "0° flat"), vertical = await mean(q, "0° vertical");
+    const rows = await q.evaluate(() => [...document.querySelectorAll("#budget tr")].map((r) => r.textContent));
+    await q.close();
+    // only the sensor's noise is left, lifted by the gain that makes up for the missing light
+    expect(vertical < 0.2 * flat, "mean " + vertical.toFixed(1) + " behind the vertical window vs " + flat.toFixed(1) + " behind the flat one");
+    expect(rows.some((r) => /window optics/i.test(r) && /short/.test(r)), "no window optics row marked short");
+  });
   await check("a settings code restores the controls", async () => {
-    const want = { gap: "150", louvre: "30", driver: "pwm", "side-h": "100", "f-fog": true, "opt-indirect": true, protect: "airknife" };
+    const want = { gap: "150", louvre: "30", driver: "pwm", "side-h": "100", "f-fog": true, "opt-indirect": true, "win-angle": "60", "win-purge": true };
     await setControls(p, want);
     await p.evaluate(() => document.getElementById("set-copy").click());
     const code = await p.evaluate(() => document.getElementById("set-code").value);

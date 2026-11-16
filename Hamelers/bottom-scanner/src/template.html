@@ -64,7 +64,8 @@
       <label class="field" for="f-enc"><input type="checkbox" id="f-enc"> Encoder reads 8% short</label>
       <label class="field" for="f-splinter"><input type="checkbox" id="f-splinter"> Splinter on the first bottom camera's window</label>
       <label class="field" for="f-fog"><input type="checkbox" id="f-fog"> Fogged bottom windows</label>
-      <label class="field" for="protect">Window and bar protection <select id="protect"><option value="none" selected>none</option><option value="slanted">slanted covers</option><option value="airknife">air knife</option></select></label>
+      <label class="field" for="win-angle">Bottom windows <input id="win-angle" type="range" min="0" max="90" step="5" value="0"><output id="win-angle-out">0° (flat)</output></label>
+      <label class="field" for="win-purge"><input type="checkbox" id="win-purge"> Air purge</label>
     </span>
     <span class="grp" aria-label="Conditions">
       <label class="field" for="driver">Light drivers <select id="driver"><option value="dc" selected>DC, flicker-free</option><option value="pwm">PWM 1 kHz (dimmed)</option><option value="ripple">100 Hz ripple (cheap driver)</option></select></label>

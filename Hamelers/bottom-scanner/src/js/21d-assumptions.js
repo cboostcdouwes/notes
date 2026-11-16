@@ -38,7 +38,10 @@
       ["Reference exposure", () => "100 µs at f/4 with the LED bar at 100% fills mid-grey to half the full well", "assumed", "every brightness and noise result"],
       ["LED bar", () => (-cams[0].lightPos[1]) + " mm below the belt, 1 m long, sampled as " + cams[0].lights.length + " points", "assumed", "light through the gap, glare, louvre"],
       ["LED bar against the station lamps", () => BAR_VS_LAMPS + "× as bright (100 µs line exposure vs 1 ms area exposure, similar lenses)", "estimate", "glare in the station cameras, lamps in the bottom images"],
-      ["Window in front of the lens", () => WINDOW_MM + " mm", "assumed", "how debris on it shows"],
+      ["Window in front of the lens", () => WINDOW_MM + " mm along the lens axis, outer face turned the way the camera looks", "assumed", "how debris on it shows, window size"],
+      ["Window glass", () => "plain, uncoated, " + GLASS.thickMm + " mm, index " + GLASS.n + " (BK7-like); housing behind it matt black, so the window reflects nothing into the lens", "assumed", "light lost at steep windows, shift of the view"],
+      ["Glass dispersion", () => "index " + GLASS.nRB[0] + " for red, " + GLASS.nRB[1] + " for blue; the colour fringe is estimated, not traced", "typical", "colour fringe"],
+      ["Purge air", () => PURGE_AIR.coolK + " K colder than the hall in a " + PURGE_AIR.layerMm + " mm layer crossed over " + PURGE_AIR.pathMm + " mm; air index " + AIR_DN_DT + " per K; the bending is estimated, not traced", "assumed", "shimmer with an air purge"],
       ["Louvre film leak beyond its cut-off", () => pct(shaderFloat("LOUVRE_LEAK"), 1), "typical", "glare with a louvre"]]],
     ["Station and top cameras", [
       ["Top camera", () => AREA_REAL.topMP + " MP, " + AREA_REAL.topPx + " px over " + AREA_REAL.topField / 1000 + " m, " + TOP_FPS + " fps", "assumed", "tracking, data rate"],
@@ -60,11 +63,11 @@
       ["Fogged window", () => "lets through " + pct(shaderFloat("FOG_KEEP")) + ", scatters " + pct(shaderFloat("FOG_SCATTER")) + " of it along the line", "assumed", "contrast in the bottom images"]]],
     ["Wear and service", [
       ["LED output loss", () => pct(WEAR.ledLoss) + " per month", "typical", "signal over time"],
-      ["Dirt on the bottom windows", () => pct(WEAR.windowDirt) + " per month", "assumed", "signal and contrast over time"],
+      ["Dirt on the bottom windows", () => pct(WEAR.windowDirt) + " per month on a flat window; in proportion to the face seen from above, but " + pct(WINDOW_WEAR.dustCling) + " of it clings to a vertical one", "assumed", "signal and contrast over time"],
       ["Dust on the LED bar", () => pct(WEAR.barDust) + " less light per month, uneven along the bar", "assumed", "signal over time"],
-      ["Grit on each bottom window", () => WEAR.specks + " specks per month (up to 10)", "assumed", "dark bands in the bottom images"],
-      ["Protection: share of grit and dirt that stays", () => "slanted covers " + pct(PROTECTION.slanted) + ", air knife " + pct(PROTECTION.airknife) + " (and no splinter)", "assumed", "service interval"],
-      ["Air knife consumption", () => "roughly 40 m³/h of compressed air", "typical", "running cost"]]],
+      ["Grit on each bottom window", () => WEAR.specks + " specks per month on a flat window (up to 10); grit and splinters slide off from " + WINDOW_WEAR.gritSlideDeg + "°", "assumed", "dark bands in the bottom images"],
+      ["Air purge on the bottom windows", () => "blows grit away, lets " + pct(WINDOW_WEAR.purgeDust) + " of the dust settle, keeps the window dry (no fog); not a splinter", "assumed", "service interval"],
+      ["Air purge consumption", () => "about " + WINDOW_WEAR.purgeAirM3h + " m³/h of compressed air per window", "assumed", "running cost"]]],
     ["Damage catalogue", [
       ["What makes a pallet need repair or count as unusual", () => "EPAL quality classification for the open exchange pool (contamination, rot, inadmissible components, skewed blocks over 1 cm, visible nail shanks, illegible marks; adhesions removed first)", "standard", "which damages exist and their severity"],
       ["Loose board turned flat", () => LOOSE_TURN_DEG[0] + "–" + LOOSE_TURN_DEG[1] + "° about the last block's nails, free end outward", "assumed", "how far it sticks out"],

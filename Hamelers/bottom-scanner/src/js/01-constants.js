@@ -3,15 +3,25 @@
   // Wear and faults between services (assumed rates): LEDs lose ~2% output per month in 24/7 use, the camera window
   // collects ~6% dirt per month; faults switch a light off or make the encoder under-count travel.
   // Dust also settles on the LED bar's upward face under the gap, unevenly (barDust: mean loss), and grit on each
-  // bottom window. Rates per month in 24/7 use; protect: the share that stays (see PROTECTION).
+  // bottom window. Rates per month in 24/7 use, for a flat window; WINDOW_WEAR scales them by the window's angle.
   const WEAR = { ledLoss: 0.02, windowDirt: 0.06, barDust: 0.04, specks: 1.5 };
-  const service = { months: 0, barOut: false, lampOut: false, encErr: 0, protect: 1,
-    lightFactor() { return 1 - WEAR.ledLoss * this.months; }, extraDirt() { return WEAR.windowDirt * this.months * this.protect; },
-    barDust() { return Math.min(0.7, WEAR.barDust * this.months * this.protect); },
-    specks() { return Math.min(10, Math.floor(WEAR.specks * this.months * this.protect)); } };
-  // Protection of the bottom windows and the LED bar from what falls through the gap: the share of grit, dust and dirt
-  // that stays (assumed). A slanted cover lets grit slide off; an air knife blows it away, a splinter too.
-  const PROTECTION = { none: 1, slanted: 0.4, airknife: 0.1 };
+  // The bottom windows against what falls through the gap (assumed): grit and splinters slide off a window steeper than
+  // gritSlideDeg from horizontal; below that grit settles in proportion to the window's face seen from above. Fine dust
+  // settles the same way, but dustCling of the flat rate clings to any face (static, damp air). An air purge (dry
+  // compressed air across the window, purgeAirM3h per window) blows grit away, cuts settling dust to purgeDust and keeps
+  // the window from fogging; it can't move a splinter.
+  const WINDOW_WEAR = { gritSlideDeg: 35, dustCling: 0.15, purgeDust: 0.1, purgeAirM3h: 2 };
+  const service = { months: 0, barOut: false, lampOut: false, encErr: 0, winAngle: 0, purge: false,
+    lightFactor() { return 1 - WEAR.ledLoss * this.months; },
+    faceUp() { return Math.cos(this.winAngle * Math.PI / 180); },
+    gritSlides() { return this.winAngle >= WINDOW_WEAR.gritSlideDeg; },
+    extraDirt() {
+      const settles = this.faceUp() + WINDOW_WEAR.dustCling * (1 - this.faceUp());
+      return WEAR.windowDirt * this.months * settles * (this.purge ? WINDOW_WEAR.purgeDust : 1);
+    },
+    barDust() { return Math.min(0.7, WEAR.barDust * this.months); },
+    specks() { return this.purge || this.gritSlides() ? 0 : Math.min(10, Math.floor(WEAR.specks * this.months * this.faceUp())); } };
+  const winAngleText = (a) => a + "°" + (a === 0 ? " (flat)" : a === 90 ? " (vertical)" : "");
   let beltSpeed = 450;   // real infeed conveyor speed, mm/s (the Playback slider only runs the simulation faster or slower)
   // The middle section, |x| < SECTION_HALF around the scanner, can run faster than the infeed so touching pallets
   // separate. Its encoder drives the line-scan cameras and the tracker, so encoder position s is in middle-section mm.

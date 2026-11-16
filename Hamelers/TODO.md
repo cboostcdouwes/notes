@@ -20,7 +20,10 @@ Hamelers: pallet classifier. Most important first. Research log: `pallet-classif
 - **Light requirements for the station spec**: flicker-free (DC) drivers for the LED bar and the station lamps
   (PWM or mains ripple bands the 100 us line exposures); matched colour temperatures or per-camera white balance.
 - **Protect the bottom windows and LED bar** from debris falling through the gap (splinters, grit, meltwater):
-  slanted covers or an air knife (both in the simulator, rates assumed); needs real deposition rates from a test.
+  a steep window (grit slides off) and an air purge; in the simulator with assumed rates (window angle, air purge);
+  needs real deposition rates at several window angles from a test. The LED bar stays unprotected. In the simulator
+  a 60° window costs the dual ±25° cameras almost no light over a flat one (ends of the line 78% vs 81% through plain
+  glass) while grit slides off; a vertical one lets only 52% through at the ends and blinds a 0° camera.
 - **Place the side station cameras ~150 mm along the belt from the scan line**: there they no longer see the LED bar
   down the gap (simulator v29), with no light lost.
 - **Simulator: centred 0 deg camera with one light** puts the LED bar under a roller at a 100 mm gap (the 80 mm offset

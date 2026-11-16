@@ -12,7 +12,7 @@
     fnum: +$("fnum").value, dirt: Math.min(1, +$("dirt").value + service.extraDirt()), transport: $("opt-transport").checked, station: $("opt-station").checked,
     expUs: Math.pow(10, +$("exp").value), light: +$("light").value, aexpMs: Math.pow(10, +$("aexp").value),
     louvre: +$("louvre").value, dust: +$("dust").value, glare: $("opt-glare").checked,
-    vib: +$("vib").value, indirect: $("opt-indirect").checked, rolling: $("shutter").value === "rolling", uncal: $("f-uncal").checked, splinter: $("f-splinter").checked, fog: $("f-fog").checked });
+    vib: +$("vib").value, indirect: $("opt-indirect").checked, rolling: $("shutter").value === "rolling", uncal: $("f-uncal").checked, splinter: $("f-splinter").checked, fog: $("f-fog").checked && !service.purge });
   const specsFor = (key) => (key === "dual" ? [{ tilt: 25, z: -sideOffset }, { tilt: -25, z: sideOffset }] : [{ tilt: Number(key), z: 0 }]);
 
   function weightedType() {

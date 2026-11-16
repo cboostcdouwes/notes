@@ -98,7 +98,9 @@
     const leds = new Set();
     cams.forEach((c) => {
       const C = new THREE.Vector3(c.C[0] / 1000, c.C[1] / 1000, c.C[2] / 1000), d0 = new THREE.Vector3(...c.d0), e = new THREE.Vector3(...c.e);
-      const body = box(0.08, 0.1, 0.16, camM, 0, 0, 0); body.position.copy(C); body.lookAt(C.clone().add(new THREE.Vector3(...c.axis)));
+      const axis = new THREE.Vector3(...c.axis), body = box(0.08, 0.1, 0.16, camM, 0, 0, 0);   // the lens at its front face
+      body.position.copy(C.clone().addScaledVector(axis, -0.08)); body.lookAt(C.clone().add(axis));
+      rig.add(windowMesh(c));
       // stands, as in the traced scene (rigParts): one under each camera, two under each LED bar
       const standM = M(css("--steel"), { metalness: 0.4, roughness: 0.5 }), stand = (x, top, z, w) => rig.add(tip(box(w, top + 0.6, w, standM, x, (top - 0.6) / 2, z), "Stand on the floor, 0.6 m below the belt."));
       stand(C.x, C.y - 0.045, C.z, 0.03);
@@ -117,6 +119,22 @@
       const fan = new THREE.Mesh(geo, beam); fan.userData.kind = "line"; rig.add(tip(fan, "Scan plane of the " + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "° camera; it passes through the gap line.")); fans.push(fan);
     });
     applyFans();
+  }
+  // Camera c's window, as a pane of the glass it needs, and the air purge collar along its upper edge when on.
+  function windowMesh(c) {
+    const win = windowFor(c), w = windowOptics(c, opts().fnum), g = new THREE.Group();
+    const a = new THREE.Vector3(...win.a), n = new THREE.Vector3(...win.n), b = n.clone().cross(a);
+    g.matrix.makeBasis(a, b, n).setPosition(win.o[0] / 1000, win.o[1] / 1000, win.o[2] / 1000); g.matrixAutoUpdate = false;
+    const wu = (w.sizeU || 40) / 1000, wv = (w.sizeV || 10) / 1000;
+    const glassM = M("#a8d8ea", { transparent: true, opacity: 0.5, roughness: 0.05, depthWrite: false });
+    g.add(tip(box(wu, wv, GLASS.thickMm / 1000, glassM, 0, 0, GLASS.thickMm / 2000), "Window, plain glass " + GLASS.thickMm + " mm, " +
+      winAngleText(service.winAngle) + " from horizontal" + (w.housed === 1 ? ": too steep for this camera to see through." : ", " + Math.ceil(w.sizeU) + " × " + Math.ceil(w.sizeV) + " mm; lets through " + Math.round(w.tLo * 100) + "–" + Math.round(w.tHi * 100) + "%.")));
+    if (service.purge) {
+      const up = b.y >= 0 ? 1 : -1;
+      g.add(tip(box(wu + 0.01, 0.008, 0.012, M(css("--steel"), { metalness: 0.4, roughness: 0.5 }), 0, up * (wv / 2 + 0.004), 0.006),
+        "Air purge collar: blows dry compressed air across the window, about " + WINDOW_WEAR.purgeAirM3h + " m³/h (assumed)."));
+    }
+    return g;
   }
   function buildStationRig() {
     while (stationRig.children.length) stationRig.remove(stationRig.children[0]);

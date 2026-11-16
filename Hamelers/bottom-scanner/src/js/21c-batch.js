@@ -8,7 +8,7 @@
   function setupSummary() {
     const o = opts(), cam = presetKey === "dual" ? "dual ±25° at ±" + sideOffset + " mm" : (+presetKey > 0 ? "+" : "") + presetKey + "° centred";
     const faults = [service.barOut && "LED bar out", service.lampOut && "lamp out", service.encErr && "encoder 8% short",
-      o.louvre && "louvre ±" + o.louvre + "°", $("protect").value !== "none" && $("protect").selectedOptions[0].textContent, o.splinter && "splinter on a window",
+      o.louvre && "louvre ±" + o.louvre + "°", service.winAngle && "windows at " + service.winAngle + "°", service.purge && "air purge", o.splinter && "splinter on a window",
       o.fog && "fogged windows", $("driver").value !== "dc" && $("driver").selectedOptions[0].textContent, o.vib > 0 && "vibration " + o.vib.toFixed(2) + " mm",
       o.uncal && "uncalibrated", o.indirect && "indirect light"].filter(Boolean);
     return [cam, "gap " + gap + " mm", PX / 1024 + "k px", o.fnum ? "f/" + o.fnum : "pinhole", Math.round(o.expUs) + " µs", "LED " + o.light + "%",

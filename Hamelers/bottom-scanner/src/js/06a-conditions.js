@@ -53,6 +53,44 @@
   const LENS_DISTORTION = 0.03;   // barrel distortion, ~1% at 35° off axis
   const ROLLING_S = 0.02;         // rolling-shutter readout, first row to last
   const WINDOW_MM = 25, PINHOLE_MM = 0.3;   // window in front of the bottom cameras' lens; aperture for the pinhole lens
+  // The bottom cameras' window: plain glass (BK7-like; index n for green light, nRB for red and blue, which only the
+  // colour-fringe estimate uses), thickMm thick. It crosses the lens axis WINDOW_MM in front of the lens and stands at
+  // the window angle from horizontal, its outer face turned the way the camera looks (assumed).
+  const GLASS = { thickMm: 4, n: 1.5185, nRB: [1.5157, 1.524] };
+  // The purge air in front of the window (assumed): coolK colder than the hall after expanding, in a layer layerMm wide
+  // that the rays cross over pathMm. Air's index changes by AIR_DN_DT per kelvin.
+  const PURGE_AIR = { coolK: 5, layerMm: 5, pathMm: 20 }, AIR_DN_DT = 9.3e-7;
+  // Camera cam's window: outward normal n, the point o where the lens axis crosses it, and the direction a in its plane
+  // along the scan line (debris positions are along a and across it, from o).
+  function windowFor(cam) {
+    const ang = service.winAngle * Math.PI / 180, side = Math.sign(cam.spec.tilt) || 1;
+    const n = [side * Math.sin(ang), Math.cos(ang), 0], o = cam.C.map((c, i) => c + WINDOW_MM * cam.axis[i]);
+    const en = cam.e[0] * n[0] + cam.e[1] * n[1] + cam.e[2] * n[2];
+    return { n: n, o: o, a: norm3(cam.e.map((v, i) => v - en * n[i])) };
+  }
+  // A ray meeting the glass at cosI to its normal, glass index nG: the share of the light it lets through (both faces
+  // reflect, by Fresnel for each polarisation, and the light bouncing between them comes out too), and how far it
+  // shifts the ray sideways, mm. As throughWindow in the tracer.
+  function glassPass(cosI, nG) {
+    if (cosI <= 0) return { T: 0, shift: 0 };
+    const sinI = Math.sqrt(1 - cosI * cosI), sinT = sinI / nG, cosT = Math.sqrt(1 - sinT * sinT);
+    const rs = ((cosI - nG * cosT) / (cosI + nG * cosT)) ** 2, rp = ((nG * cosI - cosT) / (nG * cosI + cosT)) ** 2;
+    return { T: 0.5 * ((1 - rs) / (1 + rs) + (1 - rp) / (1 + rp)), shift: GLASS.thickMm * (sinI * cosT - cosI * sinT) / cosT };
+  }
+  const camRay = (cam, phi) => [0, 1, 2].map((i) => Math.cos(phi) * cam.d0[i] + Math.sin(phi) * cam.e[i]);
+  // The window along camera cam's line, at WINDOW_SAMPLES pixel rays: per ray its cosine to the window's normal and
+  // where it crosses the window (u along the line, v across it, mm from o).
+  const WINDOW_SAMPLES = 64;
+  function windowRays(cam, win) {
+    const b = cross3(win.n, win.a), out = [];
+    for (let i = 0; i < WINDOW_SAMPLES; i++) {
+      const d = camRay(cam, cam.phi0 + (cam.phi1 - cam.phi0) * i / (WINDOW_SAMPLES - 1)), c = dot3(d, win.n);
+      if (c <= 0) { out.push({ c: c }); continue; }
+      const t = dot3(sub3(win.o, cam.C), win.n) / c, x = sub3(cam.C.map((v, k) => v + t * d[k]), win.o);
+      out.push({ c: c, u: dot3(x, win.a), v: dot3(x, b) });
+    }
+    return out;
+  }
   // Debris on a bottom camera's window (assumed): grit settles over the months since service, and a splinter
   // can lie on the first camera's window. Each: position along the sensor line and across it, radius (mm), opacity.
   function debrisFor(cam) {
@@ -60,23 +98,56 @@
     let n = 0, seed = (Math.round(cam.spec.tilt * 31 + cam.spec.z) >>> 0) + 7;
     const r = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
     const add = (u, v, rad, op) => data.set([u, v, rad, op], 4 * n++);
-    if (opts().splinter && service.protect > PROTECTION.airknife && cam.spec.z <= 0) for (let k = 0; k < 5; k++) add(-6 + k * 1.6, -0.8 + k * 0.4, 0.9, 0.95);
+    if (opts().splinter && !service.gritSlides() && cam.spec.z <= 0) for (let k = 0; k < 5; k++) add(-6 + k * 1.6, -0.8 + k * 0.4, 0.9, 0.95);
     for (let k = service.specks(); k > 0; k--) add((r() - 0.5) * 30, (r() - 0.5) * 4, 0.15 + 0.35 * r(), 0.6 + 0.4 * r());
     return { data: data, n: n };
   }
-  // Share of the bottom images' columns that debris on the windows darkens, averaged over the cameras. Estimate of
-  // windowT in the post shader: each item darkens a band as wide as the aperture disc plus the item, as far as it
-  // covers the disc, if it lies on the disc's path across the window.
+  // What camera cam's window does along its line, for the Timing & data tab: the share of the line that ends on the
+  // housing (the window too steep for this camera), the light let through at the steepest and the most head-on ray,
+  // how much the sideways shift varies along the line (a distortion that calibration removes), the glass needed (along
+  // and across the line, with the aperture's disc around every ray), and two effects too small to trace, in pixels on
+  // the belt: the colour fringe from the glass's dispersion and the purge air bending the rays.
+  function windowOptics(cam, fnum) {
+    const rays = windowRays(cam, windowFor(cam)), through = rays.filter((r) => r.c > 0), apR = apertureR(cam, fnum);
+    if (!through.length) return { housed: 1 };
+    const cs = through.map((r) => r.c), cLo = Math.min(...cs), cHi = Math.max(...cs), shifts = cs.map((c) => glassPass(c, GLASS.n).shift);
+    const fringe = Math.abs(glassPass(cLo, GLASS.nRB[1]).shift - glassPass(cLo, GLASS.nRB[0]).shift);
+    const bend = PURGE_AIR.coolK * AIR_DN_DT / PURGE_AIR.layerMm * PURGE_AIR.pathMm;   // radians
+    const span = (k) => Math.max(...through.map((r) => r[k])) - Math.min(...through.map((r) => r[k]));
+    return { housed: 1 - through.length / rays.length, tLo: glassPass(cLo, GLASS.n).T, tHi: glassPass(cHi, GLASS.n).T,
+      shiftSpan: Math.max(...shifts) - Math.min(...shifts), sizeU: span("u") + 2 * apR / cLo, sizeV: span("v") + 2 * apR / cLo,
+      fringePx: fringe / cam.mmPerPx, bendPx: bend * cam.focus / cam.mmPerPx };
+  }
+  // Light the windows let through toward the belt centre, averaged over the cameras (for the light budget).
+  const windowPass = () => cams.reduce((sum, c) => sum + glassPass(dot3(c.axis, windowFor(c).n), GLASS.n).T, 0) / cams.length;
+  // Share of the light that gets past the debris on camera cam's window along pixel ray d (as windowT in the post
+  // shader): the ray's light crosses the window as a disc the size of the aperture (radius apR) around the ray; each
+  // item, seen along the ray, is foreshortened to a disc of equal area, and blocks as much of the disc as it covers.
+  function windowT(cam, win, db, apR, d) {
+    const c = dot3(d, win.n);
+    if (c <= 0) return 1;
+    const t = dot3(sub3(win.o, cam.C), win.n) / c, x = cam.C.map((v, k) => v + t * d[k]), b = cross3(win.n, win.a);
+    let blocked = 0;
+    for (let i = 0; i < db.n; i++) {
+      const [u, v, r, op] = db.data.subarray(4 * i, 4 * i + 4), q = win.o.map((w, k) => w + u * win.a[k] + v * b[k]);
+      const off = sub3(q, x), along = dot3(off, d), across = Math.hypot(...off.map((w, k) => w - along * d[k]));
+      blocked += op * circOverlap(across, apR, r * Math.sqrt(c));
+    }
+    return Math.max(0, 1 - blocked / (Math.PI * apR * apR));
+  }
+  function circOverlap(d, r1, r2) {   // area where two circles (centres d apart) overlap, as in the post shader
+    if (d >= r1 + r2) return 0;
+    if (d <= Math.abs(r1 - r2)) return Math.PI * Math.min(r1, r2) ** 2;
+    return r1 * r1 * Math.acos((d * d + r1 * r1 - r2 * r2) / (2 * d * r1)) + r2 * r2 * Math.acos((d * d + r2 * r2 - r1 * r1) / (2 * d * r2))
+      - 0.5 * Math.sqrt((-d + r1 + r2) * (d + r1 - r2) * (d - r1 + r2) * (d + r1 + r2));
+  }
+  const apertureR = (cam, fnum) => (fnum > 0 ? cam.focal / fnum / 2 : PINHOLE_MM / 2);
+  // Share of the bottom images' light that debris on the windows blocks, averaged over the pixels and the cameras.
   function debrisShare(o) {
     let sum = 0;
     cams.forEach((cam) => {
-      const db = debrisFor(cam), apR = o.fnum > 0 ? cam.focal / o.fnum / 2 : PINHOLE_MM / 2, span = 2 * WINDOW_MM * Math.tan((cam.phi1 - cam.phi0) / 2);
-      let s = 0;
-      for (let i = 0; i < db.n; i++) {
-        const [, v, r, op] = db.data.subarray(4 * i, 4 * i + 4);
-        if (Math.abs(v) < apR + r) s += op * Math.min(1, (r / apR) * (r / apR)) * 2 * (apR + r) / span;
-      }
-      sum += Math.min(1, s);
+      const db = debrisFor(cam), win = windowFor(cam), apR = apertureR(cam, o.fnum);
+      for (let i = 0; i < WINDOW_SAMPLES; i++) sum += 1 - windowT(cam, win, db, apR, camRay(cam, cam.phi0 + (cam.phi1 - cam.phi0) * i / (WINDOW_SAMPLES - 1)));
     });
-    return sum / cams.length;
+    return sum / (WINDOW_SAMPLES * cams.length);
   }

@@ -8,8 +8,9 @@
   }
   const areaExposure = (o) => ({ t: o.aexpMs, k: o.aexpMs, blur: scanSpeed() * o.aexpMs / 1000 });
   // The line cameras' signal relative to the reference: the exposure, with everything that dims the bar's light on
-  // the scan line (louvre, LED ageing, dust on the bar, a failed bar leaving only stray light from the lamps).
-  const lineSignalK = (o) => lineExposure(o).k * louvrePass(o.louvre) * service.lightFactor() * (1 - service.barDust()) * (service.barOut ? 0.1 : 1);
+  // the scan line (louvre, LED ageing, dust on the bar, a failed bar leaving only stray light from the lamps) and on
+  // the way back through the camera's window.
+  const lineSignalK = (o) => lineExposure(o).k * louvrePass(o.louvre) * service.lightFactor() * (1 - service.barDust()) * (service.barOut ? 0.1 : 1) * windowPass();
   const significantBlur = (mm, mmPerPx) => ((mm || 0) >= 0.25 * mmPerPx ? mm : 0);   // below a quarter pixel: not worth the samples
   function sensorUniforms(P, o) { gl.uniform1f(P.uK, o.k || 1); gl.uniform1f(P.uFullWell, SENSOR.fullWell); gl.uniform1f(P.uReadNoise, SENSOR.readNoise); }
 
@@ -42,6 +43,8 @@
     const fnum = o.id ? 0 : o.fnum;
     gl.uniform3fv(U.uAxis, cam.axis); gl.uniform1f(U.uFocus, cam.focus); gl.uniform1f(U.uAperture, fnum > 0 ? cam.focal / fnum : 0); gl.uniform1i(U.uDof, fnum > 0 ? LENS_SAMPLES : 0);
     gl.uniform1f(U.uPixAng, cam.dphi); gl.uniform1f(U.uBlur, significantBlur(o.blur, pitch));
+    const win = windowFor(cam);
+    gl.uniform3fv(U.uWinN, win.n); gl.uniform3fv(U.uWinO, win.o); gl.uniform2f(U.uGlass, GLASS.n, GLASS.thickMm);
     beginStill(U, o);
     gl.uniform1i(U.uIndirect, o.indirect && !o.still && !o.id ? INDIRECT_SAMPLES : 0);
     if (o.indirect && !o.still) gl.uniform3fv(U.uSky, HALL_SKY.map((v) => v * L.hall * (1 + L.day)));
@@ -58,8 +61,9 @@
     gl.uniform1f(P.uNoise, o.noise); gl.uniform1f(P.uSeed, o.seed || 1); gl.uniform1f(P.uRowBase, o.rowBase || 0); gl.uniform1i(P.uTone, 0); sensorUniforms(P, o);
     conditionUniforms(P, L, s0 / scanSpeed(), pitch / scanSpeed(), (o.t || 100) * 1e-6, c.uncal, cam.spec.tilt * 7 + cam.spec.z);
     const db = debrisFor(cam);
-    gl.uniform4fv(P.uDebris, db.data); gl.uniform1i(P.uNDebris, db.n); gl.uniform1f(P.uWinDist, WINDOW_MM); gl.uniform1f(P.uAxisPhi, cam.axisPhi);
-    gl.uniform1f(P.uApR, o.fnum > 0 ? cam.focal / o.fnum / 2 : PINHOLE_MM / 2); gl.uniform1f(P.uFog, c.fog ? 1 : 0);
+    gl.uniform4fv(P.uDebris, db.data); gl.uniform1i(P.uNDebris, db.n);
+    gl.uniform3fv(P.uWinN, win.n); gl.uniform3fv(P.uWinO, win.o); gl.uniform3fv(P.uWinA, win.a);
+    gl.uniform1f(P.uApR, apertureR(cam, o.fnum)); gl.uniform1f(P.uFog, c.fog ? 1 : 0);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
   function traceArea(cam, s, o) {

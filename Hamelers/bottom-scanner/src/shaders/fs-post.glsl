@@ -13,7 +13,8 @@ uniform vec3 uFlick;            // light driver: mode (0 steady, 1 PWM, 2 ripple
 uniform float uT0; uniform float uTRow; uniform float uExpS;   // time of row 0 and per row, exposure, s
 uniform float uFpn; uniform float uCamSeed;   // uncalibrated sensor: pixel-to-pixel gain and dark offset
 uniform vec4 uDebris[16]; uniform int uNDebris; // on the bottom window: position along the line and across it, radius (mm), opacity
-uniform float uWinDist; uniform float uApR; uniform float uAxisPhi;   // window in front of the lens, aperture radius (mm)
+uniform vec3 uWinN; uniform vec3 uWinO; uniform vec3 uWinA;   // the window: outward normal, where the lens axis crosses it, along the line
+uniform float uApR;             // aperture radius, mm
 uniform float uFog;             // bottom window fogged: 1
 out vec4 outColor;
 vec3 aces(vec3 x) { return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0); }
@@ -52,13 +53,24 @@ float circOverlap(float d, float r1, float r2) {
   return r1 * r1 * acos((d * d + r1 * r1 - r2 * r2) / (2.0 * d * r1)) + r2 * r2 * acos((d * d + r2 * r2 - r1 * r1) / (2.0 * d * r2))
     - 0.5 * sqrt((-d + r1 + r2) * (d + r1 - r2) * (d - r1 + r2) * (d + r1 + r2));
 }
-// Share of the light that gets past the debris on the window for native pixel f. Each pixel's light passes the window
-// as a disc the size of the aperture, shifted along the line with the pixel's angle; debris is far out of focus, so
-// it dims the pixels whose disc it covers rather than showing as a shape.
+// Share of the light that gets past the debris on the window for native pixel f (as windowT in the page script). The
+// pixel's light crosses the window as a disc the size of the aperture around its ray; debris is far out of focus, so
+// it dims the pixels whose disc it covers rather than showing as a shape. Each item, seen along the ray, is
+// foreshortened to a disc of equal area.
 float windowT(float f) {
   if (uNDebris == 0) return 1.0;
-  float u = uWinDist * tan(uPhi0 + f * uDphi - uAxisPhi), blocked = 0.0;
-  for (int i = 0; i < 16; i++) { if (i >= uNDebris) break; vec4 q = uDebris[i]; blocked += q.w * circOverlap(length(vec2(u - q.x, q.y)), uApR, q.z); }
+  float phi = uPhi0 + f * uDphi;
+  vec3 d = cos(phi) * uD0 + sin(phi) * uE;
+  float c = dot(d, uWinN);
+  if (c <= 0.0) return 1.0;   // the ray ends on the housing (black in the tracer)
+  vec3 x = uC + d * (dot(uWinO - uC, uWinN) / c), b = cross(uWinN, uWinA);
+  float blocked = 0.0;
+  for (int i = 0; i < 16; i++) {
+    if (i >= uNDebris) break;
+    vec4 q = uDebris[i];
+    vec3 off = uWinO + q.x * uWinA + q.y * b - x;
+    blocked += q.w * circOverlap(length(off - d * dot(off, d)), uApR, q.z * sqrt(c));
+  }
   return max(0.0, 1.0 - blocked / (3.14159265 * uApR * uApR));
 }
 // A fogged window scatters light along the line: a wide average of it, weighted exp(-distance / FOG_PX).

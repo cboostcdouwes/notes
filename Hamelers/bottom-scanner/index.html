@@ -171,7 +171,8 @@ dialog::backdrop { background: rgb(0 0 0 / 0.55); }
       <label class="field" for="f-enc"><input type="checkbox" id="f-enc"> Encoder reads 8% short</label>
       <label class="field" for="f-splinter"><input type="checkbox" id="f-splinter"> Splinter on the first bottom camera's window</label>
       <label class="field" for="f-fog"><input type="checkbox" id="f-fog"> Fogged bottom windows</label>
-      <label class="field" for="protect">Window and bar protection <select id="protect"><option value="none" selected>none</option><option value="slanted">slanted covers</option><option value="airknife">air knife</option></select></label>
+      <label class="field" for="win-angle">Bottom windows <input id="win-angle" type="range" min="0" max="90" step="5" value="0"><output id="win-angle-out">0° (flat)</output></label>
+      <label class="field" for="win-purge"><input type="checkbox" id="win-purge"> Air purge</label>
     </span>
     <span class="grp" aria-label="Conditions">
       <label class="field" for="driver">Light drivers <select id="driver"><option value="dc" selected>DC, flicker-free</option><option value="pwm">PWM 1 kHz (dimmed)</option><option value="ripple">100 Hz ripple (cheap driver)</option></select></label>
@@ -380,6 +381,8 @@ uniform vec3 uBg; uniform float uExposure; uniform float uDirt; uniform float uS
 uniform highp sampler2DArray uAlb; uniform highp sampler2DArray uNor; uniform int uTex; uniform float uPixAng; uniform float uTexSize;
 uniform int uStill; uniform vec3 uSky; uniform vec3 uLightJit;   // photo mode: indirect light, soft lights
 uniform float uBlur;            // encoder travel during one exposure, mm: samples spread over it (motion blur)
+uniform vec3 uWinN; uniform vec3 uWinO;   // line-scan: the window's outward normal, where the lens axis crosses it
+uniform vec2 uGlass;            // the window glass: index, thickness (mm)
 out vec4 outColor;
 
 uint rngS;
@@ -840,6 +843,23 @@ vec3 vibration(float t) {
   return uVib * vec3(0.5 * sin(VIB_HZ.y * w + 0.4), 0.0, 0.8 * sin(VIB_HZ.x * w) + 0.3 * sin(VIB_HZ.z * w + 1.3));
 }
 
+// The bottom camera's window, a parallel glass plate: the ray from o leaves it in its own direction d, shifted
+// sideways (o moves to the shifted line, so distances still count from the camera, and each aperture sample shifts
+// on its own: astigmatism). Returns the share of the light let through: both faces reflect, by Fresnel for each
+// polarisation, and the light bouncing between them comes out too (as glassPass in the page script). A ray that
+// doesn't cross the window outward ends on the black housing.
+float throughWindow(inout vec3 o, vec3 d) {
+  float c = dot(d, uWinN), n = uGlass.x;
+  if (c <= 0.0) return 0.0;
+  vec3 p1 = o + d * (dot(uWinO - o, uWinN) / c), r = refract(d, -uWinN, 1.0 / n);
+  float ct = dot(r, uWinN);
+  vec3 w = p1 + r * (uGlass.y / ct) - o;
+  o += w - d * dot(w, d);
+  float rs = (c - n * ct) / (c + n * ct), rp = (n * c - ct) / (n * c + ct);
+  rs *= rs; rp *= rp;
+  return 0.5 * ((1.0 - rs) / (1.0 + rs) + (1.0 - rp) / (1.0 + rp));
+}
+
 void main() {
   int ix = int(gl_FragCoord.x); int row = uH - 1 - int(gl_FragCoord.y);
   rngS = uint(ix) * 1973u + uint(row) * 9277u + uint(uSeed * 977.0) * 26699u + 1u;
@@ -858,6 +878,7 @@ void main() {
     d = normalize(uF + pc.x / uFoc.x * uR - pc.y / uFoc.y * uU); vig = pow(max(dot(d, uF), 0.0), 4.0) / 0.93;
   }
   if (uMode >= 2) {   // ids for the visibility map: part, face, distance
+    if (uMode == 2 && throughWindow(o, d) <= 0.0) { outColor = vec4(0.0); return; }
     Hit h = trace(o, d, s);
     if (h.k < 0) { outColor = vec4(0.0); return; }
     int id = h.k + 1;
@@ -867,6 +888,7 @@ void main() {
     return;
   }
   vec3 acc = vec3(0.0);
+  float seen = 0.0;   // samples that cross the window: only they see the dirt on it
   int ns = uStill == 1 ? 1 : max(uDof, uBlur > 0.05 ? 4 : 1);
   vec3 up = abs(uAxis.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
   vec3 b1 = normalize(cross(uAxis, up)), b2 = cross(uAxis, b1);
@@ -881,6 +903,9 @@ void main() {
     }
     // the scene moves during the exposure: each sample sees it at its own point within the exposure
     float sk = s + (uStill == 1 ? rnd() - 0.5 : (float(k) + h11(float(ix) * 2.3 + float(row) * 1.1 + uSeed)) / float(ns) - 0.5) * uBlur;
+    float glass = uMode == 0 ? throughWindow(oo, dd) : 1.0;
+    if (glass <= 0.0) continue;
+    seen += 1.0;
     Hit h = trace(oo, dd, sk);
     vec3 alb, wn;
     vec3 c = shade(h, sk, h.t * uPixAng, alb, wn) + dustGlow(oo, dd, h.k < 0 && h.roller < 0 ? 8000.0 : h.t, sk);
@@ -892,12 +917,12 @@ void main() {
         c += alb * b / float(uIndirect);
       }
     }
-    acc += c;
+    acc += c * glass;
   }
   vec3 c = acc / float(ns) * uExposure * vig;
   if (uMode == 0) {   // dirty camera window: blotchy transmission loss plus veiling glare
     float bl = smoothstep(0.55, 0.85, n1(float(ix) / (uSize.x / 60.0)));
-    c = c * (1.0 - uDirt * 0.6 * bl) + uDirt * 0.02;
+    c = c * (1.0 - uDirt * 0.6 * bl) + uDirt * 0.02 * seen / float(ns);
   }
   outColor = vec4(c, 1.0);
 }
@@ -918,7 +943,8 @@ uniform vec3 uFlick;            // light driver: mode (0 steady, 1 PWM, 2 ripple
 uniform float uT0; uniform float uTRow; uniform float uExpS;   // time of row 0 and per row, exposure, s
 uniform float uFpn; uniform float uCamSeed;   // uncalibrated sensor: pixel-to-pixel gain and dark offset
 uniform vec4 uDebris[16]; uniform int uNDebris; // on the bottom window: position along the line and across it, radius (mm), opacity
-uniform float uWinDist; uniform float uApR; uniform float uAxisPhi;   // window in front of the lens, aperture radius (mm)
+uniform vec3 uWinN; uniform vec3 uWinO; uniform vec3 uWinA;   // the window: outward normal, where the lens axis crosses it, along the line
+uniform float uApR;             // aperture radius, mm
 uniform float uFog;             // bottom window fogged: 1
 out vec4 outColor;
 vec3 aces(vec3 x) { return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0); }
@@ -957,13 +983,24 @@ float circOverlap(float d, float r1, float r2) {
   return r1 * r1 * acos((d * d + r1 * r1 - r2 * r2) / (2.0 * d * r1)) + r2 * r2 * acos((d * d + r2 * r2 - r1 * r1) / (2.0 * d * r2))
     - 0.5 * sqrt((-d + r1 + r2) * (d + r1 - r2) * (d - r1 + r2) * (d + r1 + r2));
 }
-// Share of the light that gets past the debris on the window for native pixel f. Each pixel's light passes the window
-// as a disc the size of the aperture, shifted along the line with the pixel's angle; debris is far out of focus, so
-// it dims the pixels whose disc it covers rather than showing as a shape.
+// Share of the light that gets past the debris on the window for native pixel f (as windowT in the page script). The
+// pixel's light crosses the window as a disc the size of the aperture around its ray; debris is far out of focus, so
+// it dims the pixels whose disc it covers rather than showing as a shape. Each item, seen along the ray, is
+// foreshortened to a disc of equal area.
 float windowT(float f) {
   if (uNDebris == 0) return 1.0;
-  float u = uWinDist * tan(uPhi0 + f * uDphi - uAxisPhi), blocked = 0.0;
-  for (int i = 0; i < 16; i++) { if (i >= uNDebris) break; vec4 q = uDebris[i]; blocked += q.w * circOverlap(length(vec2(u - q.x, q.y)), uApR, q.z); }
+  float phi = uPhi0 + f * uDphi;
+  vec3 d = cos(phi) * uD0 + sin(phi) * uE;
+  float c = dot(d, uWinN);
+  if (c <= 0.0) return 1.0;   // the ray ends on the housing (black in the tracer)
+  vec3 x = uC + d * (dot(uWinO - uC, uWinN) / c), b = cross(uWinN, uWinA);
+  float blocked = 0.0;
+  for (int i = 0; i < 16; i++) {
+    if (i >= uNDebris) break;
+    vec4 q = uDebris[i];
+    vec3 off = uWinO + q.x * uWinA + q.y * b - x;
+    blocked += q.w * circOverlap(length(off - d * dot(off, d)), uApR, q.z * sqrt(c));
+  }
   return max(0.0, 1.0 - blocked / (3.14159265 * uApR * uApR));
 }
 // A fogged window scatters light along the line: a wide average of it, weighted exp(-distance / FOG_PX).
@@ -1029,15 +1066,25 @@ void main() {
   // Wear and faults between services (assumed rates): LEDs lose ~2% output per month in 24/7 use, the camera window
   // collects ~6% dirt per month; faults switch a light off or make the encoder under-count travel.
   // Dust also settles on the LED bar's upward face under the gap, unevenly (barDust: mean loss), and grit on each
-  // bottom window. Rates per month in 24/7 use; protect: the share that stays (see PROTECTION).
+  // bottom window. Rates per month in 24/7 use, for a flat window; WINDOW_WEAR scales them by the window's angle.
   const WEAR = { ledLoss: 0.02, windowDirt: 0.06, barDust: 0.04, specks: 1.5 };
-  const service = { months: 0, barOut: false, lampOut: false, encErr: 0, protect: 1,
-    lightFactor() { return 1 - WEAR.ledLoss * this.months; }, extraDirt() { return WEAR.windowDirt * this.months * this.protect; },
-    barDust() { return Math.min(0.7, WEAR.barDust * this.months * this.protect); },
-    specks() { return Math.min(10, Math.floor(WEAR.specks * this.months * this.protect)); } };
-  // Protection of the bottom windows and the LED bar from what falls through the gap: the share of grit, dust and dirt
-  // that stays (assumed). A slanted cover lets grit slide off; an air knife blows it away, a splinter too.
-  const PROTECTION = { none: 1, slanted: 0.4, airknife: 0.1 };
+  // The bottom windows against what falls through the gap (assumed): grit and splinters slide off a window steeper than
+  // gritSlideDeg from horizontal; below that grit settles in proportion to the window's face seen from above. Fine dust
+  // settles the same way, but dustCling of the flat rate clings to any face (static, damp air). An air purge (dry
+  // compressed air across the window, purgeAirM3h per window) blows grit away, cuts settling dust to purgeDust and keeps
+  // the window from fogging; it can't move a splinter.
+  const WINDOW_WEAR = { gritSlideDeg: 35, dustCling: 0.15, purgeDust: 0.1, purgeAirM3h: 2 };
+  const service = { months: 0, barOut: false, lampOut: false, encErr: 0, winAngle: 0, purge: false,
+    lightFactor() { return 1 - WEAR.ledLoss * this.months; },
+    faceUp() { return Math.cos(this.winAngle * Math.PI / 180); },
+    gritSlides() { return this.winAngle >= WINDOW_WEAR.gritSlideDeg; },
+    extraDirt() {
+      const settles = this.faceUp() + WINDOW_WEAR.dustCling * (1 - this.faceUp());
+      return WEAR.windowDirt * this.months * settles * (this.purge ? WINDOW_WEAR.purgeDust : 1);
+    },
+    barDust() { return Math.min(0.7, WEAR.barDust * this.months); },
+    specks() { return this.purge || this.gritSlides() ? 0 : Math.min(10, Math.floor(WEAR.specks * this.months * this.faceUp())); } };
+  const winAngleText = (a) => a + "°" + (a === 0 ? " (flat)" : a === 90 ? " (vertical)" : "");
   let beltSpeed = 450;   // real infeed conveyor speed, mm/s (the Playback slider only runs the simulation faster or slower)
   // The middle section, |x| < SECTION_HALF around the scanner, can run faster than the infeed so touching pallets
   // separate. Its encoder drives the line-scan cameras and the tracker, so encoder position s is in middle-section mm.
@@ -1751,6 +1798,7 @@ void main() {
   }
   const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
   const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
   const norm3 = (a) => { const l = Math.hypot(a[0], a[1], a[2]); return [a[0] / l, a[1] / l, a[2] / l]; };
   // Station area cameras (pinhole + thin lens), triggered by pallet position.
   const STATION_LIGHTS = STATION_LAMPS.map((l) => [l[0], l[1], l[2], 0.75 * 2.42 / 10 * 1300 * 1300]);
@@ -1861,6 +1909,44 @@ void main() {
   const LENS_DISTORTION = 0.03;   // barrel distortion, ~1% at 35° off axis
   const ROLLING_S = 0.02;         // rolling-shutter readout, first row to last
   const WINDOW_MM = 25, PINHOLE_MM = 0.3;   // window in front of the bottom cameras' lens; aperture for the pinhole lens
+  // The bottom cameras' window: plain glass (BK7-like; index n for green light, nRB for red and blue, which only the
+  // colour-fringe estimate uses), thickMm thick. It crosses the lens axis WINDOW_MM in front of the lens and stands at
+  // the window angle from horizontal, its outer face turned the way the camera looks (assumed).
+  const GLASS = { thickMm: 4, n: 1.5185, nRB: [1.5157, 1.524] };
+  // The purge air in front of the window (assumed): coolK colder than the hall after expanding, in a layer layerMm wide
+  // that the rays cross over pathMm. Air's index changes by AIR_DN_DT per kelvin.
+  const PURGE_AIR = { coolK: 5, layerMm: 5, pathMm: 20 }, AIR_DN_DT = 9.3e-7;
+  // Camera cam's window: outward normal n, the point o where the lens axis crosses it, and the direction a in its plane
+  // along the scan line (debris positions are along a and across it, from o).
+  function windowFor(cam) {
+    const ang = service.winAngle * Math.PI / 180, side = Math.sign(cam.spec.tilt) || 1;
+    const n = [side * Math.sin(ang), Math.cos(ang), 0], o = cam.C.map((c, i) => c + WINDOW_MM * cam.axis[i]);
+    const en = cam.e[0] * n[0] + cam.e[1] * n[1] + cam.e[2] * n[2];
+    return { n: n, o: o, a: norm3(cam.e.map((v, i) => v - en * n[i])) };
+  }
+  // A ray meeting the glass at cosI to its normal, glass index nG: the share of the light it lets through (both faces
+  // reflect, by Fresnel for each polarisation, and the light bouncing between them comes out too), and how far it
+  // shifts the ray sideways, mm. As throughWindow in the tracer.
+  function glassPass(cosI, nG) {
+    if (cosI <= 0) return { T: 0, shift: 0 };
+    const sinI = Math.sqrt(1 - cosI * cosI), sinT = sinI / nG, cosT = Math.sqrt(1 - sinT * sinT);
+    const rs = ((cosI - nG * cosT) / (cosI + nG * cosT)) ** 2, rp = ((nG * cosI - cosT) / (nG * cosI + cosT)) ** 2;
+    return { T: 0.5 * ((1 - rs) / (1 + rs) + (1 - rp) / (1 + rp)), shift: GLASS.thickMm * (sinI * cosT - cosI * sinT) / cosT };
+  }
+  const camRay = (cam, phi) => [0, 1, 2].map((i) => Math.cos(phi) * cam.d0[i] + Math.sin(phi) * cam.e[i]);
+  // The window along camera cam's line, at WINDOW_SAMPLES pixel rays: per ray its cosine to the window's normal and
+  // where it crosses the window (u along the line, v across it, mm from o).
+  const WINDOW_SAMPLES = 64;
+  function windowRays(cam, win) {
+    const b = cross3(win.n, win.a), out = [];
+    for (let i = 0; i < WINDOW_SAMPLES; i++) {
+      const d = camRay(cam, cam.phi0 + (cam.phi1 - cam.phi0) * i / (WINDOW_SAMPLES - 1)), c = dot3(d, win.n);
+      if (c <= 0) { out.push({ c: c }); continue; }
+      const t = dot3(sub3(win.o, cam.C), win.n) / c, x = sub3(cam.C.map((v, k) => v + t * d[k]), win.o);
+      out.push({ c: c, u: dot3(x, win.a), v: dot3(x, b) });
+    }
+    return out;
+  }
   // Debris on a bottom camera's window (assumed): grit settles over the months since service, and a splinter
   // can lie on the first camera's window. Each: position along the sensor line and across it, radius (mm), opacity.
   function debrisFor(cam) {
@@ -1868,25 +1954,58 @@ void main() {
     let n = 0, seed = (Math.round(cam.spec.tilt * 31 + cam.spec.z) >>> 0) + 7;
     const r = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
     const add = (u, v, rad, op) => data.set([u, v, rad, op], 4 * n++);
-    if (opts().splinter && service.protect > PROTECTION.airknife && cam.spec.z <= 0) for (let k = 0; k < 5; k++) add(-6 + k * 1.6, -0.8 + k * 0.4, 0.9, 0.95);
+    if (opts().splinter && !service.gritSlides() && cam.spec.z <= 0) for (let k = 0; k < 5; k++) add(-6 + k * 1.6, -0.8 + k * 0.4, 0.9, 0.95);
     for (let k = service.specks(); k > 0; k--) add((r() - 0.5) * 30, (r() - 0.5) * 4, 0.15 + 0.35 * r(), 0.6 + 0.4 * r());
     return { data: data, n: n };
   }
-  // Share of the bottom images' columns that debris on the windows darkens, averaged over the cameras. Estimate of
-  // windowT in the post shader: each item darkens a band as wide as the aperture disc plus the item, as far as it
-  // covers the disc, if it lies on the disc's path across the window.
+  // What camera cam's window does along its line, for the Timing & data tab: the share of the line that ends on the
+  // housing (the window too steep for this camera), the light let through at the steepest and the most head-on ray,
+  // how much the sideways shift varies along the line (a distortion that calibration removes), the glass needed (along
+  // and across the line, with the aperture's disc around every ray), and two effects too small to trace, in pixels on
+  // the belt: the colour fringe from the glass's dispersion and the purge air bending the rays.
+  function windowOptics(cam, fnum) {
+    const rays = windowRays(cam, windowFor(cam)), through = rays.filter((r) => r.c > 0), apR = apertureR(cam, fnum);
+    if (!through.length) return { housed: 1 };
+    const cs = through.map((r) => r.c), cLo = Math.min(...cs), cHi = Math.max(...cs), shifts = cs.map((c) => glassPass(c, GLASS.n).shift);
+    const fringe = Math.abs(glassPass(cLo, GLASS.nRB[1]).shift - glassPass(cLo, GLASS.nRB[0]).shift);
+    const bend = PURGE_AIR.coolK * AIR_DN_DT / PURGE_AIR.layerMm * PURGE_AIR.pathMm;   // radians
+    const span = (k) => Math.max(...through.map((r) => r[k])) - Math.min(...through.map((r) => r[k]));
+    return { housed: 1 - through.length / rays.length, tLo: glassPass(cLo, GLASS.n).T, tHi: glassPass(cHi, GLASS.n).T,
+      shiftSpan: Math.max(...shifts) - Math.min(...shifts), sizeU: span("u") + 2 * apR / cLo, sizeV: span("v") + 2 * apR / cLo,
+      fringePx: fringe / cam.mmPerPx, bendPx: bend * cam.focus / cam.mmPerPx };
+  }
+  // Light the windows let through toward the belt centre, averaged over the cameras (for the light budget).
+  const windowPass = () => cams.reduce((sum, c) => sum + glassPass(dot3(c.axis, windowFor(c).n), GLASS.n).T, 0) / cams.length;
+  // Share of the light that gets past the debris on camera cam's window along pixel ray d (as windowT in the post
+  // shader): the ray's light crosses the window as a disc the size of the aperture (radius apR) around the ray; each
+  // item, seen along the ray, is foreshortened to a disc of equal area, and blocks as much of the disc as it covers.
+  function windowT(cam, win, db, apR, d) {
+    const c = dot3(d, win.n);
+    if (c <= 0) return 1;
+    const t = dot3(sub3(win.o, cam.C), win.n) / c, x = cam.C.map((v, k) => v + t * d[k]), b = cross3(win.n, win.a);
+    let blocked = 0;
+    for (let i = 0; i < db.n; i++) {
+      const [u, v, r, op] = db.data.subarray(4 * i, 4 * i + 4), q = win.o.map((w, k) => w + u * win.a[k] + v * b[k]);
+      const off = sub3(q, x), along = dot3(off, d), across = Math.hypot(...off.map((w, k) => w - along * d[k]));
+      blocked += op * circOverlap(across, apR, r * Math.sqrt(c));
+    }
+    return Math.max(0, 1 - blocked / (Math.PI * apR * apR));
+  }
+  function circOverlap(d, r1, r2) {   // area where two circles (centres d apart) overlap, as in the post shader
+    if (d >= r1 + r2) return 0;
+    if (d <= Math.abs(r1 - r2)) return Math.PI * Math.min(r1, r2) ** 2;
+    return r1 * r1 * Math.acos((d * d + r1 * r1 - r2 * r2) / (2 * d * r1)) + r2 * r2 * Math.acos((d * d + r2 * r2 - r1 * r1) / (2 * d * r2))
+      - 0.5 * Math.sqrt((-d + r1 + r2) * (d + r1 - r2) * (d - r1 + r2) * (d + r1 + r2));
+  }
+  const apertureR = (cam, fnum) => (fnum > 0 ? cam.focal / fnum / 2 : PINHOLE_MM / 2);
+  // Share of the bottom images' light that debris on the windows blocks, averaged over the pixels and the cameras.
   function debrisShare(o) {
     let sum = 0;
     cams.forEach((cam) => {
-      const db = debrisFor(cam), apR = o.fnum > 0 ? cam.focal / o.fnum / 2 : PINHOLE_MM / 2, span = 2 * WINDOW_MM * Math.tan((cam.phi1 - cam.phi0) / 2);
-      let s = 0;
-      for (let i = 0; i < db.n; i++) {
-        const [, v, r, op] = db.data.subarray(4 * i, 4 * i + 4);
-        if (Math.abs(v) < apR + r) s += op * Math.min(1, (r / apR) * (r / apR)) * 2 * (apR + r) / span;
-      }
-      sum += Math.min(1, s);
+      const db = debrisFor(cam), win = windowFor(cam), apR = apertureR(cam, o.fnum);
+      for (let i = 0; i < WINDOW_SAMPLES; i++) sum += 1 - windowT(cam, win, db, apR, camRay(cam, cam.phi0 + (cam.phi1 - cam.phi0) * i / (WINDOW_SAMPLES - 1)));
     });
-    return sum / cams.length;
+    return sum / (WINDOW_SAMPLES * cams.length);
   }
   // ---------------- draw calls ----------------
   // ---------------- exposure and sensor ----------------
@@ -1899,8 +2018,9 @@ void main() {
   }
   const areaExposure = (o) => ({ t: o.aexpMs, k: o.aexpMs, blur: scanSpeed() * o.aexpMs / 1000 });
   // The line cameras' signal relative to the reference: the exposure, with everything that dims the bar's light on
-  // the scan line (louvre, LED ageing, dust on the bar, a failed bar leaving only stray light from the lamps).
-  const lineSignalK = (o) => lineExposure(o).k * louvrePass(o.louvre) * service.lightFactor() * (1 - service.barDust()) * (service.barOut ? 0.1 : 1);
+  // the scan line (louvre, LED ageing, dust on the bar, a failed bar leaving only stray light from the lamps) and on
+  // the way back through the camera's window.
+  const lineSignalK = (o) => lineExposure(o).k * louvrePass(o.louvre) * service.lightFactor() * (1 - service.barDust()) * (service.barOut ? 0.1 : 1) * windowPass();
   const significantBlur = (mm, mmPerPx) => ((mm || 0) >= 0.25 * mmPerPx ? mm : 0);   // below a quarter pixel: not worth the samples
   function sensorUniforms(P, o) { gl.uniform1f(P.uK, o.k || 1); gl.uniform1f(P.uFullWell, SENSOR.fullWell); gl.uniform1f(P.uReadNoise, SENSOR.readNoise); }
 
@@ -1933,6 +2053,8 @@ void main() {
     const fnum = o.id ? 0 : o.fnum;
     gl.uniform3fv(U.uAxis, cam.axis); gl.uniform1f(U.uFocus, cam.focus); gl.uniform1f(U.uAperture, fnum > 0 ? cam.focal / fnum : 0); gl.uniform1i(U.uDof, fnum > 0 ? LENS_SAMPLES : 0);
     gl.uniform1f(U.uPixAng, cam.dphi); gl.uniform1f(U.uBlur, significantBlur(o.blur, pitch));
+    const win = windowFor(cam);
+    gl.uniform3fv(U.uWinN, win.n); gl.uniform3fv(U.uWinO, win.o); gl.uniform2f(U.uGlass, GLASS.n, GLASS.thickMm);
     beginStill(U, o);
     gl.uniform1i(U.uIndirect, o.indirect && !o.still && !o.id ? INDIRECT_SAMPLES : 0);
     if (o.indirect && !o.still) gl.uniform3fv(U.uSky, HALL_SKY.map((v) => v * L.hall * (1 + L.day)));
@@ -1949,8 +2071,9 @@ void main() {
     gl.uniform1f(P.uNoise, o.noise); gl.uniform1f(P.uSeed, o.seed || 1); gl.uniform1f(P.uRowBase, o.rowBase || 0); gl.uniform1i(P.uTone, 0); sensorUniforms(P, o);
     conditionUniforms(P, L, s0 / scanSpeed(), pitch / scanSpeed(), (o.t || 100) * 1e-6, c.uncal, cam.spec.tilt * 7 + cam.spec.z);
     const db = debrisFor(cam);
-    gl.uniform4fv(P.uDebris, db.data); gl.uniform1i(P.uNDebris, db.n); gl.uniform1f(P.uWinDist, WINDOW_MM); gl.uniform1f(P.uAxisPhi, cam.axisPhi);
-    gl.uniform1f(P.uApR, o.fnum > 0 ? cam.focal / o.fnum / 2 : PINHOLE_MM / 2); gl.uniform1f(P.uFog, c.fog ? 1 : 0);
+    gl.uniform4fv(P.uDebris, db.data); gl.uniform1i(P.uNDebris, db.n);
+    gl.uniform3fv(P.uWinN, win.n); gl.uniform3fv(P.uWinO, win.o); gl.uniform3fv(P.uWinA, win.a);
+    gl.uniform1f(P.uApR, apertureR(cam, o.fnum)); gl.uniform1f(P.uFog, c.fog ? 1 : 0);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
   function traceArea(cam, s, o) {
@@ -2257,7 +2380,9 @@ void main() {
     const leds = new Set();
     cams.forEach((c) => {
       const C = new THREE.Vector3(c.C[0] / 1000, c.C[1] / 1000, c.C[2] / 1000), d0 = new THREE.Vector3(...c.d0), e = new THREE.Vector3(...c.e);
-      const body = box(0.08, 0.1, 0.16, camM, 0, 0, 0); body.position.copy(C); body.lookAt(C.clone().add(new THREE.Vector3(...c.axis)));
+      const axis = new THREE.Vector3(...c.axis), body = box(0.08, 0.1, 0.16, camM, 0, 0, 0);   // the lens at its front face
+      body.position.copy(C.clone().addScaledVector(axis, -0.08)); body.lookAt(C.clone().add(axis));
+      rig.add(windowMesh(c));
       // stands, as in the traced scene (rigParts): one under each camera, two under each LED bar
       const standM = M(css("--steel"), { metalness: 0.4, roughness: 0.5 }), stand = (x, top, z, w) => rig.add(tip(box(w, top + 0.6, w, standM, x, (top - 0.6) / 2, z), "Stand on the floor, 0.6 m below the belt."));
       stand(C.x, C.y - 0.045, C.z, 0.03);
@@ -2276,6 +2401,22 @@ void main() {
       const fan = new THREE.Mesh(geo, beam); fan.userData.kind = "line"; rig.add(tip(fan, "Scan plane of the " + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "° camera; it passes through the gap line.")); fans.push(fan);
     });
     applyFans();
+  }
+  // Camera c's window, as a pane of the glass it needs, and the air purge collar along its upper edge when on.
+  function windowMesh(c) {
+    const win = windowFor(c), w = windowOptics(c, opts().fnum), g = new THREE.Group();
+    const a = new THREE.Vector3(...win.a), n = new THREE.Vector3(...win.n), b = n.clone().cross(a);
+    g.matrix.makeBasis(a, b, n).setPosition(win.o[0] / 1000, win.o[1] / 1000, win.o[2] / 1000); g.matrixAutoUpdate = false;
+    const wu = (w.sizeU || 40) / 1000, wv = (w.sizeV || 10) / 1000;
+    const glassM = M("#a8d8ea", { transparent: true, opacity: 0.5, roughness: 0.05, depthWrite: false });
+    g.add(tip(box(wu, wv, GLASS.thickMm / 1000, glassM, 0, 0, GLASS.thickMm / 2000), "Window, plain glass " + GLASS.thickMm + " mm, " +
+      winAngleText(service.winAngle) + " from horizontal" + (w.housed === 1 ? ": too steep for this camera to see through." : ", " + Math.ceil(w.sizeU) + " × " + Math.ceil(w.sizeV) + " mm; lets through " + Math.round(w.tLo * 100) + "–" + Math.round(w.tHi * 100) + "%.")));
+    if (service.purge) {
+      const up = b.y >= 0 ? 1 : -1;
+      g.add(tip(box(wu + 0.01, 0.008, 0.012, M(css("--steel"), { metalness: 0.4, roughness: 0.5 }), 0, up * (wv / 2 + 0.004), 0.006),
+        "Air purge collar: blows dry compressed air across the window, about " + WINDOW_WEAR.purgeAirM3h + " m³/h (assumed)."));
+    }
+    return g;
   }
   function buildStationRig() {
     while (stationRig.children.length) stationRig.remove(stationRig.children[0]);
@@ -2336,7 +2477,7 @@ void main() {
     fnum: +$("fnum").value, dirt: Math.min(1, +$("dirt").value + service.extraDirt()), transport: $("opt-transport").checked, station: $("opt-station").checked,
     expUs: Math.pow(10, +$("exp").value), light: +$("light").value, aexpMs: Math.pow(10, +$("aexp").value),
     louvre: +$("louvre").value, dust: +$("dust").value, glare: $("opt-glare").checked,
-    vib: +$("vib").value, indirect: $("opt-indirect").checked, rolling: $("shutter").value === "rolling", uncal: $("f-uncal").checked, splinter: $("f-splinter").checked, fog: $("f-fog").checked });
+    vib: +$("vib").value, indirect: $("opt-indirect").checked, rolling: $("shutter").value === "rolling", uncal: $("f-uncal").checked, splinter: $("f-splinter").checked, fog: $("f-fog").checked && !service.purge });
   const specsFor = (key) => (key === "dual" ? [{ tilt: 25, z: -sideOffset }, { tilt: -25, z: sideOffset }] : [{ tilt: Number(key), z: 0 }]);
 
   function weightedType() {
@@ -2548,7 +2689,6 @@ void main() {
   const pending = [], trigErrs = [];
   let ds = 7; const drnd = () => { ds = (ds * 1664525 + 1013904223) >>> 0; return ds / 4294967296; };
   const gauss = () => Math.sqrt(-2 * Math.log(1 - drnd())) * Math.cos(6.2831853 * drnd());
-  const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
   const toImage = (cam, P) => { const v = sub3(P, cam.C), z = dot3(v, cam.F); return [cam.w / 2 + dot3(v, cam.R) / z * cam.fx, cam.h / 2 - dot3(v, cam.U) / z * cam.fx]; };
   function beltXAt(cam, u, y) {   // travel position where the ray through image column u meets height y
     const d = [0, 1, 2].map((i) => cam.F[i] + (u - cam.w / 2) / cam.fx * cam.R[i]);
@@ -2910,6 +3050,17 @@ void main() {
     const chk = (ok, warn) => (ok ? '<span class="chip ok">ok</span>' : warn ? '<span class="chip warn">check</span>' : '<span class="chip bad">short</span>');
     const snrChk = (s) => chk(!s.saturated && s.db >= 30, !s.saturated && s.db >= 20);
     const signal = (s) => (s.saturated ? "saturated: mid-grey already fills the full well" : Math.round(s.e) + " e⁻, SNR " + s.db.toFixed(0) + " dB, gain ×" + s.gain.toFixed(1));
+    const pct = (x) => Math.round(x * 100) + "%", px = (x) => (x < 0.01 ? "<0.01" : x.toFixed(2)) + " px";
+    function windowRow(c, o) {
+      const w = windowOptics(c, o.fnum), name = "Window optics, " + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "° camera";
+      if (w.housed === 1) return [name, "too steep: the camera can't see through it", chk(false)];
+      const housed = w.housed > 0 ? pct(w.housed) + " of the line ends on the housing; " : "";
+      return [name, housed + "lets through " + pct(w.tLo) + (w.tHi - w.tLo >= 0.005 ? "–" + pct(w.tHi) : "") +
+        "; the view's shift varies " + w.shiftSpan.toFixed(1) + " mm along the line (calibration removes it); glass " +
+        Math.ceil(w.sizeU) + " × " + Math.ceil(w.sizeV) + " mm; colour fringe " + px(w.fringePx) +
+        (service.purge ? ", purge air shimmer " + px(w.bendPx) : "") + " (too small to trace)",
+        chk(!w.housed && w.tLo >= 0.8, !w.housed && w.tLo >= 0.6)];
+    }
     const fmtBlur = (mm, mmPx) => mm.toFixed(2) + " mm = " + (mm / mmPx).toFixed(2) + " px";
     const rows = [
       ["Throughput"],
@@ -2944,8 +3095,10 @@ void main() {
       ["Light flicker between snapshots: " + flickRow(flickArea)[0], flickRow(flickArea)[1], flickRow(flickArea)[2]],
       ["Service state"],
       ["Since service", service.months + " months: light output " + Math.round(age * 100) + "%, dust on the LED bar −" + Math.round(service.barDust() * 100) + "%, window dirt " + Math.round(o.dirt * 100) + "%, " + service.specks() + " specks per bottom window", chk(age >= 0.9 && o.dirt <= 0.5, age >= 0.8 && o.dirt <= 0.75)],
-      ["Debris on the bottom windows", service.specks() + " specks of grit" + (o.splinter && service.protect > PROTECTION.airknife ? " and a splinter" : "") + ": darkens the image columns by about " + Math.round(debrisShare(o) * 100) + "% on average (estimate)", chk(debrisShare(o) <= 0.02, debrisShare(o) <= 0.1)],
-      ["Window and bar protection", $("protect").selectedOptions[0].textContent + ($("protect").value === "airknife" ? ": needs compressed air, roughly 40 m³/h (assumed)" : ""), ""],
+      ["Debris on the bottom windows", service.specks() + " specks of grit" + (o.splinter && !service.gritSlides() ? " and a splinter" : "") + ": darkens the image columns by about " + Math.round(debrisShare(o) * 100) + "% on average (estimate)", chk(debrisShare(o) <= 0.02, debrisShare(o) <= 0.1)],
+      ["Bottom windows", winAngleText(service.winAngle) + " from horizontal" + (service.gritSlides() ? ", grit slides off" : "") +
+        (service.purge ? "; air purge: about " + WINDOW_WEAR.purgeAirM3h * cams.length + " m³/h of compressed air (assumed)" : ""), ""],
+      ...cams.map((c) => windowRow(c, o)),
       ["Faults", [service.barOut && "LED bar out", service.lampOut && "a station lamp out", service.encErr && "encoder reads " + Math.round(service.encErr * 100) + "% short (images " + Math.round(service.encErr * 100) + "% compressed)"].filter(Boolean).join(", ") || "none",
         chk(!service.barOut && !service.lampOut && !service.encErr)],
       ["Totals"],
@@ -3101,7 +3254,9 @@ void main() {
   $("dust").addEventListener("input", () => { $("dust-out").textContent = $("dust").value + " mg/m³"; });
   $("louvre").addEventListener("change", updateBudget);
   $("driver").addEventListener("change", updateBudget);
-  $("protect").addEventListener("change", () => { service.protect = PROTECTION[$("protect").value]; updateBudget(); });
+  $("win-angle").addEventListener("input", () => { service.winAngle = +$("win-angle").value; $("win-angle-out").textContent = winAngleText(service.winAngle); updateBudget(); });
+  $("win-angle").addEventListener("change", buildRig);
+  $("win-purge").addEventListener("change", () => { service.purge = $("win-purge").checked; buildRig(); updateBudget(); });
   $("f-splinter").addEventListener("change", updateBudget);
   ["side-h", "side-x"].forEach((id) => {
     $(id).addEventListener("input", () => { $(id + "-out").textContent = $(id).value + " mm"; });
@@ -3145,7 +3300,7 @@ void main() {
   const SETTING_IDS = ["tilt", "side", "gap", "sensor", "fnum", "opt-fit", "opt-rect", "opt-light", "exp", "light", "aexp", "dirt", "belt", "section",
     "speed", "damage", "scatter", "opt-transport", "opt-unusual", "opt-station", "months", "f-bar", "f-lamp", "f-enc",
     "louvre", "dust", "opt-glare", "driver", "lightcol", "daylight", "vib", "shutter", "f-uncal", "f-splinter", "f-fog",
-    "protect", "side-h", "side-x", "opt-indirect"];
+    "win-angle", "win-purge", "side-h", "side-x", "opt-indirect"];
   const SETTINGS_PREFIX = "pbs1.";
   let applyingSettings = false, restartWanted = false;
   function settingsCode() {
@@ -3381,7 +3536,7 @@ void main() {
   function setupSummary() {
     const o = opts(), cam = presetKey === "dual" ? "dual ±25° at ±" + sideOffset + " mm" : (+presetKey > 0 ? "+" : "") + presetKey + "° centred";
     const faults = [service.barOut && "LED bar out", service.lampOut && "lamp out", service.encErr && "encoder 8% short",
-      o.louvre && "louvre ±" + o.louvre + "°", $("protect").value !== "none" && $("protect").selectedOptions[0].textContent, o.splinter && "splinter on a window",
+      o.louvre && "louvre ±" + o.louvre + "°", service.winAngle && "windows at " + service.winAngle + "°", service.purge && "air purge", o.splinter && "splinter on a window",
       o.fog && "fogged windows", $("driver").value !== "dc" && $("driver").selectedOptions[0].textContent, o.vib > 0 && "vibration " + o.vib.toFixed(2) + " mm",
       o.uncal && "uncalibrated", o.indirect && "indirect light"].filter(Boolean);
     return [cam, "gap " + gap + " mm", PX / 1024 + "k px", o.fnum ? "f/" + o.fnum : "pinhole", Math.round(o.expUs) + " µs", "LED " + o.light + "%",
@@ -3482,7 +3637,10 @@ void main() {
       ["Reference exposure", () => "100 µs at f/4 with the LED bar at 100% fills mid-grey to half the full well", "assumed", "every brightness and noise result"],
       ["LED bar", () => (-cams[0].lightPos[1]) + " mm below the belt, 1 m long, sampled as " + cams[0].lights.length + " points", "assumed", "light through the gap, glare, louvre"],
       ["LED bar against the station lamps", () => BAR_VS_LAMPS + "× as bright (100 µs line exposure vs 1 ms area exposure, similar lenses)", "estimate", "glare in the station cameras, lamps in the bottom images"],
-      ["Window in front of the lens", () => WINDOW_MM + " mm", "assumed", "how debris on it shows"],
+      ["Window in front of the lens", () => WINDOW_MM + " mm along the lens axis, outer face turned the way the camera looks", "assumed", "how debris on it shows, window size"],
+      ["Window glass", () => "plain, uncoated, " + GLASS.thickMm + " mm, index " + GLASS.n + " (BK7-like); housing behind it matt black, so the window reflects nothing into the lens", "assumed", "light lost at steep windows, shift of the view"],
+      ["Glass dispersion", () => "index " + GLASS.nRB[0] + " for red, " + GLASS.nRB[1] + " for blue; the colour fringe is estimated, not traced", "typical", "colour fringe"],
+      ["Purge air", () => PURGE_AIR.coolK + " K colder than the hall in a " + PURGE_AIR.layerMm + " mm layer crossed over " + PURGE_AIR.pathMm + " mm; air index " + AIR_DN_DT + " per K; the bending is estimated, not traced", "assumed", "shimmer with an air purge"],
       ["Louvre film leak beyond its cut-off", () => pct(shaderFloat("LOUVRE_LEAK"), 1), "typical", "glare with a louvre"]]],
     ["Station and top cameras", [
       ["Top camera", () => AREA_REAL.topMP + " MP, " + AREA_REAL.topPx + " px over " + AREA_REAL.topField / 1000 + " m, " + TOP_FPS + " fps", "assumed", "tracking, data rate"],
@@ -3504,11 +3662,11 @@ void main() {
       ["Fogged window", () => "lets through " + pct(shaderFloat("FOG_KEEP")) + ", scatters " + pct(shaderFloat("FOG_SCATTER")) + " of it along the line", "assumed", "contrast in the bottom images"]]],
     ["Wear and service", [
       ["LED output loss", () => pct(WEAR.ledLoss) + " per month", "typical", "signal over time"],
-      ["Dirt on the bottom windows", () => pct(WEAR.windowDirt) + " per month", "assumed", "signal and contrast over time"],
+      ["Dirt on the bottom windows", () => pct(WEAR.windowDirt) + " per month on a flat window; in proportion to the face seen from above, but " + pct(WINDOW_WEAR.dustCling) + " of it clings to a vertical one", "assumed", "signal and contrast over time"],
       ["Dust on the LED bar", () => pct(WEAR.barDust) + " less light per month, uneven along the bar", "assumed", "signal over time"],
-      ["Grit on each bottom window", () => WEAR.specks + " specks per month (up to 10)", "assumed", "dark bands in the bottom images"],
-      ["Protection: share of grit and dirt that stays", () => "slanted covers " + pct(PROTECTION.slanted) + ", air knife " + pct(PROTECTION.airknife) + " (and no splinter)", "assumed", "service interval"],
-      ["Air knife consumption", () => "roughly 40 m³/h of compressed air", "typical", "running cost"]]],
+      ["Grit on each bottom window", () => WEAR.specks + " specks per month on a flat window (up to 10); grit and splinters slide off from " + WINDOW_WEAR.gritSlideDeg + "°", "assumed", "dark bands in the bottom images"],
+      ["Air purge on the bottom windows", () => "blows grit away, lets " + pct(WINDOW_WEAR.purgeDust) + " of the dust settle, keeps the window dry (no fog); not a splinter", "assumed", "service interval"],
+      ["Air purge consumption", () => "about " + WINDOW_WEAR.purgeAirM3h + " m³/h of compressed air per window", "assumed", "running cost"]]],
     ["Damage catalogue", [
       ["What makes a pallet need repair or count as unusual", () => "EPAL quality classification for the open exchange pool (contamination, rot, inadmissible components, skewed blocks over 1 cm, visible nail shanks, illegible marks; adhesions removed first)", "standard", "which damages exist and their severity"],
       ["Loose board turned flat", () => LOOSE_TURN_DEG[0] + "–" + LOOSE_TURN_DEG[1] + "° about the last block's nails, free end outward", "assumed", "how far it sticks out"],

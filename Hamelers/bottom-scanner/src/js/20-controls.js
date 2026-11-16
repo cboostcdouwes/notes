@@ -36,7 +36,9 @@
   $("dust").addEventListener("input", () => { $("dust-out").textContent = $("dust").value + " mg/m³"; });
   $("louvre").addEventListener("change", updateBudget);
   $("driver").addEventListener("change", updateBudget);
-  $("protect").addEventListener("change", () => { service.protect = PROTECTION[$("protect").value]; updateBudget(); });
+  $("win-angle").addEventListener("input", () => { service.winAngle = +$("win-angle").value; $("win-angle-out").textContent = winAngleText(service.winAngle); updateBudget(); });
+  $("win-angle").addEventListener("change", buildRig);
+  $("win-purge").addEventListener("change", () => { service.purge = $("win-purge").checked; buildRig(); updateBudget(); });
   $("f-splinter").addEventListener("change", updateBudget);
   ["side-h", "side-x"].forEach((id) => {
     $(id).addEventListener("input", () => { $(id + "-out").textContent = $(id).value + " mm"; });

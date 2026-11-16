@@ -28,6 +28,17 @@
     const chk = (ok, warn) => (ok ? '<span class="chip ok">ok</span>' : warn ? '<span class="chip warn">check</span>' : '<span class="chip bad">short</span>');
     const snrChk = (s) => chk(!s.saturated && s.db >= 30, !s.saturated && s.db >= 20);
     const signal = (s) => (s.saturated ? "saturated: mid-grey already fills the full well" : Math.round(s.e) + " e⁻, SNR " + s.db.toFixed(0) + " dB, gain ×" + s.gain.toFixed(1));
+    const pct = (x) => Math.round(x * 100) + "%", px = (x) => (x < 0.01 ? "<0.01" : x.toFixed(2)) + " px";
+    function windowRow(c, o) {
+      const w = windowOptics(c, o.fnum), name = "Window optics, " + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "° camera";
+      if (w.housed === 1) return [name, "too steep: the camera can't see through it", chk(false)];
+      const housed = w.housed > 0 ? pct(w.housed) + " of the line ends on the housing; " : "";
+      return [name, housed + "lets through " + pct(w.tLo) + (w.tHi - w.tLo >= 0.005 ? "–" + pct(w.tHi) : "") +
+        "; the view's shift varies " + w.shiftSpan.toFixed(1) + " mm along the line (calibration removes it); glass " +
+        Math.ceil(w.sizeU) + " × " + Math.ceil(w.sizeV) + " mm; colour fringe " + px(w.fringePx) +
+        (service.purge ? ", purge air shimmer " + px(w.bendPx) : "") + " (too small to trace)",
+        chk(!w.housed && w.tLo >= 0.8, !w.housed && w.tLo >= 0.6)];
+    }
     const fmtBlur = (mm, mmPx) => mm.toFixed(2) + " mm = " + (mm / mmPx).toFixed(2) + " px";
     const rows = [
       ["Throughput"],
@@ -62,8 +73,10 @@
       ["Light flicker between snapshots: " + flickRow(flickArea)[0], flickRow(flickArea)[1], flickRow(flickArea)[2]],
       ["Service state"],
       ["Since service", service.months + " months: light output " + Math.round(age * 100) + "%, dust on the LED bar −" + Math.round(service.barDust() * 100) + "%, window dirt " + Math.round(o.dirt * 100) + "%, " + service.specks() + " specks per bottom window", chk(age >= 0.9 && o.dirt <= 0.5, age >= 0.8 && o.dirt <= 0.75)],
-      ["Debris on the bottom windows", service.specks() + " specks of grit" + (o.splinter && service.protect > PROTECTION.airknife ? " and a splinter" : "") + ": darkens the image columns by about " + Math.round(debrisShare(o) * 100) + "% on average (estimate)", chk(debrisShare(o) <= 0.02, debrisShare(o) <= 0.1)],
-      ["Window and bar protection", $("protect").selectedOptions[0].textContent + ($("protect").value === "airknife" ? ": needs compressed air, roughly 40 m³/h (assumed)" : ""), ""],
+      ["Debris on the bottom windows", service.specks() + " specks of grit" + (o.splinter && !service.gritSlides() ? " and a splinter" : "") + ": darkens the image columns by about " + Math.round(debrisShare(o) * 100) + "% on average (estimate)", chk(debrisShare(o) <= 0.02, debrisShare(o) <= 0.1)],
+      ["Bottom windows", winAngleText(service.winAngle) + " from horizontal" + (service.gritSlides() ? ", grit slides off" : "") +
+        (service.purge ? "; air purge: about " + WINDOW_WEAR.purgeAirM3h * cams.length + " m³/h of compressed air (assumed)" : ""), ""],
+      ...cams.map((c) => windowRow(c, o)),
       ["Faults", [service.barOut && "LED bar out", service.lampOut && "a station lamp out", service.encErr && "encoder reads " + Math.round(service.encErr * 100) + "% short (images " + Math.round(service.encErr * 100) + "% compressed)"].filter(Boolean).join(", ") || "none",
         chk(!service.barOut && !service.lampOut && !service.encErr)],
       ["Totals"],
