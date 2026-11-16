@@ -125,4 +125,11 @@
     gallery.innerHTML = '<p class="empty">Each pallet\'s images appear here once it has passed the scanner.</p>';
     buildRig(); buildStationRig(); setupLive(); updateGapStat(); updateBudget(); spawn();
   }
+  // A new light setup moves the bars, not the cameras: rebuild the rig and the live views, keep the feed.
+  function relight() {
+    if (applyingSettings) { restartWanted = true; return; }
+    const o = opts();
+    cams = specs.map((sp) => bottomCam(sp, PX, Object.assign({}, o, { anyZero: specs.some((s) => s.tilt === 0) })));
+    sceneKey = ""; buildRig(); setupLive(); updateGapStat(); updateBudget();
+  }
 

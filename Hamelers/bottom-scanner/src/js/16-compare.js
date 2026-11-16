@@ -1,9 +1,11 @@
   // ---------------- compare settings ----------------
-  const SETTINGS = [
-    ["Centred 0°", { key: "0" }], ["Centred +25°", { key: "25" }], ["Centred −25°", { key: "-25" }],
-    ["Dual ±25°, sides ±400 mm", { key: "dual", side: 400 }], ["Dual ±25°, sides ±600 mm", { key: "dual", side: 600 }], ["Dual ±25°, both centred", { key: "dual", side: 0 }]
-  ];
+  // camera setups to compare; the dual one takes its row's side offset
+  const SETTINGS = [["Centred 0°", "0"], ["Centred +25°", "25"], ["Centred −25°", "-25"], ["Dual ±25°", "dual"]];
   [$("cmp-a"), $("cmp-b")].forEach((s) => SETTINGS.forEach(([n], i) => { const o = document.createElement("option"); o.value = i; o.textContent = n; if (i === 3) o.selected = true; s.append(o); }));
+  [["cmp-a", "cmp-sa"], ["cmp-b", "cmp-sb"]].forEach(([sel, side]) => {
+    const show = () => { $(side + "-out").textContent = "±" + $(side).value + " mm"; $(side).disabled = SETTINGS[+$(sel).value][1] !== "dual"; };
+    $(side).addEventListener("input", show); $(sel).addEventListener("change", show); show();
+  });
   [$("cmp-ga"), $("cmp-gb")].forEach((s, j) => GAP_CHOICES.forEach((g) => { const o = document.createElement("option"); o.value = g; o.textContent = g + " mm"; if (g === (j ? 100 : 350)) o.selected = true; s.append(o); }));
   function fillDamages() { const t = TYPES.find((x) => x.id === cmpType.value); $("cmp-dmg").innerHTML = t.damages.map((d, i) => '<option value="' + i + '">' + d[0] + "</option>").join(""); }
   cmpType.addEventListener("change", fillDamages); fillDamages();
@@ -29,9 +31,10 @@
     setTimeout(() => {
       const t0 = performance.now(), out = $("cmp-out"); out.innerHTML = "";
       const intact = analysisPallet(type), damaged = analysisPallet(type, dmg), o = opts();
-      [[$("cmp-a"), $("cmp-ga")], [$("cmp-b"), $("cmp-gb")]].forEach(([sel, gsel]) => {
-        const [name, st] = SETTINGS[+sel.value], g = +gsel.value;
-        const sp = st.key === "dual" ? [{ tilt: 25, z: -st.side }, { tilt: -25, z: st.side }] : [{ tilt: Number(st.key), z: 0 }];
+      [[$("cmp-a"), $("cmp-ga"), $("cmp-sa")], [$("cmp-b"), $("cmp-gb"), $("cmp-sb")]].forEach(([sel, gsel, ssel]) => {
+        const [label, key] = SETTINGS[+sel.value], g = +gsel.value, side = +ssel.value;
+        const name = key === "dual" ? label + ", sides ±" + side + " mm" : label;
+        const sp = key === "dual" ? [{ tilt: 25, z: -side }, { tilt: -25, z: side }] : [{ tilt: Number(key), z: 0 }];
         const cs = sp.map((s) => bottomCam(s, PX, Object.assign({}, o, { anyZero: sp.some((x) => x.tilt === 0) })));
         const fig = document.createElement("figure"), cap = document.createElement("figcaption"), pair = document.createElement("div");
         cap.className = "cap"; pair.className = "pair"; let changed = 0;

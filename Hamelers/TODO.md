@@ -24,6 +24,11 @@ Hamelers: pallet classifier. Most important first. Research log: `pallet-classif
   needs real deposition rates at several window angles from a test. The LED bar stays unprotected. In the simulator
   a 60° window costs the dual ±25° cameras almost no light over a flat one (ends of the line 78% vs 81% through plain
   glass) while grit slides off; a vertical one lets only 52% through at the ends and blinds a 0° camera.
+- **Choose the bottom light setup** (simulator, Light section; geometry and powers assumed). Bar beside each camera
+  behind its own window: protected like the windows, but 62% of the signal of the bar under the gap (dual cameras,
+  two bars). Side lights: raking light that shows relief, but 14% of the signal at the belt centre and 18× brighter
+  550 mm out, so only useful as a second image with alternating lines (doubles the line rate and data). Decide with
+  real images from the test conveyor.
 - **Place the side station cameras ~150 mm along the belt from the scan line**: there they no longer see the LED bar
   down the gap (simulator v29), with no light lost.
 - **Simulator: centred 0 deg camera with one light** puts the LED bar under a roller at a 100 mm gap (the 80 mm offset

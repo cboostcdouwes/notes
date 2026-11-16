@@ -157,15 +157,12 @@ try {
     await render(p, "bar beside", "bottom", { "light-setup": "beside" });
     for (const i of [0, 1]) { const r = (await ratios(p, "base", "bar beside", i)).all; expect(r < 0.9, "camera " + i + " keeps " + r.toFixed(2) + " of the light"); }
   });
+  // Against the bar-lit image, pixel by pixel, so the wood's colour and the background drop out.
   await check("side lights light the ends of the scan line far more than its middle", async () => {
     await render(p, "side lights", "bottom", { "light-setup": "side" });
-    const L = (span) => p.evaluate((tag, LINEAR, span) => {
-      const img = window.__imgs[tag][0], lin = eval(LINEAR)(img), x0 = Math.floor(span[0] * img.width), x1 = Math.ceil(span[1] * img.width); let s = 0, n = 0;
-      for (let y = 0; y < img.height; y++) for (let x = x0; x < x1; x++) { s += lin[y * img.width + x]; n++; }
-      return s / n;
-    }, "side lights", LINEAR, span);
-    const mid = await L([0.45, 0.55]), ends = (await L([0.05, 0.15]) + await L([0.85, 0.95])) / 2;
-    expect(ends > 3 * mid, "ends " + ends.toFixed(4) + " vs middle " + mid.toFixed(4));
+    const mid = (await ratios(p, "base", "side lights", 0, [0.4, 0.6])).all;
+    const ends = ((await ratios(p, "base", "side lights", 0, [0, 0.25])).all + (await ratios(p, "base", "side lights", 0, [0.75, 1])).all) / 2;
+    expect(ends > 2 * mid, "against the bar: ends " + ends.toFixed(3) + ", middle " + mid.toFixed(3));
   });
   await check("alternating lights give each bottom camera a second, raking-light image", async () => {
     expect(await render(p, "alternating", "bottom", { "light-setup": "alternate" }) === 4, "not four bottom images");
@@ -246,6 +243,17 @@ try {
     await p.waitForFunction(() => document.querySelectorAll("#cmp-out figure").length >= 2, { timeout: 180000 });
     expect(!p.errors.length, p.errors.join("; "));
   });
+  await check("Compare traces each dual setup at its own side offset", async () => {
+    await setControls(p, DEFAULTS);
+    await p.evaluate(() => {
+      document.getElementById("tab-cmp").click();
+      for (const [id, v] of [["cmp-a", "3"], ["cmp-b", "3"], ["cmp-sa", "0"], ["cmp-sb", "1000"]]) { const e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event("input")); e.dispatchEvent(new Event("change")); }
+      document.getElementById("cmp-out").innerHTML = ""; document.getElementById("cmp-run").click();
+    });
+    await p.waitForFunction(() => document.querySelectorAll("#cmp-out figure").length >= 2, { timeout: 180000 });
+    const caps = await p.evaluate(() => [...document.querySelectorAll("#cmp-out .cap-type")].map((c) => c.textContent));
+    expect(/±0\b/.test(caps[0]) && /±1000\b/.test(caps[1]), "captions: " + caps.join(" | "));
+  });
   await check("the Assumptions tab lists every assumption with a value", async () => {
     await p.evaluate(() => document.getElementById("tab-assume").click());
     const rows = await p.evaluate(() => [...document.querySelectorAll("#assume-table tbody tr")].filter((r) => r.children.length === 4).map((r) => r.children[1].textContent));
@@ -257,7 +265,8 @@ try {
   // the ones the bottom cameras do not see at all: those need the station cameras.
   await check("every damage of every pallet type builds and renders", async () => {
     await setControls(p, DEFAULTS);
-    await p.evaluate(() => { document.getElementById("tab-cmp").click(); document.getElementById("cmp-a").value = "3"; document.getElementById("cmp-b").value = "3"; });
+    await p.evaluate(() => { document.getElementById("tab-cmp").click(); document.getElementById("cmp-a").value = "3"; document.getElementById("cmp-b").value = "3";
+      document.getElementById("cmp-sa").value = "400"; document.getElementById("cmp-sb").value = "400"; });
     const types = await p.evaluate(() => [...document.getElementById("cmp-type").options].map((o) => o.value));
     const unseen = [];
     for (const t of types) {

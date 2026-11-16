@@ -12,21 +12,30 @@
     <h1>Pallet Bottom Scanner</h1>
     <span class="stamp">GPU ray-traced line-scan and station cameras · simulated, dimensions assumed · 2026-11-13 · <span id="gpu-name">GPU: –</span></span>
   </header>
-  <div class="bar" role="group" aria-label="Playback">
+  <div class="bar" role="group" aria-label="Playback and settings">
       <button type="button" class="btn" id="pause">Pause</button>
       <label class="field" for="speed">Playback <input id="speed" type="range" min="-3.9" max="0" step="0.05" value="0"><output id="speed-out">1.00×</output></label>
-  </div>
-  <div class="row" aria-label="Share settings">
-    <button type="button" class="btn" id="set-copy">Copy settings</button>
-    <button type="button" class="btn" id="set-load">Load settings…</button>
-    <input id="set-code" type="text" spellcheck="false" aria-label="Settings code" hidden style="flex:1 1 260px;min-width:0;font:0.76rem var(--font-data);padding:4px 6px">
-    <button type="button" class="btn" id="set-apply" hidden>Apply</button>
-    <span class="cap-dim" id="set-msg" style="font-size:0.78rem"></span>
+    <div class="row" aria-label="Share settings" style="flex:1 1 auto;justify-content:flex-end">
+      <button type="button" class="btn" id="set-copy">Copy settings</button>
+      <button type="button" class="btn" id="set-load">Load settings…</button>
+      <input id="set-code" type="text" spellcheck="false" aria-label="Settings code" hidden style="flex:1 1 260px;min-width:0;font:0.76rem var(--font-data);padding:4px 6px">
+      <button type="button" class="btn" id="set-apply" hidden>Apply</button>
+      <span class="cap-dim" id="set-msg" style="font-size:0.78rem"></span>
+    </div>
   </div>
 
   <div class="bar groups" role="group" aria-label="Scanner settings">
-    <div class="grp" role="group" aria-label="Bottom cameras">
-      <span class="grp-h">Bottom cameras</span>
+    <div class="tabs" id="set-tabs" role="tablist" aria-label="Settings">
+      <button type="button" role="tab" id="settab-bottom-cameras" aria-selected="true" aria-controls="set-bottom-cameras" data-set="bottom-cameras">Bottom cameras</button>
+      <button type="button" role="tab" id="settab-light" aria-selected="false" aria-controls="set-light" data-set="light">Light</button>
+      <button type="button" role="tab" id="settab-windows-and-air" aria-selected="false" aria-controls="set-windows-and-air" data-set="windows-and-air">Windows and air</button>
+      <button type="button" role="tab" id="settab-conveyor-and-feed" aria-selected="false" aria-controls="set-conveyor-and-feed" data-set="conveyor-and-feed">Conveyor and feed</button>
+      <button type="button" role="tab" id="settab-pallet-types" aria-selected="false" aria-controls="set-pallet-types" data-set="pallet-types">Pallet types</button>
+      <button type="button" role="tab" id="settab-station-cameras" aria-selected="false" aria-controls="set-station-cameras" data-set="station-cameras">Station cameras</button>
+      <button type="button" role="tab" id="settab-service-and-faults" aria-selected="false" aria-controls="set-service-and-faults" data-set="service-and-faults">Service and faults</button>
+      <button type="button" role="tab" id="settab-analysis" aria-selected="false" aria-controls="set-analysis" data-set="analysis">Analysis</button>
+    </div>
+    <div class="grp" role="tabpanel" id="set-bottom-cameras" aria-labelledby="settab-bottom-cameras">
       <span class="seg" id="presets" aria-label="Bottom cameras">
         <button type="button" data-cams="0" aria-pressed="false">0°</button>
         <button type="button" data-cams="25" aria-pressed="false">+25°</button>
@@ -34,7 +43,7 @@
         <button type="button" data-cams="dual" aria-pressed="true">Dual ±25°, belt sides</button>
       </span>
       <label class="field" for="tilt">Tilt <input id="tilt" type="range" min="-35" max="35" step="1" value="25"><output id="tilt-out">+25°</output></label>
-      <label class="field" for="side">Side offset <input id="side" type="range" min="0" max="600" step="50" value="400"><output id="side-out">±400 mm</output></label>
+      <label class="field" for="side">Side offset <input id="side" type="range" min="0" max="1000" step="50" value="400"><output id="side-out">±400 mm</output></label>
       <label class="field" for="sensor">Sensor <select id="sensor"><option value="1024" selected>1k px</option><option value="2048">2k px</option><option value="4096">4k px</option></select></label>
       <label class="field" for="fnum">Lens <select id="fnum"><option value="0">pinhole (no depth of field)</option><option value="2.8">f/2.8</option><option value="4" selected>f/4</option><option value="8">f/8</option></select></label>
       <label class="field" for="opt-fit"><input type="checkbox" id="opt-fit" checked> Fit FOV</label>
@@ -43,8 +52,7 @@
       <label class="field" for="opt-glare"><input type="checkbox" id="opt-glare" checked> Lens glare</label>
       <label class="field" for="f-uncal"><input type="checkbox" id="f-uncal"> Uncalibrated lenses and sensors</label>
     </div>
-    <div class="grp" role="group" aria-label="Light">
-      <span class="grp-h">Light</span>
+    <div class="grp" role="tabpanel" id="set-light" aria-labelledby="settab-light" hidden>
       <label class="field" for="light-setup">Setup <select id="light-setup"><option value="gap" selected>LED bar under the gap</option><option value="beside">LED bar beside each camera, behind its own window</option><option value="alternate">bar under the gap and side lights, alternating lines</option><option value="side">side lights only</option></select></label>
       <label class="field" for="opt-light"><input type="checkbox" id="opt-light" checked> One bar for all cameras (under the gap)</label>
       <label class="field" for="light">Light power <input id="light" type="range" min="10" max="400" step="10" value="100"><output id="light-out">100%</output></label>
@@ -53,8 +61,7 @@
       <label class="field" for="lightcol">Light colours <select id="lightcol"><option value="matched" selected>all 6500 K</option><option value="mixed">bar 6500 K, lamps 4000 K</option><option value="warm">bar 5000 K, lamps 3000 K</option></select></label>
       <label class="field" for="daylight">Daylight <select id="daylight"><option value="none" selected>none (closed hall)</option><option value="overcast">overcast</option><option value="clouds">sun and passing clouds</option></select></label>
     </div>
-    <div class="grp" role="group" aria-label="Windows and air">
-      <span class="grp-h">Windows and air</span>
+    <div class="grp" role="tabpanel" id="set-windows-and-air" aria-labelledby="settab-windows-and-air" hidden>
       <label class="field" for="win-angle">Bottom windows <input id="win-angle" type="range" min="0" max="90" step="5" value="0"><output id="win-angle-out">0° (flat)</output></label>
       <label class="field" for="win-purge"><input type="checkbox" id="win-purge"> Air purge</label>
       <label class="field" for="dirt">Window dirt <input id="dirt" type="range" min="0" max="1" step="0.05" value="0.25"><output id="dirt-out">25%</output></label>
@@ -62,8 +69,7 @@
       <label class="field" for="f-fog"><input type="checkbox" id="f-fog"> Fogged bottom windows</label>
       <label class="field" for="f-splinter"><input type="checkbox" id="f-splinter"> Splinter on the first bottom camera's window</label>
     </div>
-    <div class="grp" role="group" aria-label="Conveyor and feed">
-      <span class="grp-h">Conveyor and feed</span>
+    <div class="grp" role="tabpanel" id="set-conveyor-and-feed" aria-labelledby="settab-conveyor-and-feed" hidden>
       <label class="field" for="gap">Gap <input id="gap" type="range" min="40" max="350" step="10" value="100"><output id="gap-out">100 mm</output></label>
       <label class="field" for="belt">Conveyor <input id="belt" type="range" min="0.2" max="1.5" step="0.01" value="0.45"><output id="belt-out">0.45 m/s</output></label>
       <label class="field" for="section">Middle section <input id="section" type="range" min="1" max="1.5" step="0.05" value="1.1"><output id="section-out">+10% faster</output></label>
@@ -72,28 +78,27 @@
       <label class="field" for="opt-transport"><input type="checkbox" id="opt-transport" checked> Slip, jostle, sticking, touching</label>
       <label class="field" for="opt-unusual"><input type="checkbox" id="opt-unusual" checked> Unusual cases</label>
     </div>
-    <div class="grp" role="group" aria-label="Station cameras">
-      <span class="grp-h">Station cameras</span>
+    <div class="grp" role="tabpanel" id="set-pallet-types" aria-labelledby="settab-pallet-types" hidden>
+      <div class="types" id="types" aria-label="Pallet types in the feed"></div>
+    </div>
+    <div class="grp" role="tabpanel" id="set-station-cameras" aria-labelledby="settab-station-cameras" hidden>
       <label class="field" for="opt-station"><input type="checkbox" id="opt-station" checked> Station cameras</label>
       <label class="field" for="aexp">Area exposure <input id="aexp" type="range" min="-1" max="1" step="0.05" value="0"><output id="aexp-out">1.0 ms</output></label>
       <label class="field" for="shutter">Area shutter <select id="shutter"><option value="global" selected>global</option><option value="rolling">rolling, 20 ms readout</option></select></label>
       <label class="field" for="side-h">Side cameras: height <input id="side-h" type="range" min="30" max="400" step="10" value="260"><output id="side-h-out">260 mm</output></label>
       <label class="field" for="side-x">along travel <input id="side-x" type="range" min="0" max="500" step="25" value="0"><output id="side-x-out">0 mm</output></label>
     </div>
-    <div class="grp" role="group" aria-label="Service and faults">
-      <span class="grp-h">Service and faults</span>
+    <div class="grp" role="tabpanel" id="set-service-and-faults" aria-labelledby="settab-service-and-faults" hidden>
       <label class="field" for="months">Since service <input id="months" type="range" min="0" max="12" step="0.5" value="0"><output id="months-out">0 months</output></label>
       <label class="field" for="f-bar"><input type="checkbox" id="f-bar"> LED bar failed</label>
       <label class="field" for="f-lamp"><input type="checkbox" id="f-lamp"> One station lamp out</label>
       <label class="field" for="f-enc"><input type="checkbox" id="f-enc"> Encoder reads 8% short</label>
       <label class="field" for="vib">Vibration <input id="vib" type="range" min="0" max="1" step="0.05" value="0.1"><output id="vib-out">0.10 mm</output></label>
     </div>
-    <div class="grp" role="group" aria-label="Analysis">
-      <span class="grp-h">Analysis</span>
+    <div class="grp" role="tabpanel" id="set-analysis" aria-labelledby="settab-analysis" hidden>
       <label class="field" for="opt-indirect"><input type="checkbox" id="opt-indirect"> Indirect light in Compare and Batch (slower)</label>
     </div>
   </div>
-  <div class="types" id="types" aria-label="Pallet types in the feed"></div>
 
   <div class="bench">
     <div class="view" id="view">
@@ -115,6 +120,7 @@
     <section class="panel" aria-label="Instruments">
       <div class="tabs" role="tablist">
         <button type="button" role="tab" id="tab-live" aria-selected="true" data-tab="live">Live output</button>
+        <button type="button" role="tab" id="tab-status" aria-selected="false" data-tab="status">Status</button>
         <button type="button" role="tab" id="tab-vis" aria-selected="false" data-tab="vis">Visibility map</button>
         <button type="button" role="tab" id="tab-cmp" aria-selected="false" data-tab="cmp">Compare settings</button>
         <button type="button" role="tab" id="tab-photo" aria-selected="false" data-tab="photo">Photo render</button>
@@ -125,6 +131,9 @@
 
       <div id="pane-live" role="tabpanel" aria-labelledby="tab-live" style="display:grid;gap:10px">
         <div class="livecams" id="livecams"></div>
+      </div>
+
+      <div id="pane-status" role="tabpanel" aria-labelledby="tab-status" hidden style="gap:10px">
         <dl class="stats">
           <div><dt>Frame rate</dt><dd id="st-fps">–</dd></div>
           <div><dt>Belt</dt><dd id="st-speed">–</dd></div>
@@ -165,10 +174,12 @@
         <div class="row">
           <label class="field" for="cmp-a">A <select id="cmp-a"></select></label>
           <label class="field" for="cmp-ga">gap <select id="cmp-ga"></select></label>
+          <label class="field" for="cmp-sa">sides <input id="cmp-sa" type="range" min="0" max="1000" step="50" value="400"><output id="cmp-sa-out">±400 mm</output></label>
         </div>
         <div class="row">
           <label class="field" for="cmp-b">B <select id="cmp-b"></select></label>
           <label class="field" for="cmp-gb">gap <select id="cmp-gb"></select></label>
+          <label class="field" for="cmp-sb">sides <input id="cmp-sb" type="range" min="0" max="1000" step="50" value="400"><output id="cmp-sb-out">±400 mm</output></label>
           <button type="button" class="btn primary" id="cmp-run">Compare</button>
         </div>
         <p class="cap-dim" id="cmp-status" style="margin:0;font-size:0.8rem">Same pallet traced intact and damaged, noise off. Red marks the pixels the damage changes.</p>
