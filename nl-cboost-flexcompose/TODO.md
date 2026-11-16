@@ -17,6 +17,15 @@ with private repos.
   checks). Notes: round 8 in `machine-starter-template.md`, the *Decision* drafts of `machine-repo-layout.md` and
   `machine-release-programs.md` (F2 deferred), the vault's `CLAUDE.md` (Rust); confirmed by the user, L2 kept over L6, `tmp/machine-starter-services/`
   deleted (2026-11-12).
+- **Service starter: the source check fails on message packages** (found 2026-11-16 in the PolyMX app; the user
+  fixed it in the app only for now). rosidl installs code generated from `.msg`/`.srv`/`.action` into `/opt/app`:
+  the C glue of the Python bindings (`site-packages/<pkg>/{msg,srv,action}/_*_s.c`, `_*_s.ep.rosidl_typesupport_*.c`)
+  and Rust bindings (`share/<pkg>/rust/`, confirming design §12's Rust gap). The app's Dockerfile removes them in
+  stage build; the starter needs the same, a `fix:` with an e2e fixture that has a message package.
+- PolyMX app, temporary (step 6): rosdep skips `python3-yaskawa-hse-driver` (the `hse` library; its repository is
+  unknown, so `hse` is not installed) and `ament_python` (`nl-cboost-machine-state-manager` lists it as a dependency;
+  it belongs in `<build_type>`); the middleware (patched Fast DDS, rclpy backport) is not staged in the image.
+  Inference runs inside the app for now (user, 2026-11-12).
 - The ros-tools pin is a commit; a tag in `nl-cboost-ros-tools` (e.g. `v0.1.0`) could replace it in one `ARG` line.
 
 ## Release targets: open points
@@ -36,6 +45,24 @@ Release targets and both starters are done (design §13). The prototype's docume
 - **Deferred from the plan**: `generate --image <service>` (a per-developer choice between source and image);
   FlexCompose passing `build:` on as written (F2); a warning when an importing template has a workspace service of
   its own; keeping copied starter files in sync (a template tool, with the second machine).
+- **Loosen the SSH agent requirement** (asked 2026-11-16; parked by the user until after step 6). The user's
+  reasons: CI or headless builds, Windows developers, HTTPS or token access, and fewer hard requirements in general.
+  Findings: the agent is demanded where it isn't used. `release.sh`'s `SSH_AUTH_SOCK` guard: the only clone is
+  `vcs import` on the host, any git credential works, and the guard would refuse the Windows OpenSSH agent pipe
+  (N14: `SSH_AUTH_SOCK` unset). The `release:build` fragment's `ssh: [default]`: with the starters the locked tree
+  replaces stage `resolve`, so no build clones (the e2e runs with an empty agent); PolyMX's old layout still needs
+  it until step 6. The one real use is the service Dockerfile's `RUN --mount=type=ssh cdr` (built alone, or as an
+  image in a dev box). `git@github.com:` URLs in `dependencies.repos` fix the protocol, not the agent. Options, not
+  decided:
+  1. Drop the guard and the injected `ssh:` (a service that clones in its build writes `ssh:` itself; part of F2
+     above); reword `fact-ssh-access` to "git on the developer's PC can read the private repos". Breaking output.
+  2. Resolve on the host for the standalone build too (`--build-context workspace=...`): no credentials in any
+     build; weakens `service-alone`, needs `cdr` on the host.
+  3. Document `docker build --ssh default=<key file>`: no agent, only keys without a passphrase.
+  4. Document `git config url."https://github.com/".insteadOf "git@github.com:"` for HTTPS or token users (host
+     clones and the dev box; untested whether Dev Containers forwards the credential helper).
+  5. A token secret mount next to the SSH mount in the service Dockerfile, when CI needs the in-build clone.
+  Suggested: 1 first, then `research:design` for 2-5 with CI as the deciding case.
 - **Machines may pull** (REQUIREMENTS.md `release-offline`, `release-registry-pull`): the release file sets
   `pull_policy: never`, which fits today: pulling from an online registry is a Won't. Waits for a request for an
   online update process; then update §13, the `release` target and the README. Until then only §13's wording is
