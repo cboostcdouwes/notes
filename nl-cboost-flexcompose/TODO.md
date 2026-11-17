@@ -30,8 +30,9 @@ with private repos.
   Windows users use the cboost dev box, so no native Windows build is needed (user, 2026-11-16): plain colcon-uv
   0.5.2 from PyPI can replace the repo's patched copy in `tools/colcon-uv` (the patch is Windows paths plus a
   dependency-order fix that the app doesn't need). Read from source, not run:
-  - Dev box: needs `uv` and `colcon-uv` (base image or `bootstrap.sh`), and its three private git dependencies are
-    HTTPS URLs in `pyproject.toml`, while the boxes have only the SSH agent.
+  - Dev box: `uv` 0.13.8 and `colcon-uv` 0.5.2 are in the base image's Dockerfile (2026-11-16, built and tried
+    locally with a toy package; no image released yet). Its three private git dependencies are HTTPS URLs in
+    `pyproject.toml`, while the boxes have only the SSH agent.
   - Release image, three blockers: those git dependencies can't be fetched in stage build; colcon-uv installs the
     package editable, so the venv points at source the release stage doesn't copy; the source check fails on the
     `.h`/`.c` files of the wheels in the venv.
