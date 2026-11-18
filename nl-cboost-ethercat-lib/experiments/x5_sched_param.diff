@@ -1,0 +1,8 @@
+150,152c150,152
+<             let param = libc::sched_param {
+<                 sched_priority: priority,
+<             };
+---
+>             // Zeroed rather than a literal: musl's sched_param has more fields than glibc's.
+>             let mut param: libc::sched_param = std::mem::zeroed();
+>             param.sched_priority = priority;

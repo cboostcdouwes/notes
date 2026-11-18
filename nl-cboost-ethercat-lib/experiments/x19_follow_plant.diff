@@ -1,0 +1,62 @@
+--- /tmp/claude-1000/-home-cboost-Cboost-nl-cboost-ethercat-lib/a9c39350-1637-4667-af03-992f4d34be79/scratchpad/x19-sim.orig.rs	2026-11-18 23:06:13.852184627 +0100
++++ /tmp/claude-1000/-home-cboost-Cboost-nl-cboost-ethercat-lib/a9c39350-1637-4667-af03-992f4d34be79/scratchpad/exp/crates/ethercat-realtime/src/sim.rs	2026-11-18 23:06:13.863526236 +0100
+@@ -108,6 +108,15 @@
+     failing: bool,
+     recording: Option<Vec<Vec<Vec<u8>>>>,
+     mailbox_delay: Duration,
++    follows: Vec<Follow>,
++}
++
++/// A piece of plant: an input that follows an output after a number of exchanges, as an end switch follows
++/// its valve. `history` holds the output's last levels, oldest first.
++struct Follow {
++    output: (usize, u8),
++    input: (u16, u8),
++    history: std::collections::VecDeque<bool>,
+ }
+ 
+ impl SimBus {
+@@ -136,6 +145,7 @@
+             failing: false,
+             recording: None,
+             mailbox_delay: Duration::ZERO,
++            follows: Vec::new(),
+         };
+         let world = Arc::new(Mutex::new(world));
+         (
+@@ -187,6 +197,15 @@
+             );
+             world.exchanged[position].copy_from_slice(&world.outputs[position]);
+         }
++        for follow in &mut world.follows {
++            let (position, channel) = follow.output;
++            follow.history.push_back(world.exchanged[position][0] & (1 << channel) != 0);
++            let level = follow.history.pop_front().expect("history holds the delay");
++            let (position, channel) = follow.input;
++            let device: &mut dyn Any = world.devices[usize::from(position)].as_mut();
++            let terminal = device.downcast_mut::<SimTerminal>().expect("follows drive terminal inputs");
++            if level { terminal.field_inputs |= 1 << channel } else { terminal.field_inputs &= !(1 << channel) }
++        }
+         world.exchanges += 1;
+         if let Some(recording) = &mut world.recording {
+             recording.push(world.exchanged.clone());
+@@ -229,6 +248,19 @@
+ }
+ 
+ impl SimHandle {
++    /// Makes the input named `input` follow the output named `output`, `delay` exchanges late. Both are
++    /// digital signals of `machine`.
++    pub fn follow(&self, machine: &Machine, output: &str, input: &str, delay: usize) -> Result<(), String> {
++        let find = |name: &str, kind| {
++            machine.signals.iter().find(|s| s.name == name && s.kind == kind).map(|s| (s.device, s.channel)).ok_or_else(|| format!("no {kind:?} named {name}"))
++        };
++        let (out_device, out_channel) = find(output, ethercat_port::TargetKind::DigitalOut)?;
++        let input = find(input, ethercat_port::TargetKind::DigitalIn)?;
++        let history = std::iter::repeat_n(false, delay.max(1)).collect();
++        lock(&self.world).follows.push(Follow { output: (usize::from(out_device), out_channel), input, history });
++        Ok(())
++    }
++
+     /// Sets what the field wiring presents to an input channel of a [`SimTerminal`].
+     pub fn set_input(&self, position: u16, channel: u8, level: bool) {
+         self.with_device::<SimTerminal, _>(position, |terminal| {

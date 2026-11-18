@@ -16,7 +16,7 @@ The main reasons:
 2. Each part is tested alone. The gRPC part runs against a scripted port, the realtime part runs with no socket.
 3. The port is the only contract. Another front end (for example a ROS 2 bridge) attaches to it without touching the realtime part.
 
-Status: proposal. It is based on `generic-problem-statement.md` and `generic-api-proposals.md` in the notes vault. Choices that rest on unverified requirements are marked.
+Status: proposal. It is based on `generic-problem-statement.md` and `generic-api-proposals.md` in the notes vault. Choices that rest on unverified requirements are marked. A prototype was built on 2026-11-18 in `~/Cboost/nl-cboost-ethercat-lib`; where it differs from the text below, and what it found, is in *Prototype (2026-11-18)*. The design text itself is not yet updated to match.
 
 ## Context
 
@@ -768,6 +768,69 @@ Answered: what the split is for (2026-11-11, see Q1).
 11. **Releasing a client-held guard whose holder never returns:** is an operator release needed, for example from the debug panel?
 12. **What is a client's identity?** This proposal picks an id the client sends in `Hello` and keeps across reconnects.
 13. **Another rule that forces an output a client-held guard protects:** which one wins?
+
+## Prototype (2026-11-18)
+
+A full prototype of this proposal, built from scratch by Claude in `~/Cboost/nl-cboost-ethercat-lib` (not a git repo yet; nothing committed). Generic only: no PolyMX names; a demo machine (`machines/demo.toml`) and a demo machine crate with its own rule kind (`examples/demo-machine`). 68 tests pass; clippy and rustfmt are clean. Its `README.md` describes the layout, the machine file, the rule API and the protocol.
+
+### What it covers
+
+- **Crates as in *Crates*:** `ethercat-port`, `ethercat-realtime`, `ethercat-grpc`, plus `ethercat-server` (generic binary and `main_with(rule_kinds)` for machine binaries). `cargo tree` confirms the boundaries: the port has no ethercrab, tokio or tonic; the gRPC part has no ethercrab and no realtime part.
+- **Realtime part:** the six steps per period, `start()`, pacing with overrun counting, `SCHED_FIFO`, core pinning and `mlockall` on Linux, the mailbox thread, `SimBus` with simulated EK1100, EL1008, EL1084, EL2008 and EL4002, and `EthercrabBus` (compiles; never run on a ring).
+- **Rules:** the rule API (`admit`, `evaluate`, `may_apply`), built-in kinds `mutually_exclusive` and `held_guard`, and a machine-specific kind (`stroke_timeout`) in the demo crate.
+- **gRPC part:** `serve` over any `AsyncRead + AsyncWrite`, the pump thread, gate, ledger, held-guard holders, TCP and Unix sockets, SIGTERM.
+- **Tests:** most rows of *Planned tests* for the port, gRPC part (scripted port), realtime part (`SimBus`), client-held guards and the whole server, including the binary over a Unix socket. The no-allocation invariant is checked with a counting allocator.
+
+### Where it differs from this proposal
+
+Simplifications found while building it. Each is a proposal to update the design text, not yet agreed.
+
+| Proposal | Prototype | Why |
+| --- | --- | --- |
+| The cycle thread is the unit | `Cycle` is a plain struct with `step()`; `start()` wraps it in a thread. `build()` makes the cycle without a thread | Most realtime tests step periods directly: deterministic, no threads or sleeps |
+| `Bus::image(slot)` lends the process image; `Bus` has startup SDO methods and `request_state` | `read_inputs` / `write_outputs` copy per device; `go_operational()` replaces `request_state`; SDOs only through the mailbox handle | EtherCrab hands out the image only as lock guards. No driver needs startup SDOs yet, and one SDO path serves startup and runtime |
+| `Bus::exchange` returns an error type | `ExchangeError` is a `Copy` enum | A string error allocated on the cycle thread on every failed exchange (found by the allocation test) |
+| Mailbox: bounded request ring and reply ring | std `sync_channel` for requests, one reply channel per request | Neither end runs on the cycle thread, so ring buffers and reply routing aren't needed. Client requests are read-only; the write path (Q6) is left out until the rejoin is designed |
+| Rule forces hold only while asserted, over the commanded value | A force writes through: the output keeps the forced value after the rule lets go | One rule then covers: a refused command never takes effect later, releasing a refusing guard changes no output, a command overridden in the same period is `Rejected` naming the rule |
+| A held guard's latch lives in the rule | The latch is the guard target's reading in the cycle; the rule only answers `may_apply` | One place for the latch; double apply and release of a free guard are rejected generically |
+| Services `Machine`, `Signal`, `Axis`, `Distance`, `Telemetry`, `Diagnostics` | One service `ethercat.v1.Machine`: `Hello`, `Describe`, `Read`, `Watch`, `Write`, `Conditions`, `ReadSdo` | With a closed capability set, one `Write(name, value)` covers every target. Axis actions would extend it |
+| Couplers may go undeclared | Every ring device is declared, couplers included, positions from 0 | Removes the coupler exception from the topology check; `SimBus` builds the ring from the file alone. Topology is checked by vendor and product code |
+| `[[interlock]]`, `[health]`, `[guard.<name>]` tables | One `[rule.<name>]` table with a `kind`; built-in and machine kinds alike, asked in file order | One way to configure every rule |
+| Machine rules are unit-tested with a fake `View` | Tested through the real cycle on `SimBus` | No test-only API needed; fast and deterministic anyway |
+
+### Found by testing assumptions
+
+- **Shutdown waited for every client.** Tonic's graceful shutdown waits for all connections, so a client with an open `Watch` or `Conditions` stream kept the server, and its cycle, running after SIGTERM. `serve` now gives open calls `shutdown_grace` (1 s) and then returns. *Inferred requirement, unverified:* shutdown must not depend on clients.
+- **A failed listener ended `serve` with `Ok(())`.** Tonic 0.12 skips transient accept errors (reset, aborted) and silently ends on lasting ones. `serve` now returns `ListenerEnded` whenever it ends without the shutdown signal. An earlier fix that stopped on any accept error would have let one aborted connection stop the server.
+- **EtherCrab's timeouts run on `async_io` timers.** `EthercrabBus` uses `async_io::block_on` on the cycle thread; no tokio in the realtime part.
+- **EtherCrab's group can be shared** between the cycle thread and the mailbox thread (`Arc`), as the 0.0.5 server did.
+
+### Open questions answered with this proposal's own pick (to confirm)
+
+- "Applied" means carried by an acknowledged exchange (open question 3), so it arrives one period after the command is applied. A held guard reports at once.
+- The fingerprint covers target names and kinds only (snag 4).
+- A command a rule overrides in the same period is `Rejected`, naming the rule.
+- When two rules force one output, the first in the machine file wins (open question 13, partly).
+- The server stops when its listener fails (open question 2).
+- Client SDO requests are read-only.
+- Rejections carry `ethercat-reason` and, for a rule, `ethercat-rule` as gRPC metadata.
+
+### Not in the prototype
+
+- Axes (iX7NH, ECOMODUL) and IO-Link sensors (EL6224 with ILR1040), and their simulated devices (C1).
+- Startup SDO configuration by drivers; the rejoin of a device that dropped out.
+- The working-counter check in `EthercrabBus::exchange`: only "every device in OP" is checked.
+- Fallback values, a safe-stop action and the other safety gaps of the 2026-11-11 review; GA1 is kept (no client liveness).
+- Per-device freshness: an exchange fails or succeeds for the whole ring.
+- A path for out-of-process tests to the `SimHandle` (open question 7); the `--sim` binary's inputs never change.
+- The ledger grows without bound (snag 8).
+- The Python client.
+
+### Not verified
+
+- `EthercrabBus` has not run on a ring.
+- The Windows build: no Windows target is installed on the dev PC.
+- The simulated terminals take identity and image sizes from the same model table as the drivers, so a misreading in that table passes the tests. Rig recordings (*Checking the simulation against the rig*) would catch it.
 
 ## Steps
 

@@ -35,6 +35,19 @@
       devices with several values or outputs, and other terminals with devices behind them (serial, CAN)
 - [ ] ECOMODUL runs with `0x6007 = 0`: check on the rig what its outputs do when the server is killed. Applies to
       today's server too, so not tied to the redesign
+- [x] Prototype of the split proposal in `~/Cboost/nl-cboost-ethercat-lib` (2026-11-18): port, realtime part,
+      gRPC part, server binary, demo machine; 68 tests. Summary in the proposal's *Prototype (2026-11-18)*
+- [ ] Review the prototype's simplifications (table in the proposal's *Prototype* section); for the ones agreed,
+      update the design text
+- [ ] Confirm the open questions the prototype answered with the proposal's pick: "Applied" after the
+      acknowledged exchange, fingerprint over names and kinds, overridden command `Rejected`, first forcing rule
+      wins, server stops when the listener fails, client SDO read-only
+- [ ] Confirm the inferred requirement: shutdown must not wait on clients (prototype: 1 s grace, then stop)
+- [ ] Prototype repo: `git init` and a first commit; decide whether `nl-cboost-ethercat-lib` is the generic repo's
+      name (proposal open question 8)
+- [ ] Before the prototype's `EthercrabBus` meets a ring: add the working-counter check (0.0.5's exchange
+      integrity), then a read-only start on the bench
+- [ ] Prototype on Windows: install a Windows target and build with `--no-default-features` (Q3)
 
 ## JAT ECOMODUL axis (`ecomodul/HANDOFF.md`)
 

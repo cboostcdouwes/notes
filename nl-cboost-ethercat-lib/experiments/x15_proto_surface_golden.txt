@@ -1,0 +1,66 @@
+enum ethercat.v1.Kind 0 KIND_UNSPECIFIED
+enum ethercat.v1.Kind 1 DIGITAL_IN
+enum ethercat.v1.Kind 2 DIGITAL_OUT
+enum ethercat.v1.Kind 3 ANALOG_OUT
+enum ethercat.v1.Kind 4 HELD_GUARD
+message ethercat.v1.BusStatus field 1 exchanging TYPE_BOOL LABEL_OPTIONAL
+message ethercat.v1.BusStatus field 2 failed_exchanges TYPE_UINT64 LABEL_OPTIONAL
+message ethercat.v1.BusStatus field 3 overruns TYPE_UINT64 LABEL_OPTIONAL
+message ethercat.v1.BusStatus field 4 rules_max_us TYPE_UINT32 LABEL_OPTIONAL
+message ethercat.v1.Condition field 1 source TYPE_STRING LABEL_OPTIONAL
+message ethercat.v1.Condition field 2 code TYPE_STRING LABEL_OPTIONAL
+message ethercat.v1.Condition field 3 raised TYPE_BOOL LABEL_OPTIONAL
+message ethercat.v1.Condition field 4 period TYPE_UINT64 LABEL_OPTIONAL
+message ethercat.v1.Condition field 5 lost_before TYPE_UINT64 LABEL_OPTIONAL
+message ethercat.v1.Description field 1 machine TYPE_STRING LABEL_OPTIONAL
+message ethercat.v1.Description field 2 api_version TYPE_STRING LABEL_OPTIONAL
+message ethercat.v1.Description field 3 boot_id TYPE_FIXED64 LABEL_OPTIONAL
+message ethercat.v1.Description field 4 fingerprint TYPE_FIXED64 LABEL_OPTIONAL
+message ethercat.v1.Description field 5 period_us TYPE_UINT32 LABEL_OPTIONAL
+message ethercat.v1.Description field 6 targets TYPE_MESSAGE LABEL_REPEATED
+message ethercat.v1.Description field 7 rules TYPE_MESSAGE LABEL_REPEATED
+message ethercat.v1.Description field 8 ring_mismatches TYPE_STRING LABEL_REPEATED
+message ethercat.v1.HelloReply field 1 may_write TYPE_BOOL LABEL_OPTIONAL
+message ethercat.v1.HelloReply field 2 reason TYPE_STRING LABEL_OPTIONAL
+message ethercat.v1.HelloReply field 3 api_version TYPE_STRING LABEL_OPTIONAL
+message ethercat.v1.HelloReply field 4 boot_id TYPE_FIXED64 LABEL_OPTIONAL
+message ethercat.v1.HelloRequest field 1 client_id TYPE_STRING LABEL_OPTIONAL
+message ethercat.v1.HelloRequest field 2 api_version TYPE_STRING LABEL_OPTIONAL
+message ethercat.v1.HelloRequest field 3 fingerprint TYPE_FIXED64 LABEL_OPTIONAL
+message ethercat.v1.ReadRequest field 1 names TYPE_STRING LABEL_REPEATED
+message ethercat.v1.Reading field 1 name TYPE_STRING LABEL_OPTIONAL
+message ethercat.v1.Reading field 2 digital TYPE_BOOL LABEL_OPTIONAL oneof value
+message ethercat.v1.Reading field 3 analog TYPE_INT32 LABEL_OPTIONAL oneof value
+message ethercat.v1.Reading field 4 age_ms TYPE_DOUBLE LABEL_OPTIONAL
+message ethercat.v1.Reading field 5 forced_by TYPE_STRING LABEL_OPTIONAL
+message ethercat.v1.Rule field 1 name TYPE_STRING LABEL_OPTIONAL
+message ethercat.v1.Rule field 2 kind TYPE_STRING LABEL_OPTIONAL
+message ethercat.v1.Rule field 3 binds TYPE_STRING LABEL_REPEATED
+message ethercat.v1.SdoReply field 1 data TYPE_BYTES LABEL_OPTIONAL
+message ethercat.v1.SdoRequest field 1 device TYPE_UINT32 LABEL_OPTIONAL
+message ethercat.v1.SdoRequest field 2 index TYPE_UINT32 LABEL_OPTIONAL
+message ethercat.v1.SdoRequest field 3 sub TYPE_UINT32 LABEL_OPTIONAL
+message ethercat.v1.Snapshot field 1 period TYPE_UINT64 LABEL_OPTIONAL
+message ethercat.v1.Snapshot field 2 bus TYPE_MESSAGE LABEL_OPTIONAL
+message ethercat.v1.Snapshot field 3 readings TYPE_MESSAGE LABEL_REPEATED
+message ethercat.v1.Target field 1 name TYPE_STRING LABEL_OPTIONAL
+message ethercat.v1.Target field 2 kind TYPE_ENUM LABEL_OPTIONAL
+message ethercat.v1.Target field 3 device TYPE_UINT32 LABEL_OPTIONAL
+message ethercat.v1.Target field 4 group TYPE_STRING LABEL_OPTIONAL
+message ethercat.v1.Target field 5 min TYPE_INT32 LABEL_OPTIONAL
+message ethercat.v1.Target field 6 max TYPE_INT32 LABEL_OPTIONAL
+message ethercat.v1.WatchRequest field 1 names TYPE_STRING LABEL_REPEATED
+message ethercat.v1.WatchRequest field 2 min_interval_ms TYPE_UINT32 LABEL_OPTIONAL
+message ethercat.v1.WriteReply field 1 period TYPE_UINT64 LABEL_OPTIONAL
+message ethercat.v1.WriteRequest field 1 client_id TYPE_STRING LABEL_OPTIONAL
+message ethercat.v1.WriteRequest field 2 command_id TYPE_UINT64 LABEL_OPTIONAL
+message ethercat.v1.WriteRequest field 3 name TYPE_STRING LABEL_OPTIONAL
+message ethercat.v1.WriteRequest field 4 digital TYPE_BOOL LABEL_OPTIONAL oneof value
+message ethercat.v1.WriteRequest field 5 analog TYPE_INT32 LABEL_OPTIONAL oneof value
+rpc ethercat.v1.Machine.Conditions .ethercat.v1.ConditionsRequest -> stream .ethercat.v1.Condition
+rpc ethercat.v1.Machine.Describe .ethercat.v1.DescribeRequest -> .ethercat.v1.Description
+rpc ethercat.v1.Machine.Hello .ethercat.v1.HelloRequest -> .ethercat.v1.HelloReply
+rpc ethercat.v1.Machine.Read .ethercat.v1.ReadRequest -> .ethercat.v1.Snapshot
+rpc ethercat.v1.Machine.ReadSdo .ethercat.v1.SdoRequest -> .ethercat.v1.SdoReply
+rpc ethercat.v1.Machine.Watch .ethercat.v1.WatchRequest -> stream .ethercat.v1.Snapshot
+rpc ethercat.v1.Machine.Write .ethercat.v1.WriteRequest -> .ethercat.v1.WriteReply

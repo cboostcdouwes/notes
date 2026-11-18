@@ -1,0 +1,203 @@
+machine = "polymx-generic"
+period_us = 10000
+
+[[device]]
+position = 0
+model = "EK1100"
+
+[[device]]
+position = 1
+model = "EL1008"
+
+[[device]]
+position = 2
+model = "EL1008"
+
+[[device]]
+position = 3
+model = "EL2008"
+
+[[device]]
+position = 4
+model = "EL2008"
+
+[[device]]
+position = 5
+model = "EL2008"
+
+[[device]]
+position = 6
+model = "EL4002"
+
+[[device]]
+position = 7
+model = "EL6224"
+
+[[device]]
+position = 8
+model = "EL1084"
+
+[[device]]
+position = 9
+model = "ECOMODUL"
+
+[[device]]
+position = 10
+model = "iX7NH - Standard EtherCAT drive"
+
+[input.Start]
+device = 1
+channel = 0
+group = "Operator panel"
+
+[input.Stop]
+device = 1
+channel = 1
+group = "Operator panel"
+
+[input.Reset]
+device = 1
+channel = 2
+group = "Operator panel"
+
+[input.RobotVacuumPresent]
+device = 1
+channel = 3
+group = "Robot gripper"
+
+[input.FlipperVacuumPresent]
+device = 1
+channel = 4
+group = "Flipper"
+
+[input.SledVacuumPresent]
+device = 1
+channel = 5
+group = "Sled vacuum"
+
+[input.FlipperAtUp]
+device = 1
+channel = 6
+group = "Flipper"
+
+[input.FlipperAtDown]
+device = 1
+channel = 7
+group = "Flipper"
+
+[input.PalletAtInput]
+device = 8
+channel = 0
+group = "Pallet"
+
+[input.PalletAtAccept]
+device = 8
+channel = 1
+group = "Pallet"
+
+[input.PalletAtSplitter]
+device = 8
+channel = 2
+group = "Pallet"
+
+[input.PalletAtReject]
+device = 8
+channel = 3
+group = "Pallet"
+
+[output.Green]
+device = 3
+channel = 2
+group = "Operator panel"
+
+[output.Yellow]
+device = 3
+channel = 1
+group = "Operator panel"
+
+[output.Red]
+device = 3
+channel = 0
+group = "Operator panel"
+
+[output.FlipperUp]
+device = 3
+channel = 3
+group = "Flipper"
+
+[output.FlipperDown]
+device = 3
+channel = 4
+group = "Flipper"
+
+[output.FlipperVacuum]
+device = 3
+channel = 5
+group = "Flipper"
+
+[output.FlipperRelease]
+device = 3
+channel = 6
+group = "Flipper"
+
+[output.SledVacuum]
+device = 3
+channel = 7
+group = "Sled vacuum"
+
+[output.RobotVacuum]
+device = 4
+channel = 0
+group = "Robot gripper"
+
+[output.RobotRelease]
+device = 4
+channel = 1
+group = "Robot gripper"
+
+[output.SledRelease]
+device = 4
+channel = 2
+group = "Sled vacuum"
+
+[output.VisionLight1Enable]
+device = 4
+channel = 4
+group = "Vision"
+
+[output.VisionLight2Enable]
+device = 4
+channel = 5
+group = "Vision"
+
+[output.StartButtonLight]
+device = 4
+channel = 3
+group = "Operator panel"
+
+[output.ResetButtonLight]
+device = 4
+channel = 6
+group = "Operator panel"
+
+[analog.VisionLight1]
+device = 6
+channel = 0
+group = "Vision"
+
+[analog.VisionLight2]
+device = 6
+channel = 1
+group = "Vision"
+
+[rule.Interlock1]
+kind = "mutually_exclusive"
+members = ["FlipperUp", "FlipperDown"]
+
+[rule.Interlock2]
+kind = "mutually_exclusive"
+members = ["FlipperVacuum", "FlipperRelease"]
+
+[rule.Interlock3]
+kind = "mutually_exclusive"
+members = ["RobotVacuum", "RobotRelease"]

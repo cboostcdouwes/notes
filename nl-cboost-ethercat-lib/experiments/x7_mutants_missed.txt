@@ -1,0 +1,15 @@
+crates/ethercat-grpc/src/ledger.rs:64:41: replace && with || in Ledger::submit
+crates/ethercat-grpc/src/ledger.rs:108:40: replace && with || in Ledger::record
+crates/ethercat-realtime/src/builtin.rs:25:33: replace < with > in <impl RuleKind for MutuallyExclusive>::bind
+crates/ethercat-realtime/src/builtin.rs:40:13: replace && with || in <impl Rule for MutuallyExclusive>::admit
+crates/ethercat-realtime/src/builtin.rs:40:51: replace == with != in <impl Rule for MutuallyExclusive>::admit
+crates/ethercat-realtime/src/builtin.rs:105:74: replace == with != in <impl Rule for HeldGuard>::admit
+crates/ethercat-realtime/src/cycle.rs:28:9: replace <impl std::fmt::Display for StartError>::fmt -> std::fmt::Result with Ok(Default::default())
+crates/ethercat-realtime/src/cycle.rs:275:42: replace < with <= in Cycle<B>::exchange
+crates/ethercat-realtime/src/cycle.rs:468:9: delete match arm Some(Capability::AnalogOut{counts, ..}) in target_info
+crates/ethercat-realtime/src/cycle.rs:597:5: replace check_image_sizes -> Result<(), StartError> with Ok(())
+crates/ethercat-realtime/src/cycle.rs:619:9: delete match arm TargetKind::AnalogOut in initial_reading
+crates/ethercat-realtime/src/cycle.rs:632:5: replace fingerprint -> u64 with 0
+crates/ethercat-realtime/src/cycle.rs:632:5: replace fingerprint -> u64 with 1
+crates/ethercat-realtime/src/cycle.rs:641:18: replace ^= with |= in fingerprint
+crates/ethercat-realtime/src/cycle.rs:641:18: replace ^= with &= in fingerprint
