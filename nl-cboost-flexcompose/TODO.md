@@ -5,8 +5,9 @@ Most important first. `§n` = FLEXCOMPOSE_DESIGN.md section.
 ## Next: PolyMX on the new starters
 
 **`tmp/machine-starter-imports/PLAN.md` step 6** (other repos, on `feat/flexcompose-integration`, never on
-`main`): the app as a service repo (its temporary pip step in its `Dockerfile` and `bootstrap.sh`; settle its
-`dependencies.repos`, two branches it names no longer exist), inference as an as-image service around
+`main`): the app as a service repo (its temporary pip step in its `Dockerfile` and `bootstrap.sh`; its
+`dependencies.repos` settled 2026-11-18: all pins exist, `packml_ros2` on `feature/packml-2022`, the simulated stack
+cycle passes in the dev box), inference as an as-image service around
 `Dockerfile.serve`, `nl-polymx-automated-qc` as the integration repo; `./lock.sh`, a test release, a run on the
 machine; the dev box in VS Code on Linux, then Windows. That also tests `ssh: [default]` in an as-image `build:`
 with private repos.
