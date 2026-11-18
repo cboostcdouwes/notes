@@ -94,6 +94,27 @@
 - [ ] Topology check by vendor/product code, not name only (the 2/4/8-axis ECOMODULs presumably share a name).
       Low urgency while the driver checks the axis count.
 
+## EK1960 TwinSAFE controller (branch `feature/beckhoff-ek1960`, clone `nl-polymx-ethercat-live`)
+
+- [x] Step 1: `SubdeviceTrait::init` returns `Result` (`71c46aa`)
+- [x] Step 2: profile, PDO layout check and driver for the standard signals (`F788` out, `F688` in), counts declared as
+      `inputs`/`outputs` in the machine file (`26a29ae`)
+- [x] Bench, EK1960 alone on `enp66s0` (2026-11-18, scratch program running the lib engine with only this driver):
+      OP, 8 outputs at bit 0, 10 s at 10 ms with 0 faults; wrong `inputs`/`outputs` refused naming the object.
+      Outputs held at 0 throughout
+- [ ] Bench: which `F788` bit does what (needs the TwinSAFE project or its ENI export); the EK1960 in the full ring
+- [ ] The server can't run a ring without every `Input` enum value on a real input device (`signals.rs`), so the
+      EK1960 alone could only be tested with a scratch program. Part of the generic/PolyMX split
+- [ ] Local safe I/O over PDO when the safety project maps it (user, 2026-11-18). Needs the project to enable the
+      "Internal I/O" info data first, so the real mapping can be read. Over 32 bits (20 in, 24+4 out, module errors,
+      ErrAck), so it needs a way to address more than one digital mask
+- [ ] The current safety project maps no standard outputs (`F688`), so the server has no inputs from the logic yet
+- [x] Docs: the EK1960 and its `inputs`/`outputs` fields in `docs/guide/machine-toml.md` (2026-11-18)
+- [ ] RxPDO `17FE` (the AND gate on safe outputs) stays unassigned: assigning it means writing `1C12`, against the
+      no-CoE-writes decision. Revisit only if the project enables "Standard Outputs active"
+- [ ] Low urgency: the EL6224, iX7NH and ECOMODUL `init` bodies still `unwrap()`/`panic!` on SDO failures; return `Err`
+      with the object index now that `init` can fail
+
 ## Versioning (`decisions.md`)
 
 - [ ] Give client and server one version source per part, so lockstep can't drift: today `server/Cargo.toml`,

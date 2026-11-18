@@ -22,8 +22,9 @@ with private repos.
   the C glue of the Python bindings (`site-packages/<pkg>/{msg,srv,action}/_*_s.c`, `_*_s.ep.rosidl_typesupport_*.c`)
   and Rust bindings (`share/<pkg>/rust/`, confirming design §12's Rust gap). The app's Dockerfile removes them in
   stage build; the starter needs the same, a `fix:` with an e2e fixture that has a message package.
-- PolyMX app, temporary (step 6): rosdep skips `python3-yaskawa-hse-driver` (the `hse` library; its repository is
-  unknown, so `hse` is not installed) and `ament_python` (`nl-cboost-machine-state-manager` lists it as a dependency;
+- PolyMX app, temporary (step 6): rosdep skips `python3-yaskawa-hse-driver` (the `hse` library, not on PyPI; since
+  2026-11-18 `Cboostbv/nl-cboost-yaskawa-hse` is in `dependencies.repos` and installed by pip like the other three)
+  and `ament_python` (`nl-cboost-machine-state-manager` lists it as a dependency;
   it belongs in `<build_type>`); the middleware (patched Fast DDS, rclpy backport) is not staged in the image.
   Inference runs inside the app for now (user, 2026-11-12).
 - **`nl-polymx-aqc-ai` (the AI node, built by colcon-uv) in the app** (asked 2026-11-16, nothing built or changed).
