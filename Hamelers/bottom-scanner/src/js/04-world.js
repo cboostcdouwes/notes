@@ -24,12 +24,15 @@
     out.forEach((p) => { p.stain = [0, 0, 0]; p.knots = [1e9, 1e9, 1e9, 1e9]; });
     return { parts: out, bb: [-5000, -640, -3000, 5000, 2200, 3000] };
   }
-  // The bottom rig under the gap: each camera body (as an upright box) and each LED bar, emitting from its top.
+  // The line-scan rig: each camera body (as an upright box) and each LED bar, emitting from its face toward the belt.
+  // The bottom rig stands on the floor; the top line-scan rig hangs from the frame above the station (TOP_FRAME_Y).
+  const TOP_FRAME_Y = 2170;
   function rigParts(camList) {
-    const out = [], seen = new Set();
+    const out = [], seen = new Set(), steel = { col: [0.3, 0.31, 0.33] };
     camList.forEach((c) => {
       out.push(part("line-scan camera", [c.C[0] - 45, c.C[1] - 45, c.C[2] - 45], [c.C[0] + 45, c.C[1] + 45, c.C[2] + 45], "steel", 1, { col: [0.06, 0.07, 0.08] }));
-      out.push(part("camera stand", [c.C[0] - 15, -600, c.C[2] - 15], [c.C[0] + 15, c.C[1] - 45, c.C[2] + 15], "steel", 1, { col: [0.3, 0.31, 0.33] }));
+      out.push(c.top ? part("camera hanger", [c.C[0] - 15, c.C[1] + 45, c.C[2] - 15], [c.C[0] + 15, TOP_FRAME_Y, c.C[2] + 15], "steel", 1, steel)
+        : part("camera stand", [c.C[0] - 15, -600, c.C[2] - 15], [c.C[0] + 15, c.C[1] - 45, c.C[2] + 15], "steel", 1, steel));
       if (c.spot) {   // the housing only: its light leaves in the beam (spotShare, spotGlint), not from a glowing face
         const [x, y, z] = c.spot.pos, r = SPOT.faceR + 10;
         out.push(part("LED spot", [x - r, y - 60, z - r], [x + r, y - 3, z + r], "steel", 1, { col: [0.06, 0.07, 0.08] }));
@@ -39,14 +42,39 @@
       if (!c.lights.length || seen.has(k)) return;
       seen.add(k);
       const barI = c.lights.reduce((s, l) => s + l[3], 0);   // axis 2 tells the tracer this lamp is the bar
-      out.push(part("LED bar", [c.lightPos[0] - 25, c.lightPos[1] - 30, -500], [c.lightPos[0] + 25, c.lightPos[1] - 3, 500], "lamp", 2, { col: faceRadiance(barI, 50 * 1000) }));
-      [-450, 450].forEach((z) => out.push(part("LED bar stand", [c.lightPos[0] - 12, -600, z - 12], [c.lightPos[0] + 12, c.lightPos[1] - 30, z + 12], "steel", 1, { col: [0.3, 0.31, 0.33] })));
+      const [bx, by] = c.lightPos;
+      if (c.top) {   // facing down
+        out.push(part("LED bar", [bx - 25, by + 3, -500], [bx + 25, by + 30, 500], "lamp", 2, { col: faceRadiance(barI, 50 * 1000) }));
+        [-450, 450].forEach((z) => out.push(part("LED bar hanger", [bx - 12, by + 30, z - 12], [bx + 12, TOP_FRAME_Y, z + 12], "steel", 1, steel)));
+        return;
+      }
+      out.push(part("LED bar", [bx - 25, by - 30, -500], [bx + 25, by - 3, 500], "lamp", 2, { col: faceRadiance(barI, 50 * 1000) }));
+      [-450, 450].forEach((z) => out.push(part("LED bar stand", [bx - 12, -600, z - 12], [bx + 12, by - 30, z + 12], "steel", 1, steel)));
     });
+    if ($("opt-plates").checked) out.push(...platesFor(camList));
     if (opts().lightSetup === "side" || opts().lightSetup === "alternate") sideLights().forEach(([x, y, z, I]) => {   // facing in along the gap
       const s = Math.sign(z), face = 100 * 40;
       out.push(part("side light", [x - 50, y - 20, s > 0 ? z + 3 : z - 33], [x + 50, y + 20, s > 0 ? z + 33 : z - 3], "lamp", 0, { col: faceRadiance(I, face) }));
     });
     out.forEach((p) => { p.stain = [0, 0, 0]; p.knots = [1e9, 1e9, 1e9, 1e9]; });
+    return out;
+  }
+  // Matt black plates (option) across each line camera's view PLATE.beyondMm past the plane it looks at, so what it
+  // sees between and past the pallet's boards is black: above the belt for a bottom camera, below for a top one. In the
+  // travel/height plane a line camera's view is a line from its lens through the scan line, so each plate is a strip
+  // across the belt. A plate that would cut into another line camera's view is left out (a 0° camera and a top one
+  // right above it look at each other). Assumed: flocked or black anodised, PLATE.albedo of the light diffusely.
+  const PLATE = { beyondMm: 400, widthMm: 40, albedo: 0.03 };
+  function platesFor(camList) {
+    const along = (c, y) => c.C[0] * (c.planeY - y) / (c.planeY - c.C[1]);   // where c's view crosses height y, along travel
+    const inView = (c, x0, x1, y) => (y - c.C[1]) * (y - c.planeY) < 0 && along(c, y) > x0 && along(c, y) < x1;   // between lens and plane
+    const out = [], w = PLATE.widthMm / 2;
+    camList.forEach((c) => {
+      const y = c.planeY + (c.top ? -1 : 1) * PLATE.beyondMm, x = along(c, y);
+      if (camList.some((o) => o !== c && inView(o, x - w, x + w, y))) return;
+      const k = (y - c.C[1]) / (c.planeY - c.C[1]), zs = [c.z0, c.z1].map((z) => c.C[2] + (z - c.C[2]) * k);   // the view's width there
+      out.push(part("black plate", [x - w, y, Math.min(...zs) - 50], [x + w, y + 3, Math.max(...zs) + 50], "black", 0, { col: [PLATE.albedo, PLATE.albedo, PLATE.albedo] }));
+    });
     return out;
   }
   const worlds = new Map();
@@ -68,7 +96,7 @@
     out.forEach((p) => { p.stain = [0, 0, 0]; p.knots = [1e9, 1e9, 1e9, 1e9]; });
     return out;
   }
-  const rigKey = (camList) => camList.map((c) => c.C.map(Math.round).join(",") + "/" + String(c.lightPos)).join(";") + "|" + opts().lightSetup +
+  const rigKey = (camList) => camList.map((c) => c.C.map(Math.round).join(",") + "/" + String(c.lightPos)).join(";") + "|" + opts().lightSetup + "|" + $("opt-plates").checked +
     "|" + $("opt-station").checked + ":" + AREA_CAMS.map((c) => c.C.join(",")).join(";");
   function worldFor(g, camList) {
     const key = g + "|" + rigKey(camList);

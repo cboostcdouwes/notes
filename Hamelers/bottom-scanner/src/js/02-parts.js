@@ -1,6 +1,6 @@
   // ---------------- parts ----------------
-  const MAT = { spruce: 0, oak: 1, press: 2, paint: 3, moulded: 4, plasticBlue: 5, plasticGrey: 6, wrap: 7, steel: 9, floor: 10, card: 11, lamp: 12 };
-  const MAT3D = { spruce: "#c9a878", oak: "#8d6a45", press: "#a9875e", paint: "#2a58a8", moulded: "#7b5838", plasticBlue: "#2d5fb0", plasticGrey: "#3a3d42", wrap: "#d7dde2", steel: "#7f8891", floor: "#2b2e31", card: "#a8845a", lamp: "#fff4d6" };
+  const MAT = { spruce: 0, oak: 1, press: 2, paint: 3, moulded: 4, plasticBlue: 5, plasticGrey: 6, wrap: 7, steel: 9, floor: 10, card: 11, lamp: 12, black: 13 };
+  const MAT3D = { spruce: "#c9a878", oak: "#8d6a45", press: "#a9875e", paint: "#2a58a8", moulded: "#7b5838", plasticBlue: "#2d5fb0", plasticGrey: "#3a3d42", wrap: "#d7dde2", steel: "#7f8891", floor: "#2b2e31", card: "#a8845a", lamp: "#fff4d6", black: "#141516" };
   const WOOD = ["#cfae7e", "#c6a476", "#b6aa98", "#d6b688", "#ada291"];
   // Each part draws its look from its own generator, seeded by the pallet's salt and the part's identity, so
   // removing one part (a damage) leaves every other part unchanged.

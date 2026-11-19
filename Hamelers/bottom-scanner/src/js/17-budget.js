@@ -22,7 +22,7 @@
     const driver = DRIVERS[$("driver").value], driverName = $("driver").selectedOptions[0].textContent;
     const flickLine = flickerSpread(driver, le.t * 1e-6), flickArea = flickerSpread(driver, ae.t * 1e-3);
     const flickRow = (spread) => [driverName, spread ? "brightness differs up to " + Math.round(spread * 100) + "% between exposures" : "steady", chk(spread <= 0.02, spread <= 0.1)];
-    const lineCamMBs = lineRate * cams[0].PX * 3 / 1e6, linePalletMB = (L + 2 * MARGIN) / pitch * linesPerImage(o) * cams[0].PX * 3 * cams.length / 1e6;
+    const lineCamMBs = lineRate * cams[0].PX * 3 / 1e6, linePalletMB = (L + 2 * MARGIN) / pitch * linesPerImage(o) * cams[0].PX * 3 * lineCams().length / 1e6;
     const topMmPx = AREA_REAL.topField / AREA_REAL.topPx, topMBs = AREA_REAL.topMP * TOP_FPS;
     const stations = AREA_CAMS.length - 1, stationMB = AREA_REAL.stationMP * stations, keptMB = linePalletMB + stationMB + AREA_REAL.topMP;
     const deadline = (1200 - MARGIN) / vs;   // end of the bottom scan until the trail leaves the station frame
@@ -66,7 +66,7 @@
         ["Gap in the middle section at " + TARGET_PER_H + "/h", Math.round(sectionFactor * v * cycle - L) + " mm", ""],
         ["Touching pallets come apart by", "about " + Math.round((sectionFactor - 1) * L) + " mm (longest type)", chk((sectionFactor - 1) * L >= 50, (sectionFactor - 1) * L >= 20)]] : []),
       ["… less gap sticking (" + st.perPallet.toFixed(2) + " × " + st.meanStall.toFixed(0) + " mm per pallet, model)", Math.round(capStick) + " pallets/h", chk(capStick >= TARGET_PER_H)],
-      ["Bottom line-scan, " + cams.length + " × " + cams[0].PX + " px" + (sectionFactor > 1.001 ? ", at the middle-section speed" : "")],
+      ["Bottom line-scan, " + cams.length + (topLineCams.length ? " (+ " + topLineCams.length + " top, mirrored)" : "") + " × " + cams[0].PX + " px" + (sectionFactor > 1.001 ? ", at the middle-section speed" : "")],
       ["Line rate", Math.round(lineRate) + " lines/s, " + (1000 / lineRate).toFixed(2) + " ms per line" + (linesPerImage(o) > 1 ? " (the lights alternate: each image every other line)" : ""), ""],
       ["Exposure", Math.round(le.t) + " µs" + (o.expUs > le.tMax ? " (capped at the line period)" : ""), chk(o.expUs <= le.tMax, true)],
       ["Motion blur along travel", fmtBlur(le.blur, pitch), chk(le.blur / pitch <= 0.5, le.blur / pitch <= 1)],

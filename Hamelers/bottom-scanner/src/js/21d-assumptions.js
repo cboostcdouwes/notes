@@ -44,7 +44,9 @@
       ["Window glass", () => "plain, uncoated, " + GLASS.thickMm + " mm, index " + GLASS.n + " (BK7-like); housing behind it matt black, so the window reflects nothing into the lens", "assumed", "light lost at steep windows, shift of the view"],
       ["Glass dispersion", () => "index " + GLASS.nRB[0] + " for red, " + GLASS.nRB[1] + " for blue; the colour fringe is estimated, not traced", "typical", "colour fringe"],
       ["Purge air", () => PURGE_AIR.coolK + " K colder than the hall in a " + PURGE_AIR.layerMm + " mm layer crossed over " + PURGE_AIR.pathMm + " mm; air index " + AIR_DN_DT + " per K; the bending is estimated, not traced", "assumed", "shimmer with an air purge"],
-      ["Louvre film leak beyond its cut-off", () => pct(shaderFloat("LOUVRE_LEAK"), 1), "typical", "glare with a louvre"]]],
+      ["Louvre film leak beyond its cut-off", () => pct(shaderFloat("LOUVRE_LEAK"), 1), "typical", "glare with a louvre"],
+      ["Top line-scan cameras (option)", () => "copies of the bottom cameras and their LED bar under the gap, mirrored in the plane " + TOP_MIRROR_Y + " mm above the belt (half a EUR pallet's height) or turned half way round the scan line at that height, hung from the frame above the station at " + TOP_FRAME_Y + " mm; their windows face down, so no grit or splinter settles on them, but they and their bar take the same dust and dirt as the bottom ones", "assumed", "top line-scan images"],
+      ["Black plates behind the scan lines (option)", () => PLATE.widthMm + " mm wide strips across the belt, " + PLATE.beyondMm + " mm past the plane each line camera looks at, reflecting " + pct(PLATE.albedo) + " diffusely (flocked or black anodised)", "assumed", "background in the line-scan images"]]],
     ["Station and top cameras", [
       ["Top camera", () => AREA_REAL.topMP + " MP, " + AREA_REAL.topPx + " px over " + AREA_REAL.topField / 1000 + " m, " + TOP_FPS + " fps", "assumed", "tracking, data rate"],
       ["Station cameras", () => AREA_REAL.stationMP + " MP, " + AREA_REAL.stationMmPx + " mm/px", "assumed", "motion blur, data per pallet"],

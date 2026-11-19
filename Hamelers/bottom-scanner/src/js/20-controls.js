@@ -25,8 +25,9 @@
   });
   // pallets that have not reached the gap yet take the new conditions; the others keep their path
   function rebuildUpcoming() { feed.forEach((p, i) => { if (palletX(p, lastLine) < -(p.reach + 200)) p.motion = buildMotion(p, gap, p.touching ? feed[i - 1] : null); }); sceneKey = ""; }
-  ["sensor", "fnum", "opt-fit", "opt-rect", "opt-light"].forEach((id) => $(id).addEventListener("change", restart));
-  $("light-setup").addEventListener("change", relight);
+  ["sensor", "fnum", "opt-fit", "opt-rect", "opt-light", "top-line"].forEach((id) => $(id).addEventListener("change", restart));
+  $("light-setup").addEventListener("change", () => { $("top-line").disabled = $("light-setup").value !== "gap"; relight(); });   // see topLineHow
+  $("opt-plates").addEventListener("change", relight);
   $("spot-beam").addEventListener("change", relight);
   $("opt-station").addEventListener("change", buildStationRig);
   $("opt-fans").addEventListener("change", applyFans);

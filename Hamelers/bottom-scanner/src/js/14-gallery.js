@@ -24,9 +24,10 @@
     else if (job.stage === 1) {
       const card = job.card = document.createElement("button"), imgs = document.createElement("div");
       card.type = "button"; card.className = "card"; imgs.className = "imgs";
+      const lc = lineCams();
       p.caps.forEach((c, k) => {
         if (!c.cv) return;
-        const tw = 300, th = Math.max(1, Math.round(c.rows * pitch / ((cams[k].z1 - cams[k].z0) / tw)));
+        const tw = 300, th = Math.max(1, Math.round(c.rows * pitch / ((lc[k].z1 - lc[k].z0) / tw)));
         const t = document.createElement("canvas"); t.width = tw; t.height = th;
         t.getContext("2d").drawImage(c.cv, 0, 0, c.cv.width, Math.max(1, c.rows), 0, 0, tw, th); imgs.append(t);
       });

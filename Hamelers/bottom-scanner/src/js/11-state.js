@@ -47,7 +47,7 @@
     }
   }
 
-  const camLabel = (c) => (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "°" + (c.spec.z ? (c.spec.z < 0 ? " left " : " right ") + Math.abs(c.spec.z) + " mm" : " centred") +
+  const camLabel = (c) => (c.top ? "top " : "") + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "°" + (c.spec.z ? (c.spec.z < 0 ? " left " : " right ") + Math.abs(c.spec.z) + " mm" : " centred") +
     " · FOV " + ((c.phi1 - c.phi0) * 180 / Math.PI).toFixed(0) + "° · " + (opts().rect ? "rectified" : "raw");
 
   // What the gap does to the bottom cameras. In the travel/height plane the scan plane is a line from the camera
@@ -91,7 +91,8 @@
       st.perPallet.toFixed(2) + " catches per pallet, " + st.meanStall.toFixed(0) + " mm stall on average, up to " + st.worst.toFixed(0) + " mm (intact pallets; damaged ones droop more)";
   }
 
-  // One live waterfall per bottom camera, and with alternating lights a second one for its raking-light image.
+  // One live waterfall per line camera, and with alternating lights a second one for each bottom camera's raking-light
+  // image.
   function setupLive() {
     liveEl.innerHTML = ""; live = []; liveRaking = [];
     const waterfall = (c, label) => {
@@ -105,17 +106,21 @@
       wrap.append(lbl, cv, mark); liveEl.append(wrap);
       return { ctx: ctx, acc: 0, mm: mm };
     };
-    cams.forEach((c) => live.push(waterfall(c, camLabel(c))));
+    lineCams().forEach((c) => live.push(waterfall(c, camLabel(c))));
     if (opts().lightSetup === "alternate") cams.forEach((c) => liveRaking.push(waterfall(c, camLabel(c) + " · raking light")));
     const c0 = cams[0];
     $("st-res").textContent = (opts().rect ? c0.mmPerPx.toFixed(2) : c0.nearMm.toFixed(2) + "–" + c0.farMm.toFixed(2)) + " mm · " + c0.PX + " px";
   }
 
+  // How the top line-scan cameras are placed (a key of TOP_LINE), or null for none; they copy the LED bar under the gap only.
+  const topLineHow = () => ($("top-line").value !== "off" && $("light-setup").value === "gap" ? $("top-line").value : null);
+  const topLineFor = (bottom) => (topLineHow() ? bottom.map((c) => topLineCam(c, topLineHow())) : []);
   function restart() {
     if (applyingSettings) { restartWanted = true; return; }   // applySettings restarts once at the end
     const o = opts();
     PX = +$("sensor").value; specs = specsFor(presetKey);
     cams = specs.map((sp) => bottomCam(sp, PX, Object.assign({}, o, { anyZero: specs.some((s) => s.tilt === 0) })));
+    topLineCams = topLineFor(cams);
     pitch = Math.max(0.2, cams[0].mmPerPx);   // square pixels: one line per pixel width of travel
     sizeGL(PX);
     feed.forEach((p) => disposeMesh(p.mesh)); feed = []; sceneKey = "";
@@ -125,11 +130,14 @@
     gallery.innerHTML = '<p class="empty">Each pallet\'s images appear here once it has passed the scanner.</p>';
     buildRig(); buildStationRig(); setupLive(); updateGapStat(); updateBudget(); spawn();
   }
-  // A new light setup moves the bars, not the cameras: rebuild the rig and the live views, keep the feed.
+  // A new light setup moves the bars, not the cameras: rebuild the rig and the live views, keep the feed. One that adds
+  // or drops the top line-scan cameras restarts it, as each pallet's captures hold one image per line camera.
   function relight() {
     if (applyingSettings) { restartWanted = true; return; }
-    const o = opts();
+    const o = opts(), hadTop = topLineCams.length > 0;
     cams = specs.map((sp) => bottomCam(sp, PX, Object.assign({}, o, { anyZero: specs.some((s) => s.tilt === 0) })));
+    topLineCams = topLineFor(cams);
+    if (topLineCams.length > 0 !== hadTop) { restart(); return; }
     sceneKey = ""; buildRig(); setupLive(); updateGapStat(); updateBudget();
   }
 

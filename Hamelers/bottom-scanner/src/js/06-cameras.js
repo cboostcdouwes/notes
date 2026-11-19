@@ -19,7 +19,22 @@
     const lights = lightPos && !spot ? bar(lightPos[0], lightPos[1], -450, 450, 4, o.lightSetup === "beside" ? BAR_REF_MM : Math.hypot(lightPos[0], lightPos[1])) : [];
     return { kind: "line", spec: spec, C: C, d0: d0, e: e, phi0: p0, phi1: p1, dphi: dphi, axisPhi: axisPhi, axis: axis, z0: z0, z1: z1,
       mmPerPx: (z1 - z0) / (px - 1), nearMm: Math.abs(beltZ(p0 + dphi) - z0), farMm: Math.abs(z1 - beltZ(p1 - dphi)),
-      focus: focus, focal: focal, lights: lights, lightPos: lightPos, spot: spot, PX: px };
+      focus: focus, focal: focal, lights: lights, lightPos: lightPos, spot: spot, PX: px, planeY: 0 };
+  }
+  // Top line-scan cameras (option): copies of the bottom cameras and their LED bar above the belt, placed by one of
+  // TOP_LINE about the height TOP_MIRROR_Y: mirrored in the horizontal plane there (on the same side of the scan line),
+  // or turned half way round the line across the belt there (on the other side). A pallet lying upside down is the
+  // upright one turned that way, so the turned cameras see it exactly as the bottom ones see it upright, passing the
+  // other way round; the mirrored ones see it reflected along travel. Exactly for a pallet 2 × TOP_MIRROR_Y high.
+  // planeY: the plane a camera's view is fitted to and rectified on; mapDir: carries a bottom camera's direction over.
+  const TOP_MIRROR_Y = 72;   // half a EUR pallet's 144 mm height (assumed)
+  const TOP_LINE = {
+    mirrored: { name: "mirror image", point: (v) => [v[0], 2 * TOP_MIRROR_Y - v[1], v[2]], dir: (v) => [v[0], -v[1], v[2]] },
+    turned: { name: "turned half way round the scan line", point: (v) => [-v[0], 2 * TOP_MIRROR_Y - v[1], v[2]], dir: (v) => [-v[0], -v[1], v[2]] } };
+  function topLineCam(c, how) {
+    const { point, dir } = TOP_LINE[how], lp = point([c.lightPos[0], c.lightPos[1], 0]);
+    return Object.assign({}, c, { top: true, how: how, C: point(c.C), d0: dir(c.d0), e: dir(c.e), axis: dir(c.axis), planeY: 2 * TOP_MIRROR_Y, mapDir: dir,
+      lightPos: [lp[0], lp[1]], lights: c.lights.map((l) => point(l).concat(l[3])) });
   }
   const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
   const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];

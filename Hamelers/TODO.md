@@ -49,3 +49,14 @@ Hamelers: pallet classifier. Most important first. Research log: `pallet-classif
   the worst sticking case). Needs per-part motion (the board's angle following the pallet's position over the rollers)
   in the motion model and the shader, and six cutting planes per part instead of four for turning and hanging at once.
   Roughly a day; worth it if catching at the gap matters on the test conveyor.
+- **Flipped pallets (R17)**, simulator: top line-scan cameras (mirrored or turned), black plates behind the scan lines,
+  and Compare > "Flipped from above vs upright from below" (2026-11-19, EUR, broken bottom board, pixels differing by
+  more than 30/765): mirrored 59% at a 100 mm gap; turned + plates 56% at 100 mm (the top cameras look past the deck
+  onto the zinc rollers), 18% at 250 mm, 0.5% at 250 mm with the station lamps kept off the scan line. Mirrored stays
+  ~17% even then: it sees the pallet's other block faces. Between ~180 and ~230 mm the bar under the gap lights only the
+  bottom cameras' plates (+4%). So: **turned top cameras, black plates, gap >= ~230 mm, and no station-lamp light on
+  the scan line** (shield, or strobe the lamps with the area cameras). Costs: sticking at 250 mm 1.33 catches/pallet,
+  14 mm average stall (100 mm: 0.39, 4 mm), model only. Alternative to the wide gap: black sleeves on the two gap
+  rollers (not simulated). Still to do: trace the stand-in classifier's evidence in the pallet's real orientation (now
+  always upright); make flips follow heavy bottom damage instead of 3% at random; pallet heights other than 144 mm
+  (one-way 120, CHEP 156) put the top cameras' plane off the deck.

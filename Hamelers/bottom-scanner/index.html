@@ -158,6 +158,8 @@ dialog::backdrop { background: rgb(0 0 0 / 0.55); }
       <label class="field" for="fnum">Lens <select id="fnum"><option value="0">pinhole (no depth of field)</option><option value="2.8">f/2.8</option><option value="4" selected>f/4</option><option value="8">f/8</option></select></label>
       <label class="field" for="opt-fit"><input type="checkbox" id="opt-fit" checked> Fit FOV</label>
       <label class="field" for="opt-rect"><input type="checkbox" id="opt-rect" checked> Perspective correction</label>
+      <label class="field" for="top-line" title="Top line-scan cameras and LED bar, copies of the bottom ones about half a pallet's height: mirrored in that plane, or turned half way round the scan line there (as a pallet is when laid upside down). Only with the LED bar under the gap.">Top line-scan <select id="top-line"><option value="off" selected>none</option><option value="mirrored">mirrored</option><option value="turned">turned (opposite side)</option></select></label>
+      <label class="field" for="opt-plates" title="Matt black plates across each line camera's view, 400 mm past the pallet, so the background between the boards is black."><input type="checkbox" id="opt-plates"> Black plates behind the scan lines</label>
       <label class="field" for="exp">Line exposure <input id="exp" type="range" min="1.3" max="3.5" step="0.05" value="2"><output id="exp-out">100 µs</output></label>
       <label class="field" for="opt-glare"><input type="checkbox" id="opt-glare" checked> Lens glare</label>
       <label class="field" for="f-uncal"><input type="checkbox" id="f-uncal"> Uncalibrated lenses and sensors</label>
@@ -293,7 +295,10 @@ dialog::backdrop { background: rgb(0 0 0 / 0.55); }
           <label class="field" for="cmp-sb">sides <input id="cmp-sb" type="range" min="0" max="1000" step="50" value="400"><output id="cmp-sb-out">±400 mm</output></label>
           <button type="button" class="btn primary" id="cmp-run">Compare</button>
         </div>
-        <p class="cap-dim" id="cmp-status" style="margin:0;font-size:0.8rem">Same pallet traced intact and damaged, noise off. Red marks the pixels the damage changes.</p>
+        <div class="row">
+          <button type="button" class="btn" id="cmp-flip">Flipped from above vs upright from below</button>
+        </div>
+        <p class="cap-dim" id="cmp-status" style="margin:0;font-size:0.8rem">Same pallet traced intact and damaged, noise off. Red marks the pixels the damage changes. Flipped vs upright: the damaged pallet upside down through the top line-scan cameras against it upright through the bottom ones, with the current settings.</p>
         <div class="cmpgrid" id="cmp-out"></div>
       </div>
 
@@ -389,8 +394,8 @@ uniform sampler2D uMotion;      // per slot row: pose by belt progress, two texe
 uniform float uMotionU0; uniform float uMotionDU; uniform int uMotionN;
 uniform vec4 uBbLo[6]; uniform vec4 uBbHi[6];
 uniform float uRollX[40]; uniform int uNRoll; uniform float uRollHalf;
-uniform vec4 uLights[24]; uniform int uNL; uniform float uAmbient;
-uniform int uNBar;              // the first uNBar lights are LED bar points
+uniform vec4 uLights[32]; uniform int uNL; uniform float uAmbient;
+uniform int uNBar;              // the first uNBar lights are LED bar points (see barFacing)
 uniform int uNSide;             // the next uNSide are side lights, aimed along the gap at the belt centre
 uniform int uNSpot;             // the next uNSpot are the spots beside the cameras, each a row of units: axis, along the line,
 uniform vec3 uSpotAxis[2]; uniform vec3 uSpotAlong[2]; uniform vec2 uSpotTan[2];   // a unit's half-angle tangents across and along,
@@ -571,12 +576,14 @@ float triCum(float x, float w) { x = clamp(x, -w, w); return x < 0.0 ? (x + w) *
 // stretch the point stands for that the louvre passes toward p (by each part's angle along the bar).
 // Behind its own window, the light leaving toward p also passes the glass (ownWindowT).
 float ownWindowT(vec3 lp, vec3 u);
+// A bar below the belt faces up; one above it (the top line-scan cameras' bar) faces down: +1 or -1 along y.
+float barFacing(vec3 lp) { return lp.y < 0.0 ? 1.0 : -1.0; }
 float barWeight(vec3 lp, vec3 p) {
-  vec3 v = p - lp; float len = length(v), cosT = v.y / len;
+  vec3 v = p - lp; float len = length(v), cosT = barFacing(lp) * v.y / len;
   if (cosT <= 0.0) return 0.0;
   cosT *= ownWindowT(lp, v / len);
   if (uLouvreTan <= 0.0) return cosT;
-  float w = v.y * uLouvreTan;
+  float w = abs(v.y) * uLouvreTan;
   return cosT * (triCum(lp.z + uBarHalf - p.z, w) - triCum(lp.z - uBarHalf - p.z, w)) / (2.0 * uBarHalf);
 }
 // A light beside its camera (lp) sends light along u through its own window, turned toward the scan line at x = 0.
@@ -840,7 +847,7 @@ vec3 spotFaces(vec3 o, vec3 d, float tEnd) {
 const float MIRROR_SPEC = 0.1;
 const float METAL_F0 = 0.5, DIELECTRIC_F0 = 0.04;   // head-on reflectance: zinc and steel (assumed), water, ice and plastic
 
-const float BEVEL[13] = float[13](2.5, 2.0, 1.2, 2.5, 6.0, 4.0, 4.0, 0.0, 0.0, 1.0, 0.0, 0.5, 0.0);   // edge radius per material, mm
+const float BEVEL[14] = float[14](2.5, 2.0, 1.2, 2.5, 6.0, 4.0, 4.0, 0.0, 0.0, 1.0, 0.0, 0.5, 0.0, 0.0);   // edge radius per material (MAT), mm
 
 // Direct light at a hit. Returns radiance; alb and wn give the albedo and world normal for an indirect bounce.
 vec3 shade(Hit h, float s, float foot, out vec3 alb, out vec3 wn) {
@@ -848,7 +855,7 @@ vec3 shade(Hit h, float s, float foot, out vec3 alb, out vec3 wn) {
   if (h.k < 0 && h.roller < 0) return (h.ld.y > 0.0 ? uBgUp : uBg) * uLampCol;   // the hall, lit by the station lamps
   if (h.k >= 0 && int(P(h.k, 0).w) == 12) {   // a lamp's emitting face: its radiance (the part's colour) in this view
     vec3 L = P(h.k, 2).xyz;
-    if (int(P(h.k, 1).w) == 2) return L * uFace.x * louvreT(abs(h.ld.z) / max(-h.ld.y, 1e-4)) * uBarCol;   // the LED bar
+    if (int(P(h.k, 1).w) == 2) return L * uFace.x * louvreT(abs(h.ld.z) / max(-barFacing(P(h.k, 0).xyz) * h.ld.y, 1e-4)) * uBarCol;   // an LED bar
     return L * uFace.y * uLampCol;
   }
   float spec = 0.0; vec3 n = h.n;
@@ -864,7 +871,7 @@ vec3 shade(Hit h, float s, float foot, out vec3 alb, out vec3 wn) {
   vec3 wp = (movable ? worldP(q, h.pl) : h.pl) + wn * 0.05;
   float gloss = spec > 0.1 ? 40.0 : 10.0;
   bool mirror = spec >= MIRROR_SPEC;
-  for (int l = 0; l < 24; l++) {
+  for (int l = 0; l < 32; l++) {
     if (l >= uNL) break;
     vec3 Lw = uLights[l].xyz;
     if (uStill == 1) Lw += (vec3(rnd(), rnd(), rnd()) * 2.0 - 1.0) * uLightJit;
@@ -918,7 +925,7 @@ const float DUST_G = 0.7, DUST_R = 30.0, DUST_VISIBLE = 1e-3;
 vec3 dustGlow(vec3 o, vec3 d, float tEnd, float s) {
   if (uDust <= 0.0) return vec3(0.0);
   vec3 sum = vec3(0.0); bool posed = false;
-  for (int l = 0; l < 24; l++) {
+  for (int l = 0; l < 32; l++) {
     if (l >= uNL) break;
     vec3 Lw = uLights[l].xyz, v = Lw - o;
     float tc = dot(v, d), hh = sqrt(max(dot(v, v) - tc * tc, 0.0) + DUST_R * DUST_R);
@@ -1040,6 +1047,7 @@ precision highp float; precision highp int;
 uniform sampler2D uNative; uniform int uMode; uniform int uRect; uniform int uPX; uniform int uH;
 uniform int uOutRow;            // output drawn this many rows below the traced rows, so several renders share the canvas
 uniform vec3 uC; uniform vec3 uD0; uniform vec3 uE; uniform float uPhi0; uniform float uDphi; uniform float uZ0; uniform float uZ1;
+uniform float uPlaneY;          // line-scan: height of the plane its view is fitted to, mm (the belt plane; a top camera's mirror of it)
 uniform float uNoise; uniform float uSeed; uniform float uRowBase; uniform int uTone;
 uniform float uK;               // exposure relative to the reference (1 = mid-grey at half the full well)
 uniform float uGain;            // the camera's gain, set for its light (never below 1, so overexposure stays clipped)
@@ -1126,9 +1134,9 @@ void main() {
   vec3 c;
   float f = float(ix);   // native pixel (line-scan)
   if (uMode == 0) {
-    if (uRect == 1) {   // perspective correction: uniform mm on the belt plane
+    if (uRect == 1) {   // perspective correction: uniform mm on the plane at uPlaneY
       float z = uZ0 + (uZ1 - uZ0) * float(ix) / float(uPX - 1);
-      vec3 v = vec3(0.0, 0.0, z) - uC;
+      vec3 v = vec3(0.0, uPlaneY, z) - uC;
       f = (atan(dot(v, uE), dot(v, uD0)) - uPhi0) / uDphi;
     }
     c = fetchRow(f, row);
@@ -1219,8 +1227,8 @@ void main() {
   const srgb2lin = (hex) => { const c = new THREE.Color(hex); return [c.r, c.g, c.b].map((v) => (v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4))); };
 
   // ---------------- parts ----------------
-  const MAT = { spruce: 0, oak: 1, press: 2, paint: 3, moulded: 4, plasticBlue: 5, plasticGrey: 6, wrap: 7, steel: 9, floor: 10, card: 11, lamp: 12 };
-  const MAT3D = { spruce: "#c9a878", oak: "#8d6a45", press: "#a9875e", paint: "#2a58a8", moulded: "#7b5838", plasticBlue: "#2d5fb0", plasticGrey: "#3a3d42", wrap: "#d7dde2", steel: "#7f8891", floor: "#2b2e31", card: "#a8845a", lamp: "#fff4d6" };
+  const MAT = { spruce: 0, oak: 1, press: 2, paint: 3, moulded: 4, plasticBlue: 5, plasticGrey: 6, wrap: 7, steel: 9, floor: 10, card: 11, lamp: 12, black: 13 };
+  const MAT3D = { spruce: "#c9a878", oak: "#8d6a45", press: "#a9875e", paint: "#2a58a8", moulded: "#7b5838", plasticBlue: "#2d5fb0", plasticGrey: "#3a3d42", wrap: "#d7dde2", steel: "#7f8891", floor: "#2b2e31", card: "#a8845a", lamp: "#fff4d6", black: "#141516" };
   const WOOD = ["#cfae7e", "#c6a476", "#b6aa98", "#d6b688", "#ada291"];
   // Each part draws its look from its own generator, seeded by the pallet's salt and the part's identity, so
   // removing one part (a damage) leaves every other part unchanged.
@@ -1611,12 +1619,15 @@ void main() {
     out.forEach((p) => { p.stain = [0, 0, 0]; p.knots = [1e9, 1e9, 1e9, 1e9]; });
     return { parts: out, bb: [-5000, -640, -3000, 5000, 2200, 3000] };
   }
-  // The bottom rig under the gap: each camera body (as an upright box) and each LED bar, emitting from its top.
+  // The line-scan rig: each camera body (as an upright box) and each LED bar, emitting from its face toward the belt.
+  // The bottom rig stands on the floor; the top line-scan rig hangs from the frame above the station (TOP_FRAME_Y).
+  const TOP_FRAME_Y = 2170;
   function rigParts(camList) {
-    const out = [], seen = new Set();
+    const out = [], seen = new Set(), steel = { col: [0.3, 0.31, 0.33] };
     camList.forEach((c) => {
       out.push(part("line-scan camera", [c.C[0] - 45, c.C[1] - 45, c.C[2] - 45], [c.C[0] + 45, c.C[1] + 45, c.C[2] + 45], "steel", 1, { col: [0.06, 0.07, 0.08] }));
-      out.push(part("camera stand", [c.C[0] - 15, -600, c.C[2] - 15], [c.C[0] + 15, c.C[1] - 45, c.C[2] + 15], "steel", 1, { col: [0.3, 0.31, 0.33] }));
+      out.push(c.top ? part("camera hanger", [c.C[0] - 15, c.C[1] + 45, c.C[2] - 15], [c.C[0] + 15, TOP_FRAME_Y, c.C[2] + 15], "steel", 1, steel)
+        : part("camera stand", [c.C[0] - 15, -600, c.C[2] - 15], [c.C[0] + 15, c.C[1] - 45, c.C[2] + 15], "steel", 1, steel));
       if (c.spot) {   // the housing only: its light leaves in the beam (spotShare, spotGlint), not from a glowing face
         const [x, y, z] = c.spot.pos, r = SPOT.faceR + 10;
         out.push(part("LED spot", [x - r, y - 60, z - r], [x + r, y - 3, z + r], "steel", 1, { col: [0.06, 0.07, 0.08] }));
@@ -1626,14 +1637,39 @@ void main() {
       if (!c.lights.length || seen.has(k)) return;
       seen.add(k);
       const barI = c.lights.reduce((s, l) => s + l[3], 0);   // axis 2 tells the tracer this lamp is the bar
-      out.push(part("LED bar", [c.lightPos[0] - 25, c.lightPos[1] - 30, -500], [c.lightPos[0] + 25, c.lightPos[1] - 3, 500], "lamp", 2, { col: faceRadiance(barI, 50 * 1000) }));
-      [-450, 450].forEach((z) => out.push(part("LED bar stand", [c.lightPos[0] - 12, -600, z - 12], [c.lightPos[0] + 12, c.lightPos[1] - 30, z + 12], "steel", 1, { col: [0.3, 0.31, 0.33] })));
+      const [bx, by] = c.lightPos;
+      if (c.top) {   // facing down
+        out.push(part("LED bar", [bx - 25, by + 3, -500], [bx + 25, by + 30, 500], "lamp", 2, { col: faceRadiance(barI, 50 * 1000) }));
+        [-450, 450].forEach((z) => out.push(part("LED bar hanger", [bx - 12, by + 30, z - 12], [bx + 12, TOP_FRAME_Y, z + 12], "steel", 1, steel)));
+        return;
+      }
+      out.push(part("LED bar", [bx - 25, by - 30, -500], [bx + 25, by - 3, 500], "lamp", 2, { col: faceRadiance(barI, 50 * 1000) }));
+      [-450, 450].forEach((z) => out.push(part("LED bar stand", [bx - 12, -600, z - 12], [bx + 12, by - 30, z + 12], "steel", 1, steel)));
     });
+    if ($("opt-plates").checked) out.push(...platesFor(camList));
     if (opts().lightSetup === "side" || opts().lightSetup === "alternate") sideLights().forEach(([x, y, z, I]) => {   // facing in along the gap
       const s = Math.sign(z), face = 100 * 40;
       out.push(part("side light", [x - 50, y - 20, s > 0 ? z + 3 : z - 33], [x + 50, y + 20, s > 0 ? z + 33 : z - 3], "lamp", 0, { col: faceRadiance(I, face) }));
     });
     out.forEach((p) => { p.stain = [0, 0, 0]; p.knots = [1e9, 1e9, 1e9, 1e9]; });
+    return out;
+  }
+  // Matt black plates (option) across each line camera's view PLATE.beyondMm past the plane it looks at, so what it
+  // sees between and past the pallet's boards is black: above the belt for a bottom camera, below for a top one. In the
+  // travel/height plane a line camera's view is a line from its lens through the scan line, so each plate is a strip
+  // across the belt. A plate that would cut into another line camera's view is left out (a 0° camera and a top one
+  // right above it look at each other). Assumed: flocked or black anodised, PLATE.albedo of the light diffusely.
+  const PLATE = { beyondMm: 400, widthMm: 40, albedo: 0.03 };
+  function platesFor(camList) {
+    const along = (c, y) => c.C[0] * (c.planeY - y) / (c.planeY - c.C[1]);   // where c's view crosses height y, along travel
+    const inView = (c, x0, x1, y) => (y - c.C[1]) * (y - c.planeY) < 0 && along(c, y) > x0 && along(c, y) < x1;   // between lens and plane
+    const out = [], w = PLATE.widthMm / 2;
+    camList.forEach((c) => {
+      const y = c.planeY + (c.top ? -1 : 1) * PLATE.beyondMm, x = along(c, y);
+      if (camList.some((o) => o !== c && inView(o, x - w, x + w, y))) return;
+      const k = (y - c.C[1]) / (c.planeY - c.C[1]), zs = [c.z0, c.z1].map((z) => c.C[2] + (z - c.C[2]) * k);   // the view's width there
+      out.push(part("black plate", [x - w, y, Math.min(...zs) - 50], [x + w, y + 3, Math.max(...zs) + 50], "black", 0, { col: [PLATE.albedo, PLATE.albedo, PLATE.albedo] }));
+    });
     return out;
   }
   const worlds = new Map();
@@ -1655,7 +1691,7 @@ void main() {
     out.forEach((p) => { p.stain = [0, 0, 0]; p.knots = [1e9, 1e9, 1e9, 1e9]; });
     return out;
   }
-  const rigKey = (camList) => camList.map((c) => c.C.map(Math.round).join(",") + "/" + String(c.lightPos)).join(";") + "|" + opts().lightSetup +
+  const rigKey = (camList) => camList.map((c) => c.C.map(Math.round).join(",") + "/" + String(c.lightPos)).join(";") + "|" + opts().lightSetup + "|" + $("opt-plates").checked +
     "|" + $("opt-station").checked + ":" + AREA_CAMS.map((c) => c.C.join(",")).join(";");
   function worldFor(g, camList) {
     const key = g + "|" + rigKey(camList);
@@ -1785,10 +1821,10 @@ void main() {
     return g;
   }
   // Reading the WebGL canvas back is slow in some browsers (about 2 ms per copy in Firefox), so each frame's renders
-  // go to separate rows of it and are read back once, by queueCopy/flushCopies. Rows: bottom camera k at k × MAXROWS,
-  // its raking-light image (alternating lights) at (2 + k) × MAXROWS, then the top camera's strip, then a station
-  // snapshot strip.
-  const OUT_RAKING = 2 * MAXROWS, OUT_TOP = 4 * MAXROWS, OUT_SNAP = () => OUT_TOP + TOP_LIVE.h;
+  // go to separate rows of it and are read back once, by queueCopy/flushCopies. Rows: line camera k (see lineCams) at
+  // k × MAXROWS, then the bottom cameras' raking-light images (alternating lights, which the top line-scan cameras
+  // don't mirror), four images at most; then the top camera's strip, then a station snapshot strip.
+  const OUT_TOP = 4 * MAXROWS, OUT_SNAP = () => OUT_TOP + TOP_LIVE.h;
   const stage = document.createElement("canvas"), stageCtx = stage.getContext("2d");
   const strip = document.createElement("canvas"), stripCtx = strip.getContext("2d");   // see flushCopies
   const copyQueue = [], afterCopy = [];
@@ -1832,11 +1868,11 @@ void main() {
   let sceneKey = "", sceneSlots = [], sceneGap = gap;   // slots: [{pal (null = world), start, count}]
   function uploadScene(pals, g) {
     g = g || gap;
-    const key = g + ":" + rigKey(cams) + ":" + pals.map((p) => p.uid).join(",");
+    const key = g + ":" + rigKey(lineCams()) + ":" + pals.map((p) => p.uid).join(",");
     if (key === sceneKey) return;
     sceneKey = key; sceneSlots = []; sceneGap = g; let row = 0;
     const add = (pal, parts) => { const st = row; parts.forEach((q) => { if (row < TEXH) writePart(row++, q); }); sceneSlots.push({ pal: pal, start: st, count: row - st }); };
-    add(null, worldFor(g, cams).parts);
+    add(null, worldFor(g, lineCams()).parts);
     pals.forEach((p) => add(p, p.parts));
     motionData.fill(0);
     sceneSlots.forEach((e, i) => {
@@ -1854,7 +1890,7 @@ void main() {
   const MAX_LAMPS = 16, lampLo = new Float32Array(MAX_LAMPS * 4), lampHi = new Float32Array(MAX_LAMPS * 4);
   // The lamp faces, for mirror reflections: box, base radiance (lo.w) and whether it is the LED bar (hi.w).
   function lampUniforms(U) {
-    const lamps = worldFor(sceneGap, cams).parts.filter((q) => q.mat === "lamp");
+    const lamps = worldFor(sceneGap, lineCams()).parts.filter((q) => q.mat === "lamp");
     if (lamps.length > MAX_LAMPS) throw new Error(lamps.length + " lamps; the tracer takes " + MAX_LAMPS + ". Raise MAX_LAMPS and uLampLo/uLampHi[] together.");
     lamps.forEach((q, i) => { lampLo.set([q.lo[0], q.lo[1], q.lo[2], q.col[0]], i * 4); lampHi.set([q.hi[0], q.hi[1], q.hi[2], q.axis === 2 ? 1 : 0], i * 4); });
     gl.uniform4fv(U.uLampLo, lampLo); gl.uniform4fv(U.uLampHi, lampHi); gl.uniform1i(U.uNLamp, lamps.length);
@@ -1864,7 +1900,7 @@ void main() {
       const p = e.pal;
       palA.set([p ? p.off : 0, 0, 0, e.start], i * 4);
       palB.set([e.count, p ? 1 : 0, 0, 0], i * 4);
-      const b = p ? p.bb : worldFor(sceneGap, cams).bb; bbLo.set([b[0], b[1], b[2], 0], i * 4); bbHi.set([b[3], b[4], b[5], 0], i * 4);
+      const b = p ? p.bb : worldFor(sceneGap, lineCams()).bb; bbLo.set([b[0], b[1], b[2], 0], i * 4); bbHi.set([b[3], b[4], b[5], 0], i * 4);
     });
     gl.uniform1i(U.uNPal, sceneSlots.length);
     gl.uniform4fv(U.uPalA, palA); gl.uniform4fv(U.uPalB, palB); gl.uniform4fv(U.uBbLo, bbLo); gl.uniform4fv(U.uBbHi, bbHi);
@@ -1879,7 +1915,7 @@ void main() {
     lampUniforms(U);
   }
   const MAX_SPOTS = 2, MAX_SPOT_UNITS = 16;   // one per bottom camera, as uSpotAxis[]; units each, as spotShare's loop
-  const MAX_LIGHTS = 24, HALL = [0.1, 0.1, 0.11];   // HALL: brightness of the hall above, as seen through gaps
+  const MAX_LIGHTS = 32, HALL = [0.1, 0.1, 0.11];   // HALL: brightness of the hall above, as seen through gaps
   // L: from lightsFor
   function setLights(U, L, ambient) {
     const lights = L.lights;
@@ -1923,7 +1959,22 @@ void main() {
     const lights = lightPos && !spot ? bar(lightPos[0], lightPos[1], -450, 450, 4, o.lightSetup === "beside" ? BAR_REF_MM : Math.hypot(lightPos[0], lightPos[1])) : [];
     return { kind: "line", spec: spec, C: C, d0: d0, e: e, phi0: p0, phi1: p1, dphi: dphi, axisPhi: axisPhi, axis: axis, z0: z0, z1: z1,
       mmPerPx: (z1 - z0) / (px - 1), nearMm: Math.abs(beltZ(p0 + dphi) - z0), farMm: Math.abs(z1 - beltZ(p1 - dphi)),
-      focus: focus, focal: focal, lights: lights, lightPos: lightPos, spot: spot, PX: px };
+      focus: focus, focal: focal, lights: lights, lightPos: lightPos, spot: spot, PX: px, planeY: 0 };
+  }
+  // Top line-scan cameras (option): copies of the bottom cameras and their LED bar above the belt, placed by one of
+  // TOP_LINE about the height TOP_MIRROR_Y: mirrored in the horizontal plane there (on the same side of the scan line),
+  // or turned half way round the line across the belt there (on the other side). A pallet lying upside down is the
+  // upright one turned that way, so the turned cameras see it exactly as the bottom ones see it upright, passing the
+  // other way round; the mirrored ones see it reflected along travel. Exactly for a pallet 2 × TOP_MIRROR_Y high.
+  // planeY: the plane a camera's view is fitted to and rectified on; mapDir: carries a bottom camera's direction over.
+  const TOP_MIRROR_Y = 72;   // half a EUR pallet's 144 mm height (assumed)
+  const TOP_LINE = {
+    mirrored: { name: "mirror image", point: (v) => [v[0], 2 * TOP_MIRROR_Y - v[1], v[2]], dir: (v) => [v[0], -v[1], v[2]] },
+    turned: { name: "turned half way round the scan line", point: (v) => [-v[0], 2 * TOP_MIRROR_Y - v[1], v[2]], dir: (v) => [-v[0], -v[1], v[2]] } };
+  function topLineCam(c, how) {
+    const { point, dir } = TOP_LINE[how], lp = point([c.lightPos[0], c.lightPos[1], 0]);
+    return Object.assign({}, c, { top: true, how: how, C: point(c.C), d0: dir(c.d0), e: dir(c.e), axis: dir(c.axis), planeY: 2 * TOP_MIRROR_Y, mapDir: dir,
+      lightPos: [lp[0], lp[1]], lights: c.lights.map((l) => point(l).concat(l[3])) });
   }
   const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
   const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
@@ -2175,7 +2226,8 @@ void main() {
   // along the scan line (debris positions are along a and across it, from o).
   function windowFor(cam) {
     const ang = service.winAngle * Math.PI / 180, side = Math.sign(cam.spec.tilt) || 1;
-    const n = [side * Math.sin(ang), Math.cos(ang), 0], o = cam.C.map((c, i) => c + WINDOW_MM * cam.axis[i]);
+    const bottomN = [side * Math.sin(ang), Math.cos(ang), 0], n = cam.top ? cam.mapDir(bottomN) : bottomN;   // a top camera's: its bottom camera's, carried over
+    const o = cam.C.map((c, i) => c + WINDOW_MM * cam.axis[i]);
     const en = cam.e[0] * n[0] + cam.e[1] * n[1] + cam.e[2] * n[2];
     return { n: n, o: o, a: norm3(cam.e.map((v, i) => v - en * n[i])) };
   }
@@ -2204,8 +2256,10 @@ void main() {
   }
   // Debris on a bottom camera's window (assumed): grit settles over the months since service, and a splinter
   // can lie on the first camera's window. Each: position along the sensor line and across it, radius (mm), opacity.
+  // A top camera's window faces down: nothing settles on it.
   function debrisFor(cam) {
     const data = new Float32Array(64);   // up to 16: a splinter is 5, specks at most 10
+    if (cam.top) return { data: data, n: 0 };
     let n = 0, seed = (Math.round(cam.spec.tilt * 31 + cam.spec.z) >>> 0) + 7;
     const r = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
     const add = (u, v, rad, op) => data.set([u, v, rad, op], 4 * n++);
@@ -2314,7 +2368,7 @@ void main() {
     gl.uniform3fv(U.uC, cam.C); gl.uniform3fv(U.uD0, cam.d0); gl.uniform3fv(U.uE, cam.e);
     gl.uniform1f(U.uPhi0, cam.phi0); gl.uniform1f(U.uDphi, cam.dphi); gl.uniform1f(U.uAxisPhi, cam.axisPhi);
     gl.uniform1f(U.uS0, s0); gl.uniform1f(U.uPitch, pitch); gl.uniform2f(U.uSize, cam.PX, rows);
-    const L = o.lights || lightsFor(cams, "line"), c = opts();
+    const L = o.lights || lightsFor(lineCams(), "line"), c = opts();
     setLights(U, L, o.still || o.indirect ? 0.008 : 0.035);   // indirect light replaces the constant fill
     gl.uniform1f(U.uVib, o.id ? 0 : c.vib); gl.uniform1f(U.uSpeed, scanSpeed()); gl.uniform1f(U.uDistort, c.uncal ? LENS_DISTORTION : 0); gl.uniform1f(U.uRollMM, 0);
     const fnum = o.id ? 0 : o.fnum;
@@ -2334,9 +2388,9 @@ void main() {
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, nativeTex); gl.uniform1i(P.uNative, 1);
     gl.uniform1i(P.uMode, 0); gl.uniform1i(P.uRect, o.rect ? 1 : 0); gl.uniform1i(P.uPX, cam.PX); gl.uniform1i(P.uH, GH);
     gl.uniform3fv(P.uC, cam.C); gl.uniform3fv(P.uD0, cam.d0); gl.uniform3fv(P.uE, cam.e);
-    gl.uniform1f(P.uPhi0, cam.phi0); gl.uniform1f(P.uDphi, cam.dphi); gl.uniform1f(P.uZ0, cam.z0); gl.uniform1f(P.uZ1, cam.z1);
+    gl.uniform1f(P.uPhi0, cam.phi0); gl.uniform1f(P.uDphi, cam.dphi); gl.uniform1f(P.uZ0, cam.z0); gl.uniform1f(P.uZ1, cam.z1); gl.uniform1f(P.uPlaneY, cam.planeY);
     gl.uniform1f(P.uNoise, o.noise); gl.uniform1f(P.uSeed, o.seed || 1); gl.uniform1f(P.uRowBase, o.rowBase || 0); gl.uniform1i(P.uTone, 0); sensorUniforms(P, o, lineGain(o, o.which, o.cams));
-    conditionUniforms(P, L, s0 / scanSpeed(), pitch / scanSpeed(), (o.t || 100) * 1e-6, c.uncal, cam.spec.tilt * 7 + cam.spec.z);
+    conditionUniforms(P, L, s0 / scanSpeed(), pitch / scanSpeed(), (o.t || 100) * 1e-6, c.uncal, cam.spec.tilt * 7 + cam.spec.z + (cam.top ? 500 : 0));   // a top camera: its own sensor
     const db = debrisFor(cam);
     gl.uniform4fv(P.uDebris, db.data); gl.uniform1i(P.uNDebris, db.n);
     gl.uniform3fv(P.uWinN, win.n); gl.uniform3fv(P.uWinO, win.o); gl.uniform3fv(P.uWinA, win.a);
@@ -2353,7 +2407,7 @@ void main() {
     gl.uniform1f(U.uExposure, o.exposure || 1.6); gl.uniform1f(U.uDirt, 0); gl.uniform1f(U.uSeed, o.seed || 1); gl.uniform3f(U.uBg, 0.1, 0.105, 0.11);
     gl.uniform3fv(U.uC, cam.C); gl.uniform3fv(U.uF, cam.F); gl.uniform3fv(U.uR, cam.R); gl.uniform3fv(U.uU, cam.U);
     gl.uniform2f(U.uFoc, cam.fx, cam.fx); gl.uniform2f(U.uSize, cam.w, cam.h); gl.uniform1f(U.uSnapS, s);
-    const L = o.lights || lightsFor(cams, "area"), c = opts(), flaws = c.uncal && !cam.photo, rollS = c.rolling && !cam.photo ? ROLLING_S : 0;
+    const L = o.lights || lightsFor(lineCams(), "area"), c = opts(), flaws = c.uncal && !cam.photo, rollS = c.rolling && !cam.photo ? ROLLING_S : 0;
     setLights(U, L, o.still ? 0.015 : 0.07);
     gl.uniform1f(U.uVib, 0); gl.uniform1f(U.uSpeed, scanSpeed()); gl.uniform1f(U.uDistort, flaws ? LENS_DISTORTION : 0); gl.uniform1f(U.uRollMM, rollS * scanSpeed());
     const dof = !o.id && o.fnum > 0;
@@ -2638,30 +2692,34 @@ void main() {
     scanLine = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.004, Wm), new THREE.MeshBasicMaterial({ color: new THREE.Color(css("--beam")) }));
     scanLine.position.set(0, 0.002, 0); fixed.add(tip(scanLine, "Scan line on the belt plane: every bottom-camera pixel ray crosses it."));
   }
-  let cams = [];
+  let cams = [], topLineCams = [];   // the bottom line-scan cameras; the top ones mirroring them (option)
+  const lineCams = () => cams.concat(topLineCams);
   function buildRig() {
     while (rig.children.length) rig.remove(rig.children[0]);
     for (let i = fans.length - 1; i >= 0; i--) if (fans[i].userData.kind === "line") fans.splice(i, 1);
     const camM = M(css("--cam"), { roughness: 0.35 }), ledM = M(css("--led"), { emissive: new THREE.Color(css("--led")), emissiveIntensity: 0.6 });
     const beam = new THREE.MeshBasicMaterial({ color: new THREE.Color(css("--beam")), transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false });
     const leds = new Set();
-    cams.forEach((c) => {
+    lineCams().forEach((c) => {
       const C = new THREE.Vector3(c.C[0] / 1000, c.C[1] / 1000, c.C[2] / 1000), d0 = new THREE.Vector3(...c.d0), e = new THREE.Vector3(...c.e);
       const axis = new THREE.Vector3(...c.axis), body = box(0.08, 0.1, 0.16, camM, 0, 0, 0);   // the lens at its front face
       body.position.copy(C.clone().addScaledVector(axis, -0.08)); body.lookAt(C.clone().add(axis));
       rig.add(windowMesh(c));
-      // stands, as in the traced scene (rigParts): one under each camera, two under each LED bar
+      // stands and hangers, as in the traced scene (rigParts): one for each camera, two for each LED bar
       const standM = M(css("--steel"), { metalness: 0.4, roughness: 0.5 }), stand = (x, top, z, w) => rig.add(tip(box(w, top + 0.6, w, standM, x, (top - 0.6) / 2, z), "Stand on the floor, 0.6 m below the belt."));
-      stand(C.x, C.y - 0.045, C.z, 0.03);
+      const frameY = TOP_FRAME_Y / 1000, hanger = (x, bottom, z, w) => rig.add(tip(box(w, frameY - bottom, w, standM, x, (frameY + bottom) / 2, z), "Hanger from the frame above the station."));
+      const mount = c.top ? hanger : stand, toMount = c.top ? 1 : -1;   // a top camera's rig hangs from above
+      mount(C.x, C.y + toMount * 0.045, C.z, 0.03);
       const lk = String(c.lightPos), newBar = c.lights.length > 0 && !leds.has(lk);
-      if (newBar) [-0.45, 0.45].forEach((z) => stand(c.lightPos[0] / 1000, c.lightPos[1] / 1000 - 0.03, z, 0.024));
-      rig.add(tip(body, "Line-scan camera " + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "°" + (c.spec.z ? ", " + Math.abs(c.spec.z) + " mm " + (c.spec.z < 0 ? "left" : "right") : ", centred") +
+      if (newBar) [-0.45, 0.45].forEach((z) => mount(c.lightPos[0] / 1000, c.lightPos[1] / 1000 + toMount * 0.03, z, 0.024));
+      rig.add(tip(body, (c.top ? "Top line-scan camera, the bottom one's " + TOP_LINE[c.how].name + ": " : "Line-scan camera ") + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "°" + (c.spec.z ? ", " + Math.abs(c.spec.z) + " mm " + (c.spec.z < 0 ? "left" : "right") : ", centred") +
         ". FOV " + ((c.phi1 - c.phi0) * 180 / Math.PI).toFixed(0) + "°, " + c.PX + " px over " + Math.round(c.z1 - c.z0) + " mm; lens " + c.focal.toFixed(0) + " mm focused at " + Math.round(c.focus) + " mm."));
       if (newBar) {
         leds.add(lk);
         const beside = opts().lightSetup === "beside";
-        rig.add(tip(box(0.05, 0.03, 1.0, ledM, c.lightPos[0] / 1000, c.lightPos[1] / 1000, 0), "LED line light, 1 m bar, " + Math.round(-c.lightPos[1]) + " mm below the belt" +
-          (beside ? ", beside the camera behind its own window." : c.lightPos[0] === 0 ? ", centred under the gap." : ".")));
+        rig.add(tip(box(0.05, 0.03, 1.0, ledM, c.lightPos[0] / 1000, c.lightPos[1] / 1000, 0), "LED line light, 1 m bar, " +
+          (c.top ? Math.round(c.lightPos[1] - c.planeY) + " mm above a " + c.planeY + " mm high deck, facing down" : Math.round(-c.lightPos[1]) + " mm below the belt") +
+          (beside ? ", beside the camera behind its own window." : c.lightPos[0] === 0 ? (c.top ? ", centred over the scan line." : ", centred under the gap.") : ".")));
         if (beside) rig.add(ownWindowMesh(c.lightPos, 0, 1000));
       }
       if (c.spot) rig.add(spotMesh(c, ledM));
@@ -2669,13 +2727,18 @@ void main() {
       for (let i = 0; i <= N; i++) {
         const phi = c.phi0 + (c.phi1 - c.phi0) * i / N;
         const dir = d0.clone().multiplyScalar(Math.cos(phi)).add(e.clone().multiplyScalar(Math.sin(phi)));
-        pts.push(C.clone().add(dir.multiplyScalar((0.2 - C.y) / dir.y)));
+        pts.push(C.clone().add(dir.multiplyScalar(((c.planeY - toMount * 200) / 1000 - C.y) / dir.y)));   // 200 mm past its plane
       }
       const geo = new THREE.BufferGeometry().setFromPoints(pts); const idx = []; for (let i = 1; i <= N; i++) idx.push(0, i, i + 1); geo.setIndex(idx);
-      const fan = new THREE.Mesh(geo, beam); fan.userData.kind = "line"; rig.add(tip(fan, "Scan plane of the " + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "° camera; it passes through the gap line.")); fans.push(fan);
+      const fan = new THREE.Mesh(geo, beam); fan.userData.kind = "line"; fans.push(fan);
+      rig.add(tip(fan, "Scan plane of the " + (c.top ? "top " : "") + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "° camera; it passes through " + (c.top ? "the scan line at " + c.planeY + " mm, a deck's height." : "the gap line.")));
     });
     if (opts().lightSetup === "side" || opts().lightSetup === "alternate") sideLights().forEach(([x, y, z]) => {
       rig.add(tip(box(0.1, 0.04, 0.03, ledM, x / 1000, y / 1000, (z + Math.sign(z) * 18) / 1000), "Side light, " + (-y) + " mm below the belt, aimed along the gap at the belt centre (raking light)."));
+    });
+    if ($("opt-plates").checked) platesFor(lineCams()).forEach((q) => {   // as traced
+      const s = [0, 1, 2].map((i) => (q.hi[i] - q.lo[i]) / 1000), c = [0, 1, 2].map((i) => (q.lo[i] + q.hi[i]) / 2000);
+      rig.add(tip(box(s[0], s[1], s[2], mats3d.black, c[0], c[1], c[2]), "Matt black plate across a line camera's view " + PLATE.beyondMm + " mm past the pallet's plane: the background between the boards."));
     });
     applyFans();
   }
@@ -2823,7 +2886,7 @@ void main() {
     }
   }
 
-  const camLabel = (c) => (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "°" + (c.spec.z ? (c.spec.z < 0 ? " left " : " right ") + Math.abs(c.spec.z) + " mm" : " centred") +
+  const camLabel = (c) => (c.top ? "top " : "") + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "°" + (c.spec.z ? (c.spec.z < 0 ? " left " : " right ") + Math.abs(c.spec.z) + " mm" : " centred") +
     " · FOV " + ((c.phi1 - c.phi0) * 180 / Math.PI).toFixed(0) + "° · " + (opts().rect ? "rectified" : "raw");
 
   // What the gap does to the bottom cameras. In the travel/height plane the scan plane is a line from the camera
@@ -2867,7 +2930,8 @@ void main() {
       st.perPallet.toFixed(2) + " catches per pallet, " + st.meanStall.toFixed(0) + " mm stall on average, up to " + st.worst.toFixed(0) + " mm (intact pallets; damaged ones droop more)";
   }
 
-  // One live waterfall per bottom camera, and with alternating lights a second one for its raking-light image.
+  // One live waterfall per line camera, and with alternating lights a second one for each bottom camera's raking-light
+  // image.
   function setupLive() {
     liveEl.innerHTML = ""; live = []; liveRaking = [];
     const waterfall = (c, label) => {
@@ -2881,17 +2945,21 @@ void main() {
       wrap.append(lbl, cv, mark); liveEl.append(wrap);
       return { ctx: ctx, acc: 0, mm: mm };
     };
-    cams.forEach((c) => live.push(waterfall(c, camLabel(c))));
+    lineCams().forEach((c) => live.push(waterfall(c, camLabel(c))));
     if (opts().lightSetup === "alternate") cams.forEach((c) => liveRaking.push(waterfall(c, camLabel(c) + " · raking light")));
     const c0 = cams[0];
     $("st-res").textContent = (opts().rect ? c0.mmPerPx.toFixed(2) : c0.nearMm.toFixed(2) + "–" + c0.farMm.toFixed(2)) + " mm · " + c0.PX + " px";
   }
 
+  // How the top line-scan cameras are placed (a key of TOP_LINE), or null for none; they copy the LED bar under the gap only.
+  const topLineHow = () => ($("top-line").value !== "off" && $("light-setup").value === "gap" ? $("top-line").value : null);
+  const topLineFor = (bottom) => (topLineHow() ? bottom.map((c) => topLineCam(c, topLineHow())) : []);
   function restart() {
     if (applyingSettings) { restartWanted = true; return; }   // applySettings restarts once at the end
     const o = opts();
     PX = +$("sensor").value; specs = specsFor(presetKey);
     cams = specs.map((sp) => bottomCam(sp, PX, Object.assign({}, o, { anyZero: specs.some((s) => s.tilt === 0) })));
+    topLineCams = topLineFor(cams);
     pitch = Math.max(0.2, cams[0].mmPerPx);   // square pixels: one line per pixel width of travel
     sizeGL(PX);
     feed.forEach((p) => disposeMesh(p.mesh)); feed = []; sceneKey = "";
@@ -2901,11 +2969,14 @@ void main() {
     gallery.innerHTML = '<p class="empty">Each pallet\'s images appear here once it has passed the scanner.</p>';
     buildRig(); buildStationRig(); setupLive(); updateGapStat(); updateBudget(); spawn();
   }
-  // A new light setup moves the bars, not the cameras: rebuild the rig and the live views, keep the feed.
+  // A new light setup moves the bars, not the cameras: rebuild the rig and the live views, keep the feed. One that adds
+  // or drops the top line-scan cameras restarts it, as each pallet's captures hold one image per line camera.
   function relight() {
     if (applyingSettings) { restartWanted = true; return; }
-    const o = opts();
+    const o = opts(), hadTop = topLineCams.length > 0;
     cams = specs.map((sp) => bottomCam(sp, PX, Object.assign({}, o, { anyZero: specs.some((s) => s.tilt === 0) })));
+    topLineCams = topLineFor(cams);
+    if (topLineCams.length > 0 !== hadTop) { restart(); return; }
     sceneKey = ""; buildRig(); setupLive(); updateGapStat(); updateBudget();
   }
 
@@ -2919,7 +2990,7 @@ void main() {
   function ensureCaps(p) {
     if (p.caps) return;
     const rows = Math.ceil((p.lead - p.trail + 2 * MARGIN) * 1.15 / pitch) + 40;
-    p.caps = cams.map(() => { const c = document.createElement("canvas"); c.width = PX; c.height = rows; const x = c.getContext("2d"); x.fillStyle = "#000"; x.fillRect(0, 0, PX, rows); return { cv: c, ctx: x, rows: 0 }; });
+    p.caps = lineCams().map(() => { const c = document.createElement("canvas"); c.width = PX; c.height = rows; const x = c.getContext("2d"); x.fillStyle = "#000"; x.fillRect(0, 0, PX, rows); return { cv: c, ctx: x, rows: 0 }; });
   }
   function growCap(c, need) {
     const cv = document.createElement("canvas"); cv.width = c.cv.width; cv.height = Math.ceil(need * 1.4);
@@ -2939,14 +3010,16 @@ void main() {
     uploadScene(activePallets(s0 + n * tp / 2));
     const owners = [];
     for (let r = 0; r < n; r++) { const s = s0 + r * tp; owners.push(tracks.find((t) => ownsLine(t, s)) || null); }
-    cams.forEach((cam, k) => {
+    const lc = lineCams();
+    lc.forEach((cam, k) => {
       const out = k * MAXROWS;
       traceLines(cam, s0, tp, n, Object.assign({ fnum: o.fnum, dirt: o.dirt, rect: o.rect, noise: 1, seed: seedN, rowBase: lineCounter, outRow: out }, lineExposure(o)));
       scrollLive(live[k], out, cam, n);
-      if (liveRaking[k]) {   // the side lights' lines fall between the bar's
-        traceLines(cam, s0 + tp / 2, tp, n, Object.assign({ fnum: o.fnum, dirt: o.dirt, rect: o.rect, noise: 1, seed: seedN + 0.5, rowBase: lineCounter, outRow: OUT_RAKING + k * MAXROWS,
+      if (liveRaking[k]) {   // the side lights' lines fall between the bar's; their images in the rows after the line cameras'
+        const outRaking = (lc.length + k) * MAXROWS;
+        traceLines(cam, s0 + tp / 2, tp, n, Object.assign({ fnum: o.fnum, dirt: o.dirt, rect: o.rect, noise: 1, seed: seedN + 0.5, rowBase: lineCounter, outRow: outRaking,
           lights: lightsFor(cams, "line", "side"), which: "side" }, lineExposure(o)));
-        scrollLive(liveRaking[k], OUT_RAKING + k * MAXROWS, cam, n);
+        scrollLive(liveRaking[k], outRaking, cam, n);
       }
       let r = 0;
       while (r < n) {   // captures: contiguous rows that belong to one pallet
@@ -3159,9 +3232,10 @@ void main() {
     else if (job.stage === 1) {
       const card = job.card = document.createElement("button"), imgs = document.createElement("div");
       card.type = "button"; card.className = "card"; imgs.className = "imgs";
+      const lc = lineCams();
       p.caps.forEach((c, k) => {
         if (!c.cv) return;
-        const tw = 300, th = Math.max(1, Math.round(c.rows * pitch / ((cams[k].z1 - cams[k].z0) / tw)));
+        const tw = 300, th = Math.max(1, Math.round(c.rows * pitch / ((lc[k].z1 - lc[k].z0) / tw)));
         const t = document.createElement("canvas"); t.width = tw; t.height = th;
         t.getContext("2d").drawImage(c.cv, 0, 0, c.cv.width, Math.max(1, c.rows), 0, 0, tw, th); imgs.append(t);
       });
@@ -3269,7 +3343,7 @@ void main() {
     const type = TYPES.find((t) => t.id === visType.value);
     $("vis-status").textContent = "Tracing…";
     setTimeout(() => {
-      const t0 = performance.now(), p = analysisPallet(type), stats = idStats(p), worldN = worldFor(gap, cams).parts.length;
+      const t0 = performance.now(), p = analysisPallet(type), stats = idStats(p), worldN = worldFor(gap, lineCams()).parts.length;   // the world idStats traced
       const names = cams.map((c) => "bottom " + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "°").concat(opts().station ? AREA_CAMS.map((c) => c.name) : []);
       $("vis-table").querySelector("thead").innerHTML = "<tr><th>Part</th>" + names.map((n) => "<th>" + n + "</th>").join("") + "<th>Best mm/px</th><th>Faces seen</th></tr>";
       let html = "", unseen = 0;
@@ -3303,20 +3377,64 @@ void main() {
   function fillDamages() { const t = TYPES.find((x) => x.id === cmpType.value); $("cmp-dmg").innerHTML = t.damages.map((d, i) => '<option value="' + i + '">' + d[0] + "</option>").join(""); }
   cmpType.addEventListener("change", fillDamages); fillDamages();
   const DIFF_LEVEL = 30;   // summed RGB difference (0-765) above which a pixel counts as changed
+  // Line camera cam's image of pallet p at rest, 200 mm beyond its ends; the lines lie symmetrically about the pallet's
+  // centre, so turned end over end the image lines up with one of the pallet turned round (runFlipCompare).
   function renderPass(p, cam, o, g, pit) {
     pit = pit || pitch;
     const rows = Math.ceil((2 * p.reach + 400) / pit), cv = document.createElement("canvas"); cv.width = cam.PX; cv.height = rows;
-    const ctx = cv.getContext("2d");
+    const ctx = cv.getContext("2d"), s0 = -(rows - 1) * pit / 2;
     uploadScene([p], g);
     const step = o.indirect ? MAXROWS / 8 : MAXROWS;   // indirect light is slow: smaller draws keep the GPU responsive
     for (let r = 0; r < rows; r += step) {
       const n = Math.min(step, rows - r);
-      traceLines(cam, -p.reach - 200 + r * pit, pit, n, Object.assign({ noise: 0, seed: 7, rowBase: r }, o));
+      traceLines(cam, s0 + r * pit, pit, n, Object.assign({ noise: 0, seed: 7, rowBase: r }, o));
       ctx.drawImage(glc, 0, 0, cam.PX, n, 0, r, cam.PX, n);
     }
     sceneKey = "";
     return cv;
   }
+  // Image b with the pixels that differ from image a (same size) by more than DIFF_LEVEL in red, the rest in grey;
+  // how many differ, and the mean difference per channel (0-255).
+  function diffImage(a, b) {
+    const A = a.getContext("2d").getImageData(0, 0, a.width, a.height).data, bctx = b.getContext("2d"), B = bctx.getImageData(0, 0, b.width, b.height).data;
+    const D = bctx.createImageData(b.width, b.height);
+    let changed = 0, sum = 0;
+    for (let i = 0; i < A.length; i += 4) {
+      const df = Math.abs(A[i] - B[i]) + Math.abs(A[i + 1] - B[i + 1]) + Math.abs(A[i + 2] - B[i + 2]);
+      sum += df;
+      if (df > DIFF_LEVEL) { D.data[i] = 255; D.data[i + 1] = 40; D.data[i + 2] = 30; changed++; } else { D.data[i] = D.data[i + 1] = D.data[i + 2] = (B[i] + B[i + 1] + B[i + 2]) / 6; }
+      D.data[i + 3] = 255;
+    }
+    const canvas = document.createElement("canvas"); canvas.width = b.width; canvas.height = b.height; canvas.getContext("2d").putImageData(D, 0, 0);
+    return { canvas: canvas, changed: changed, mean: sum / (A.length / 4 * 3) };
+  }
+  // The selected pallet upside down as each top line-scan camera sees it, against the same pallet upright as the bottom
+  // camera it copies sees it, with the current settings: what one learned model for both has to bridge. The top image
+  // is turned end over end, as the flipped pallet passes the other way round (see TOP_LINE).
+  function runFlipCompare() {
+    if (!topLineCams.length) { $("cmp-status").textContent = "Choose top line-scan cameras first (Bottom cameras tab; they need the LED bar under the gap)."; return; }
+    markEvent("analysis");
+    const type = TYPES.find((t) => t.id === cmpType.value), dmg = type.damages[+$("cmp-dmg").value];
+    $("cmp-status").textContent = "Tracing…";
+    setTimeout(() => {
+      const t0 = performance.now(), out = $("cmp-out"); out.innerHTML = "";
+      const upright = analysisPallet(type, dmg), flipped = Object.assign({}, upright, { uid: -(++uidN), motion: staticMotion(0, 0, upright.H, Math.PI) });
+      const o = opts(), ro = Object.assign({ fnum: o.fnum, dirt: o.dirt, rect: o.rect, lights: lightsFor(lineCams(), "line"), indirect: o.indirect }, lineExposure(o));
+      const endOverEnd = (cv) => { const t = document.createElement("canvas"); t.width = cv.width; t.height = cv.height; const x = t.getContext("2d"); x.translate(0, cv.height); x.scale(1, -1); x.drawImage(cv, 0, 0); return t; };
+      cams.forEach((cam, k) => {
+        const a = renderPass(upright, cam, ro, gap), b = endOverEnd(renderPass(flipped, topLineCams[k], ro, gap)), d = diffImage(a, b);
+        const fig = document.createElement("figure"), cap = document.createElement("figcaption"), pair = document.createElement("div");
+        cap.className = "cap"; pair.className = "pair";
+        [a, b, d.canvas].forEach((c) => { c.style.aspectRatio = (cam.PX * cam.mmPerPx).toFixed(0) + " / " + (c.height * pitch).toFixed(0); pair.append(c); });
+        cap.innerHTML = '<span class="cap-type">' + camLabel(cam) + ": upright from below · flipped from above (" + TOP_LINE[topLineCams[k].how].name + ") · difference</span><span>" +
+          (100 * d.changed / (a.width * a.height)).toFixed(1) + "% of pixels differ, mean difference " + d.mean.toFixed(1) + " of 255</span>" +
+          (upright.H !== 2 * TOP_MIRROR_Y ? '<span class="cap-dim">deck at ' + upright.H + " mm; the top cameras are set for " + 2 * TOP_MIRROR_Y + " mm</span>" : "");
+        fig.append(cap, pair); out.append(fig);
+      });
+      $("cmp-status").textContent = "Done in " + Math.round(performance.now() - t0) + " ms · " + type.name + ", " + dmg[0] + " · gap " + gap + " mm" + ($("opt-plates").checked ? " · black plates" : "") + " · noise off.";
+    }, 30);
+  }
+  $("cmp-flip").addEventListener("click", runFlipCompare);
   function runCompare() {
     markEvent("analysis");
     const type = TYPES.find((t) => t.id === cmpType.value), dmg = type.damages[+$("cmp-dmg").value];
@@ -3333,16 +3451,9 @@ void main() {
         cap.className = "cap"; pair.className = "pair"; let changed = 0;
         cs.forEach((cam) => {
           const ro = Object.assign({ fnum: o.fnum, dirt: o.dirt, rect: o.rect, lights: lightsFor(cs, "line"), cams: cs, indirect: o.indirect }, lineExposure(o));
-          const a = renderPass(intact, cam, ro, g), b = renderPass(damaged, cam, ro, g);
-          const A = a.getContext("2d").getImageData(0, 0, a.width, a.height).data, bctx = b.getContext("2d"), B = bctx.getImageData(0, 0, b.width, b.height).data;
-          const D = bctx.createImageData(b.width, b.height);
-          for (let i = 0; i < A.length; i += 4) {
-            const df = Math.abs(A[i] - B[i]) + Math.abs(A[i + 1] - B[i + 1]) + Math.abs(A[i + 2] - B[i + 2]);
-            if (df > DIFF_LEVEL) { D.data[i] = 255; D.data[i + 1] = 40; D.data[i + 2] = 30; changed++; } else { D.data[i] = D.data[i + 1] = D.data[i + 2] = (B[i] + B[i + 1] + B[i + 2]) / 6; }
-            D.data[i + 3] = 255;
-          }
-          const dcv = document.createElement("canvas"); dcv.width = b.width; dcv.height = b.height; dcv.getContext("2d").putImageData(D, 0, 0);
-          [b, dcv].forEach((c) => { c.style.aspectRatio = (cam.PX * cam.mmPerPx).toFixed(0) + " / " + (c.height * pitch).toFixed(0); pair.append(c); });
+          const b = renderPass(damaged, cam, ro, g), d = diffImage(renderPass(intact, cam, ro, g), b);
+          changed += d.changed;
+          [b, d.canvas].forEach((c) => { c.style.aspectRatio = (cam.PX * cam.mmPerPx).toFixed(0) + " / " + (c.height * pitch).toFixed(0); pair.append(c); });
         });
         const cm2 = changed * cs[0].mmPerPx * pitch / 100;
         const gr = gapReport(g, cs, o.fnum);
@@ -3378,7 +3489,7 @@ void main() {
     const driver = DRIVERS[$("driver").value], driverName = $("driver").selectedOptions[0].textContent;
     const flickLine = flickerSpread(driver, le.t * 1e-6), flickArea = flickerSpread(driver, ae.t * 1e-3);
     const flickRow = (spread) => [driverName, spread ? "brightness differs up to " + Math.round(spread * 100) + "% between exposures" : "steady", chk(spread <= 0.02, spread <= 0.1)];
-    const lineCamMBs = lineRate * cams[0].PX * 3 / 1e6, linePalletMB = (L + 2 * MARGIN) / pitch * linesPerImage(o) * cams[0].PX * 3 * cams.length / 1e6;
+    const lineCamMBs = lineRate * cams[0].PX * 3 / 1e6, linePalletMB = (L + 2 * MARGIN) / pitch * linesPerImage(o) * cams[0].PX * 3 * lineCams().length / 1e6;
     const topMmPx = AREA_REAL.topField / AREA_REAL.topPx, topMBs = AREA_REAL.topMP * TOP_FPS;
     const stations = AREA_CAMS.length - 1, stationMB = AREA_REAL.stationMP * stations, keptMB = linePalletMB + stationMB + AREA_REAL.topMP;
     const deadline = (1200 - MARGIN) / vs;   // end of the bottom scan until the trail leaves the station frame
@@ -3422,7 +3533,7 @@ void main() {
         ["Gap in the middle section at " + TARGET_PER_H + "/h", Math.round(sectionFactor * v * cycle - L) + " mm", ""],
         ["Touching pallets come apart by", "about " + Math.round((sectionFactor - 1) * L) + " mm (longest type)", chk((sectionFactor - 1) * L >= 50, (sectionFactor - 1) * L >= 20)]] : []),
       ["… less gap sticking (" + st.perPallet.toFixed(2) + " × " + st.meanStall.toFixed(0) + " mm per pallet, model)", Math.round(capStick) + " pallets/h", chk(capStick >= TARGET_PER_H)],
-      ["Bottom line-scan, " + cams.length + " × " + cams[0].PX + " px" + (sectionFactor > 1.001 ? ", at the middle-section speed" : "")],
+      ["Bottom line-scan, " + cams.length + (topLineCams.length ? " (+ " + topLineCams.length + " top, mirrored)" : "") + " × " + cams[0].PX + " px" + (sectionFactor > 1.001 ? ", at the middle-section speed" : "")],
       ["Line rate", Math.round(lineRate) + " lines/s, " + (1000 / lineRate).toFixed(2) + " ms per line" + (linesPerImage(o) > 1 ? " (the lights alternate: each image every other line)" : ""), ""],
       ["Exposure", Math.round(le.t) + " µs" + (o.expUs > le.tMax ? " (capped at the line period)" : ""), chk(o.expUs <= le.tMax, true)],
       ["Motion blur along travel", fmtBlur(le.blur, pitch), chk(le.blur / pitch <= 0.5, le.blur / pitch <= 1)],
@@ -3631,8 +3742,9 @@ void main() {
   });
   // pallets that have not reached the gap yet take the new conditions; the others keep their path
   function rebuildUpcoming() { feed.forEach((p, i) => { if (palletX(p, lastLine) < -(p.reach + 200)) p.motion = buildMotion(p, gap, p.touching ? feed[i - 1] : null); }); sceneKey = ""; }
-  ["sensor", "fnum", "opt-fit", "opt-rect", "opt-light"].forEach((id) => $(id).addEventListener("change", restart));
-  $("light-setup").addEventListener("change", relight);
+  ["sensor", "fnum", "opt-fit", "opt-rect", "opt-light", "top-line"].forEach((id) => $(id).addEventListener("change", restart));
+  $("light-setup").addEventListener("change", () => { $("top-line").disabled = $("light-setup").value !== "gap"; relight(); });   // see topLineHow
+  $("opt-plates").addEventListener("change", relight);
   $("spot-beam").addEventListener("change", relight);
   $("opt-station").addEventListener("change", buildStationRig);
   $("opt-fans").addEventListener("change", applyFans);
@@ -3687,7 +3799,7 @@ void main() {
 
   // ---------------- shareable settings ----------------
   // Every control as a short code; "Load settings…" accepts the code or a link ending in #s=<code>.
-  const SETTING_IDS = ["tilt", "side", "gap", "sensor", "fnum", "opt-fit", "opt-rect", "opt-light", "light-setup", "spot-beam", "exp", "light", "aexp", "dirt", "belt", "section",
+  const SETTING_IDS = ["tilt", "side", "gap", "sensor", "fnum", "opt-fit", "opt-rect", "opt-light", "top-line", "opt-plates", "light-setup", "spot-beam", "exp", "light", "aexp", "dirt", "belt", "section",
     "speed", "damage", "scatter", "opt-transport", "opt-unusual", "opt-station", "months", "f-bar", "f-lamp", "f-enc",
     "louvre", "dust", "opt-glare", "driver", "lightcol", "daylight", "vib", "shutter", "f-uncal", "f-splinter", "f-fog",
     "win-angle", "win-purge", "side-h", "side-x", "opt-indirect"];
@@ -4033,7 +4145,9 @@ void main() {
       ["Window glass", () => "plain, uncoated, " + GLASS.thickMm + " mm, index " + GLASS.n + " (BK7-like); housing behind it matt black, so the window reflects nothing into the lens", "assumed", "light lost at steep windows, shift of the view"],
       ["Glass dispersion", () => "index " + GLASS.nRB[0] + " for red, " + GLASS.nRB[1] + " for blue; the colour fringe is estimated, not traced", "typical", "colour fringe"],
       ["Purge air", () => PURGE_AIR.coolK + " K colder than the hall in a " + PURGE_AIR.layerMm + " mm layer crossed over " + PURGE_AIR.pathMm + " mm; air index " + AIR_DN_DT + " per K; the bending is estimated, not traced", "assumed", "shimmer with an air purge"],
-      ["Louvre film leak beyond its cut-off", () => pct(shaderFloat("LOUVRE_LEAK"), 1), "typical", "glare with a louvre"]]],
+      ["Louvre film leak beyond its cut-off", () => pct(shaderFloat("LOUVRE_LEAK"), 1), "typical", "glare with a louvre"],
+      ["Top line-scan cameras (option)", () => "copies of the bottom cameras and their LED bar under the gap, mirrored in the plane " + TOP_MIRROR_Y + " mm above the belt (half a EUR pallet's height) or turned half way round the scan line at that height, hung from the frame above the station at " + TOP_FRAME_Y + " mm; their windows face down, so no grit or splinter settles on them, but they and their bar take the same dust and dirt as the bottom ones", "assumed", "top line-scan images"],
+      ["Black plates behind the scan lines (option)", () => PLATE.widthMm + " mm wide strips across the belt, " + PLATE.beyondMm + " mm past the plane each line camera looks at, reflecting " + pct(PLATE.albedo) + " diffusely (flocked or black anodised)", "assumed", "background in the line-scan images"]]],
     ["Station and top cameras", [
       ["Top camera", () => AREA_REAL.topMP + " MP, " + AREA_REAL.topPx + " px over " + AREA_REAL.topField / 1000 + " m, " + TOP_FPS + " fps", "assumed", "tracking, data rate"],
       ["Station cameras", () => AREA_REAL.stationMP + " MP, " + AREA_REAL.stationMmPx + " mm/px", "assumed", "motion blur, data per pallet"],

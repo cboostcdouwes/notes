@@ -43,7 +43,7 @@
     const type = TYPES.find((t) => t.id === visType.value);
     $("vis-status").textContent = "Tracing…";
     setTimeout(() => {
-      const t0 = performance.now(), p = analysisPallet(type), stats = idStats(p), worldN = worldFor(gap, cams).parts.length;
+      const t0 = performance.now(), p = analysisPallet(type), stats = idStats(p), worldN = worldFor(gap, lineCams()).parts.length;   // the world idStats traced
       const names = cams.map((c) => "bottom " + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "°").concat(opts().station ? AREA_CAMS.map((c) => c.name) : []);
       $("vis-table").querySelector("thead").innerHTML = "<tr><th>Part</th>" + names.map((n) => "<th>" + n + "</th>").join("") + "<th>Best mm/px</th><th>Faces seen</th></tr>";
       let html = "", unseen = 0;

@@ -309,6 +309,47 @@ try {
     expect(vertical < 0.2 * flat, "mean " + vertical.toFixed(1) + " behind the vertical window vs " + flat.toFixed(1) + " behind the flat one");
     expect(rows.some((r) => /window optics/i.test(r) && /short/.test(r)), "no window optics row marked short");
   });
+  // The top cameras see the deck as the bottom ones see the underside, by their own mirrored bar: about as bright.
+  await check("mirrored top line-scan cameras add two images of each pallet, lit like the bottom ones", async () => {
+    const q = await open(browser);
+    await setControls(q, { "top-line": "mirrored" });
+    await q.waitForFunction(() => document.querySelector("#gallery .card"), { timeout: 120000 });
+    const means = await q.evaluate(() => [...document.querySelectorAll("#gallery .card .imgs canvas")].map((c) => {
+      const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; let s = 0;
+      for (let k = 0; k < d.length; k += 4) s += d[k] + d[k + 1] + d[k + 2];
+      return s / (d.length / 4 * 3);
+    }));
+    const errors = q.errors.slice();
+    await q.close();
+    expect(!errors.length, errors.join("; "));
+    expect(means.length === 4, means.length + " line-scan images per pallet");
+    const bottom = (means[0] + means[1]) / 2, top = (means[2] + means[3]) / 2;
+    expect(top > bottom / 3 && top < bottom * 3, "mean brightness: bottom " + bottom.toFixed(1) + ", top " + top.toFixed(1));
+  });
+  // Compare tab, flipped vs upright: the share of pixels that differ between a broken-board EUR pallet upside down from
+  // above and upright from below, averaged over the cameras. (Changing the top cameras restarts the feed.)
+  const FLIP_DEFAULTS = { "top-line": "off", "opt-plates": false, gap: "100" };
+  const flipDiff = async (settings) => {
+    await setControls(p, Object.assign({}, DEFAULTS, FLIP_DEFAULTS, settings));
+    await p.evaluate(() => {
+      document.getElementById("tab-cmp").click();
+      const t = document.getElementById("cmp-type"); t.value = "eur"; t.dispatchEvent(new Event("change"));
+      document.getElementById("cmp-dmg").value = "2"; document.getElementById("cmp-status").textContent = ""; document.getElementById("cmp-flip").click();
+    });
+    await p.waitForFunction(() => /^Done/.test(document.getElementById("cmp-status").textContent), { timeout: 120000 });
+    const shares = await p.evaluate(() => [...document.querySelectorAll("#cmp-out figcaption")].map((c) => parseFloat(/([\d.]+)% of pixels differ/.exec(c.textContent)[1])));
+    return shares.reduce((a, b) => a + b, 0) / shares.length;
+  };
+  // Turned round, the top cameras see a flipped pallet as the bottom ones see it upright; with a gap wide enough for
+  // their view to pass the rollers, the black plates are the background on both sides. Only the station lamps above
+  // still light the two differently.
+  await check("turned top cameras, black plates and a wide gap match a flipped pallet from above to it upright from below best", async () => {
+    const best = await flipDiff({ "top-line": "turned", "opt-plates": true, gap: "250" });
+    const others = { mirrored: await flipDiff({ "top-line": "mirrored", "opt-plates": true, gap: "250" }),
+      "no plates": await flipDiff({ "top-line": "turned", gap: "250" }), "gap 100": await flipDiff({ "top-line": "turned", "opt-plates": true }) };
+    await setControls(p, FLIP_DEFAULTS);
+    for (const [name, share] of Object.entries(others)) expect(best < share, "best " + best + "% of pixels differ, " + name + " " + share + "%");
+  });
   await check("the live render of the 3D view keeps drawing while the feed runs", async () => {
     const q = await open(browser);
     await q.evaluate(() => {

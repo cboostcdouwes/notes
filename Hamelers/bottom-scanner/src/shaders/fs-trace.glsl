@@ -9,8 +9,8 @@ uniform sampler2D uMotion;      // per slot row: pose by belt progress, two texe
 uniform float uMotionU0; uniform float uMotionDU; uniform int uMotionN;
 uniform vec4 uBbLo[6]; uniform vec4 uBbHi[6];
 uniform float uRollX[40]; uniform int uNRoll; uniform float uRollHalf;
-uniform vec4 uLights[24]; uniform int uNL; uniform float uAmbient;
-uniform int uNBar;              // the first uNBar lights are LED bar points
+uniform vec4 uLights[32]; uniform int uNL; uniform float uAmbient;
+uniform int uNBar;              // the first uNBar lights are LED bar points (see barFacing)
 uniform int uNSide;             // the next uNSide are side lights, aimed along the gap at the belt centre
 uniform int uNSpot;             // the next uNSpot are the spots beside the cameras, each a row of units: axis, along the line,
 uniform vec3 uSpotAxis[2]; uniform vec3 uSpotAlong[2]; uniform vec2 uSpotTan[2];   // a unit's half-angle tangents across and along,
@@ -191,12 +191,14 @@ float triCum(float x, float w) { x = clamp(x, -w, w); return x < 0.0 ? (x + w) *
 // stretch the point stands for that the louvre passes toward p (by each part's angle along the bar).
 // Behind its own window, the light leaving toward p also passes the glass (ownWindowT).
 float ownWindowT(vec3 lp, vec3 u);
+// A bar below the belt faces up; one above it (the top line-scan cameras' bar) faces down: +1 or -1 along y.
+float barFacing(vec3 lp) { return lp.y < 0.0 ? 1.0 : -1.0; }
 float barWeight(vec3 lp, vec3 p) {
-  vec3 v = p - lp; float len = length(v), cosT = v.y / len;
+  vec3 v = p - lp; float len = length(v), cosT = barFacing(lp) * v.y / len;
   if (cosT <= 0.0) return 0.0;
   cosT *= ownWindowT(lp, v / len);
   if (uLouvreTan <= 0.0) return cosT;
-  float w = v.y * uLouvreTan;
+  float w = abs(v.y) * uLouvreTan;
   return cosT * (triCum(lp.z + uBarHalf - p.z, w) - triCum(lp.z - uBarHalf - p.z, w)) / (2.0 * uBarHalf);
 }
 // A light beside its camera (lp) sends light along u through its own window, turned toward the scan line at x = 0.
@@ -460,7 +462,7 @@ vec3 spotFaces(vec3 o, vec3 d, float tEnd) {
 const float MIRROR_SPEC = 0.1;
 const float METAL_F0 = 0.5, DIELECTRIC_F0 = 0.04;   // head-on reflectance: zinc and steel (assumed), water, ice and plastic
 
-const float BEVEL[13] = float[13](2.5, 2.0, 1.2, 2.5, 6.0, 4.0, 4.0, 0.0, 0.0, 1.0, 0.0, 0.5, 0.0);   // edge radius per material, mm
+const float BEVEL[14] = float[14](2.5, 2.0, 1.2, 2.5, 6.0, 4.0, 4.0, 0.0, 0.0, 1.0, 0.0, 0.5, 0.0, 0.0);   // edge radius per material (MAT), mm
 
 // Direct light at a hit. Returns radiance; alb and wn give the albedo and world normal for an indirect bounce.
 vec3 shade(Hit h, float s, float foot, out vec3 alb, out vec3 wn) {
@@ -468,7 +470,7 @@ vec3 shade(Hit h, float s, float foot, out vec3 alb, out vec3 wn) {
   if (h.k < 0 && h.roller < 0) return (h.ld.y > 0.0 ? uBgUp : uBg) * uLampCol;   // the hall, lit by the station lamps
   if (h.k >= 0 && int(P(h.k, 0).w) == 12) {   // a lamp's emitting face: its radiance (the part's colour) in this view
     vec3 L = P(h.k, 2).xyz;
-    if (int(P(h.k, 1).w) == 2) return L * uFace.x * louvreT(abs(h.ld.z) / max(-h.ld.y, 1e-4)) * uBarCol;   // the LED bar
+    if (int(P(h.k, 1).w) == 2) return L * uFace.x * louvreT(abs(h.ld.z) / max(-barFacing(P(h.k, 0).xyz) * h.ld.y, 1e-4)) * uBarCol;   // an LED bar
     return L * uFace.y * uLampCol;
   }
   float spec = 0.0; vec3 n = h.n;
@@ -484,7 +486,7 @@ vec3 shade(Hit h, float s, float foot, out vec3 alb, out vec3 wn) {
   vec3 wp = (movable ? worldP(q, h.pl) : h.pl) + wn * 0.05;
   float gloss = spec > 0.1 ? 40.0 : 10.0;
   bool mirror = spec >= MIRROR_SPEC;
-  for (int l = 0; l < 24; l++) {
+  for (int l = 0; l < 32; l++) {
     if (l >= uNL) break;
     vec3 Lw = uLights[l].xyz;
     if (uStill == 1) Lw += (vec3(rnd(), rnd(), rnd()) * 2.0 - 1.0) * uLightJit;
@@ -538,7 +540,7 @@ const float DUST_G = 0.7, DUST_R = 30.0, DUST_VISIBLE = 1e-3;
 vec3 dustGlow(vec3 o, vec3 d, float tEnd, float s) {
   if (uDust <= 0.0) return vec3(0.0);
   vec3 sum = vec3(0.0); bool posed = false;
-  for (int l = 0; l < 24; l++) {
+  for (int l = 0; l < 32; l++) {
     if (l >= uNL) break;
     vec3 Lw = uLights[l].xyz, v = Lw - o;
     float tc = dot(v, d), hh = sqrt(max(dot(v, v) - tc * tc, 0.0) + DUST_R * DUST_R);

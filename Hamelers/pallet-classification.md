@@ -58,6 +58,7 @@ waiting on this one:
 | R14 | The product is simple and cheap to build, install and support per site across a series (the user's reason for one lane; lane count is a design variable under it) | reason given; what breaks without it: not asked | user, round 4 (2026-11-13), reworded round 5 after the checks | should | partly: between one lane and modules, cost decides (user, round 5) |
 | R15 | A learned judgement is trained and tested on data that represents operation: the station's own sensors and lighting, and the site's pallet mix and conditions | otherwise the model meets a distribution shift in operation | user, round 4 (2026-11-13) | must (as stated) | no |
 | R16 | The judgement uses a learned model (AI) | learned judgement is part of the know-how Cboost wants to build (as R12b) | user, round 5 (2026-11-13) | must | yes |
+| R17 | A pallet lying upside down is still judged: the cameras above see its underside closely enough like the bottom cameras see an upright one's that one learned model judges both | pallets are laid deck-down when their bottom is too damaged to stand on the conveyor, so flipped pallets are mostly badly damaged ones | user, 2026-11-19 | should (assumed; priority not asked) | no |
 | R4 | Sorts the pallets, or handles their input and output | done externally | user, 2026-11-12 | won't | no |
 
 ## Options

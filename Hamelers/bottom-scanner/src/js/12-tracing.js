@@ -8,7 +8,7 @@
   function ensureCaps(p) {
     if (p.caps) return;
     const rows = Math.ceil((p.lead - p.trail + 2 * MARGIN) * 1.15 / pitch) + 40;
-    p.caps = cams.map(() => { const c = document.createElement("canvas"); c.width = PX; c.height = rows; const x = c.getContext("2d"); x.fillStyle = "#000"; x.fillRect(0, 0, PX, rows); return { cv: c, ctx: x, rows: 0 }; });
+    p.caps = lineCams().map(() => { const c = document.createElement("canvas"); c.width = PX; c.height = rows; const x = c.getContext("2d"); x.fillStyle = "#000"; x.fillRect(0, 0, PX, rows); return { cv: c, ctx: x, rows: 0 }; });
   }
   function growCap(c, need) {
     const cv = document.createElement("canvas"); cv.width = c.cv.width; cv.height = Math.ceil(need * 1.4);
@@ -28,14 +28,16 @@
     uploadScene(activePallets(s0 + n * tp / 2));
     const owners = [];
     for (let r = 0; r < n; r++) { const s = s0 + r * tp; owners.push(tracks.find((t) => ownsLine(t, s)) || null); }
-    cams.forEach((cam, k) => {
+    const lc = lineCams();
+    lc.forEach((cam, k) => {
       const out = k * MAXROWS;
       traceLines(cam, s0, tp, n, Object.assign({ fnum: o.fnum, dirt: o.dirt, rect: o.rect, noise: 1, seed: seedN, rowBase: lineCounter, outRow: out }, lineExposure(o)));
       scrollLive(live[k], out, cam, n);
-      if (liveRaking[k]) {   // the side lights' lines fall between the bar's
-        traceLines(cam, s0 + tp / 2, tp, n, Object.assign({ fnum: o.fnum, dirt: o.dirt, rect: o.rect, noise: 1, seed: seedN + 0.5, rowBase: lineCounter, outRow: OUT_RAKING + k * MAXROWS,
+      if (liveRaking[k]) {   // the side lights' lines fall between the bar's; their images in the rows after the line cameras'
+        const outRaking = (lc.length + k) * MAXROWS;
+        traceLines(cam, s0 + tp / 2, tp, n, Object.assign({ fnum: o.fnum, dirt: o.dirt, rect: o.rect, noise: 1, seed: seedN + 0.5, rowBase: lineCounter, outRow: outRaking,
           lights: lightsFor(cams, "line", "side"), which: "side" }, lineExposure(o)));
-        scrollLive(liveRaking[k], OUT_RAKING + k * MAXROWS, cam, n);
+        scrollLive(liveRaking[k], outRaking, cam, n);
       }
       let r = 0;
       while (r < n) {   // captures: contiguous rows that belong to one pallet

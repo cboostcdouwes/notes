@@ -49,7 +49,7 @@
     gl.uniform3fv(U.uC, cam.C); gl.uniform3fv(U.uD0, cam.d0); gl.uniform3fv(U.uE, cam.e);
     gl.uniform1f(U.uPhi0, cam.phi0); gl.uniform1f(U.uDphi, cam.dphi); gl.uniform1f(U.uAxisPhi, cam.axisPhi);
     gl.uniform1f(U.uS0, s0); gl.uniform1f(U.uPitch, pitch); gl.uniform2f(U.uSize, cam.PX, rows);
-    const L = o.lights || lightsFor(cams, "line"), c = opts();
+    const L = o.lights || lightsFor(lineCams(), "line"), c = opts();
     setLights(U, L, o.still || o.indirect ? 0.008 : 0.035);   // indirect light replaces the constant fill
     gl.uniform1f(U.uVib, o.id ? 0 : c.vib); gl.uniform1f(U.uSpeed, scanSpeed()); gl.uniform1f(U.uDistort, c.uncal ? LENS_DISTORTION : 0); gl.uniform1f(U.uRollMM, 0);
     const fnum = o.id ? 0 : o.fnum;
@@ -69,9 +69,9 @@
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, nativeTex); gl.uniform1i(P.uNative, 1);
     gl.uniform1i(P.uMode, 0); gl.uniform1i(P.uRect, o.rect ? 1 : 0); gl.uniform1i(P.uPX, cam.PX); gl.uniform1i(P.uH, GH);
     gl.uniform3fv(P.uC, cam.C); gl.uniform3fv(P.uD0, cam.d0); gl.uniform3fv(P.uE, cam.e);
-    gl.uniform1f(P.uPhi0, cam.phi0); gl.uniform1f(P.uDphi, cam.dphi); gl.uniform1f(P.uZ0, cam.z0); gl.uniform1f(P.uZ1, cam.z1);
+    gl.uniform1f(P.uPhi0, cam.phi0); gl.uniform1f(P.uDphi, cam.dphi); gl.uniform1f(P.uZ0, cam.z0); gl.uniform1f(P.uZ1, cam.z1); gl.uniform1f(P.uPlaneY, cam.planeY);
     gl.uniform1f(P.uNoise, o.noise); gl.uniform1f(P.uSeed, o.seed || 1); gl.uniform1f(P.uRowBase, o.rowBase || 0); gl.uniform1i(P.uTone, 0); sensorUniforms(P, o, lineGain(o, o.which, o.cams));
-    conditionUniforms(P, L, s0 / scanSpeed(), pitch / scanSpeed(), (o.t || 100) * 1e-6, c.uncal, cam.spec.tilt * 7 + cam.spec.z);
+    conditionUniforms(P, L, s0 / scanSpeed(), pitch / scanSpeed(), (o.t || 100) * 1e-6, c.uncal, cam.spec.tilt * 7 + cam.spec.z + (cam.top ? 500 : 0));   // a top camera: its own sensor
     const db = debrisFor(cam);
     gl.uniform4fv(P.uDebris, db.data); gl.uniform1i(P.uNDebris, db.n);
     gl.uniform3fv(P.uWinN, win.n); gl.uniform3fv(P.uWinO, win.o); gl.uniform3fv(P.uWinA, win.a);
@@ -88,7 +88,7 @@
     gl.uniform1f(U.uExposure, o.exposure || 1.6); gl.uniform1f(U.uDirt, 0); gl.uniform1f(U.uSeed, o.seed || 1); gl.uniform3f(U.uBg, 0.1, 0.105, 0.11);
     gl.uniform3fv(U.uC, cam.C); gl.uniform3fv(U.uF, cam.F); gl.uniform3fv(U.uR, cam.R); gl.uniform3fv(U.uU, cam.U);
     gl.uniform2f(U.uFoc, cam.fx, cam.fx); gl.uniform2f(U.uSize, cam.w, cam.h); gl.uniform1f(U.uSnapS, s);
-    const L = o.lights || lightsFor(cams, "area"), c = opts(), flaws = c.uncal && !cam.photo, rollS = c.rolling && !cam.photo ? ROLLING_S : 0;
+    const L = o.lights || lightsFor(lineCams(), "area"), c = opts(), flaws = c.uncal && !cam.photo, rollS = c.rolling && !cam.photo ? ROLLING_S : 0;
     setLights(U, L, o.still ? 0.015 : 0.07);
     gl.uniform1f(U.uVib, 0); gl.uniform1f(U.uSpeed, scanSpeed()); gl.uniform1f(U.uDistort, flaws ? LENS_DISTORTION : 0); gl.uniform1f(U.uRollMM, rollS * scanSpeed());
     const dof = !o.id && o.fnum > 0;

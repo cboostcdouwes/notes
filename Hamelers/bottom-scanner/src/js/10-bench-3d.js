@@ -89,30 +89,34 @@
     scanLine = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.004, Wm), new THREE.MeshBasicMaterial({ color: new THREE.Color(css("--beam")) }));
     scanLine.position.set(0, 0.002, 0); fixed.add(tip(scanLine, "Scan line on the belt plane: every bottom-camera pixel ray crosses it."));
   }
-  let cams = [];
+  let cams = [], topLineCams = [];   // the bottom line-scan cameras; the top ones mirroring them (option)
+  const lineCams = () => cams.concat(topLineCams);
   function buildRig() {
     while (rig.children.length) rig.remove(rig.children[0]);
     for (let i = fans.length - 1; i >= 0; i--) if (fans[i].userData.kind === "line") fans.splice(i, 1);
     const camM = M(css("--cam"), { roughness: 0.35 }), ledM = M(css("--led"), { emissive: new THREE.Color(css("--led")), emissiveIntensity: 0.6 });
     const beam = new THREE.MeshBasicMaterial({ color: new THREE.Color(css("--beam")), transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false });
     const leds = new Set();
-    cams.forEach((c) => {
+    lineCams().forEach((c) => {
       const C = new THREE.Vector3(c.C[0] / 1000, c.C[1] / 1000, c.C[2] / 1000), d0 = new THREE.Vector3(...c.d0), e = new THREE.Vector3(...c.e);
       const axis = new THREE.Vector3(...c.axis), body = box(0.08, 0.1, 0.16, camM, 0, 0, 0);   // the lens at its front face
       body.position.copy(C.clone().addScaledVector(axis, -0.08)); body.lookAt(C.clone().add(axis));
       rig.add(windowMesh(c));
-      // stands, as in the traced scene (rigParts): one under each camera, two under each LED bar
+      // stands and hangers, as in the traced scene (rigParts): one for each camera, two for each LED bar
       const standM = M(css("--steel"), { metalness: 0.4, roughness: 0.5 }), stand = (x, top, z, w) => rig.add(tip(box(w, top + 0.6, w, standM, x, (top - 0.6) / 2, z), "Stand on the floor, 0.6 m below the belt."));
-      stand(C.x, C.y - 0.045, C.z, 0.03);
+      const frameY = TOP_FRAME_Y / 1000, hanger = (x, bottom, z, w) => rig.add(tip(box(w, frameY - bottom, w, standM, x, (frameY + bottom) / 2, z), "Hanger from the frame above the station."));
+      const mount = c.top ? hanger : stand, toMount = c.top ? 1 : -1;   // a top camera's rig hangs from above
+      mount(C.x, C.y + toMount * 0.045, C.z, 0.03);
       const lk = String(c.lightPos), newBar = c.lights.length > 0 && !leds.has(lk);
-      if (newBar) [-0.45, 0.45].forEach((z) => stand(c.lightPos[0] / 1000, c.lightPos[1] / 1000 - 0.03, z, 0.024));
-      rig.add(tip(body, "Line-scan camera " + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "°" + (c.spec.z ? ", " + Math.abs(c.spec.z) + " mm " + (c.spec.z < 0 ? "left" : "right") : ", centred") +
+      if (newBar) [-0.45, 0.45].forEach((z) => mount(c.lightPos[0] / 1000, c.lightPos[1] / 1000 + toMount * 0.03, z, 0.024));
+      rig.add(tip(body, (c.top ? "Top line-scan camera, the bottom one's " + TOP_LINE[c.how].name + ": " : "Line-scan camera ") + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "°" + (c.spec.z ? ", " + Math.abs(c.spec.z) + " mm " + (c.spec.z < 0 ? "left" : "right") : ", centred") +
         ". FOV " + ((c.phi1 - c.phi0) * 180 / Math.PI).toFixed(0) + "°, " + c.PX + " px over " + Math.round(c.z1 - c.z0) + " mm; lens " + c.focal.toFixed(0) + " mm focused at " + Math.round(c.focus) + " mm."));
       if (newBar) {
         leds.add(lk);
         const beside = opts().lightSetup === "beside";
-        rig.add(tip(box(0.05, 0.03, 1.0, ledM, c.lightPos[0] / 1000, c.lightPos[1] / 1000, 0), "LED line light, 1 m bar, " + Math.round(-c.lightPos[1]) + " mm below the belt" +
-          (beside ? ", beside the camera behind its own window." : c.lightPos[0] === 0 ? ", centred under the gap." : ".")));
+        rig.add(tip(box(0.05, 0.03, 1.0, ledM, c.lightPos[0] / 1000, c.lightPos[1] / 1000, 0), "LED line light, 1 m bar, " +
+          (c.top ? Math.round(c.lightPos[1] - c.planeY) + " mm above a " + c.planeY + " mm high deck, facing down" : Math.round(-c.lightPos[1]) + " mm below the belt") +
+          (beside ? ", beside the camera behind its own window." : c.lightPos[0] === 0 ? (c.top ? ", centred over the scan line." : ", centred under the gap.") : ".")));
         if (beside) rig.add(ownWindowMesh(c.lightPos, 0, 1000));
       }
       if (c.spot) rig.add(spotMesh(c, ledM));
@@ -120,13 +124,18 @@
       for (let i = 0; i <= N; i++) {
         const phi = c.phi0 + (c.phi1 - c.phi0) * i / N;
         const dir = d0.clone().multiplyScalar(Math.cos(phi)).add(e.clone().multiplyScalar(Math.sin(phi)));
-        pts.push(C.clone().add(dir.multiplyScalar((0.2 - C.y) / dir.y)));
+        pts.push(C.clone().add(dir.multiplyScalar(((c.planeY - toMount * 200) / 1000 - C.y) / dir.y)));   // 200 mm past its plane
       }
       const geo = new THREE.BufferGeometry().setFromPoints(pts); const idx = []; for (let i = 1; i <= N; i++) idx.push(0, i, i + 1); geo.setIndex(idx);
-      const fan = new THREE.Mesh(geo, beam); fan.userData.kind = "line"; rig.add(tip(fan, "Scan plane of the " + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "° camera; it passes through the gap line.")); fans.push(fan);
+      const fan = new THREE.Mesh(geo, beam); fan.userData.kind = "line"; fans.push(fan);
+      rig.add(tip(fan, "Scan plane of the " + (c.top ? "top " : "") + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "° camera; it passes through " + (c.top ? "the scan line at " + c.planeY + " mm, a deck's height." : "the gap line.")));
     });
     if (opts().lightSetup === "side" || opts().lightSetup === "alternate") sideLights().forEach(([x, y, z]) => {
       rig.add(tip(box(0.1, 0.04, 0.03, ledM, x / 1000, y / 1000, (z + Math.sign(z) * 18) / 1000), "Side light, " + (-y) + " mm below the belt, aimed along the gap at the belt centre (raking light)."));
+    });
+    if ($("opt-plates").checked) platesFor(lineCams()).forEach((q) => {   // as traced
+      const s = [0, 1, 2].map((i) => (q.hi[i] - q.lo[i]) / 1000), c = [0, 1, 2].map((i) => (q.lo[i] + q.hi[i]) / 2000);
+      rig.add(tip(box(s[0], s[1], s[2], mats3d.black, c[0], c[1], c[2]), "Matt black plate across a line camera's view " + PLATE.beyondMm + " mm past the pallet's plane: the background between the boards."));
     });
     applyFans();
   }

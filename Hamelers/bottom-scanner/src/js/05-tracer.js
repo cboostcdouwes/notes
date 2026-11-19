@@ -120,10 +120,10 @@
     return g;
   }
   // Reading the WebGL canvas back is slow in some browsers (about 2 ms per copy in Firefox), so each frame's renders
-  // go to separate rows of it and are read back once, by queueCopy/flushCopies. Rows: bottom camera k at k × MAXROWS,
-  // its raking-light image (alternating lights) at (2 + k) × MAXROWS, then the top camera's strip, then a station
-  // snapshot strip.
-  const OUT_RAKING = 2 * MAXROWS, OUT_TOP = 4 * MAXROWS, OUT_SNAP = () => OUT_TOP + TOP_LIVE.h;
+  // go to separate rows of it and are read back once, by queueCopy/flushCopies. Rows: line camera k (see lineCams) at
+  // k × MAXROWS, then the bottom cameras' raking-light images (alternating lights, which the top line-scan cameras
+  // don't mirror), four images at most; then the top camera's strip, then a station snapshot strip.
+  const OUT_TOP = 4 * MAXROWS, OUT_SNAP = () => OUT_TOP + TOP_LIVE.h;
   const stage = document.createElement("canvas"), stageCtx = stage.getContext("2d");
   const strip = document.createElement("canvas"), stripCtx = strip.getContext("2d");   // see flushCopies
   const copyQueue = [], afterCopy = [];
@@ -167,11 +167,11 @@
   let sceneKey = "", sceneSlots = [], sceneGap = gap;   // slots: [{pal (null = world), start, count}]
   function uploadScene(pals, g) {
     g = g || gap;
-    const key = g + ":" + rigKey(cams) + ":" + pals.map((p) => p.uid).join(",");
+    const key = g + ":" + rigKey(lineCams()) + ":" + pals.map((p) => p.uid).join(",");
     if (key === sceneKey) return;
     sceneKey = key; sceneSlots = []; sceneGap = g; let row = 0;
     const add = (pal, parts) => { const st = row; parts.forEach((q) => { if (row < TEXH) writePart(row++, q); }); sceneSlots.push({ pal: pal, start: st, count: row - st }); };
-    add(null, worldFor(g, cams).parts);
+    add(null, worldFor(g, lineCams()).parts);
     pals.forEach((p) => add(p, p.parts));
     motionData.fill(0);
     sceneSlots.forEach((e, i) => {
@@ -189,7 +189,7 @@
   const MAX_LAMPS = 16, lampLo = new Float32Array(MAX_LAMPS * 4), lampHi = new Float32Array(MAX_LAMPS * 4);
   // The lamp faces, for mirror reflections: box, base radiance (lo.w) and whether it is the LED bar (hi.w).
   function lampUniforms(U) {
-    const lamps = worldFor(sceneGap, cams).parts.filter((q) => q.mat === "lamp");
+    const lamps = worldFor(sceneGap, lineCams()).parts.filter((q) => q.mat === "lamp");
     if (lamps.length > MAX_LAMPS) throw new Error(lamps.length + " lamps; the tracer takes " + MAX_LAMPS + ". Raise MAX_LAMPS and uLampLo/uLampHi[] together.");
     lamps.forEach((q, i) => { lampLo.set([q.lo[0], q.lo[1], q.lo[2], q.col[0]], i * 4); lampHi.set([q.hi[0], q.hi[1], q.hi[2], q.axis === 2 ? 1 : 0], i * 4); });
     gl.uniform4fv(U.uLampLo, lampLo); gl.uniform4fv(U.uLampHi, lampHi); gl.uniform1i(U.uNLamp, lamps.length);
@@ -199,7 +199,7 @@
       const p = e.pal;
       palA.set([p ? p.off : 0, 0, 0, e.start], i * 4);
       palB.set([e.count, p ? 1 : 0, 0, 0], i * 4);
-      const b = p ? p.bb : worldFor(sceneGap, cams).bb; bbLo.set([b[0], b[1], b[2], 0], i * 4); bbHi.set([b[3], b[4], b[5], 0], i * 4);
+      const b = p ? p.bb : worldFor(sceneGap, lineCams()).bb; bbLo.set([b[0], b[1], b[2], 0], i * 4); bbHi.set([b[3], b[4], b[5], 0], i * 4);
     });
     gl.uniform1i(U.uNPal, sceneSlots.length);
     gl.uniform4fv(U.uPalA, palA); gl.uniform4fv(U.uPalB, palB); gl.uniform4fv(U.uBbLo, bbLo); gl.uniform4fv(U.uBbHi, bbHi);
@@ -214,7 +214,7 @@
     lampUniforms(U);
   }
   const MAX_SPOTS = 2, MAX_SPOT_UNITS = 16;   // one per bottom camera, as uSpotAxis[]; units each, as spotShare's loop
-  const MAX_LIGHTS = 24, HALL = [0.1, 0.1, 0.11];   // HALL: brightness of the hall above, as seen through gaps
+  const MAX_LIGHTS = 32, HALL = [0.1, 0.1, 0.11];   // HALL: brightness of the hall above, as seen through gaps
   // L: from lightsFor
   function setLights(U, L, ambient) {
     const lights = L.lights;

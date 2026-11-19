@@ -181,7 +181,8 @@
   // along the scan line (debris positions are along a and across it, from o).
   function windowFor(cam) {
     const ang = service.winAngle * Math.PI / 180, side = Math.sign(cam.spec.tilt) || 1;
-    const n = [side * Math.sin(ang), Math.cos(ang), 0], o = cam.C.map((c, i) => c + WINDOW_MM * cam.axis[i]);
+    const bottomN = [side * Math.sin(ang), Math.cos(ang), 0], n = cam.top ? cam.mapDir(bottomN) : bottomN;   // a top camera's: its bottom camera's, carried over
+    const o = cam.C.map((c, i) => c + WINDOW_MM * cam.axis[i]);
     const en = cam.e[0] * n[0] + cam.e[1] * n[1] + cam.e[2] * n[2];
     return { n: n, o: o, a: norm3(cam.e.map((v, i) => v - en * n[i])) };
   }
@@ -210,8 +211,10 @@
   }
   // Debris on a bottom camera's window (assumed): grit settles over the months since service, and a splinter
   // can lie on the first camera's window. Each: position along the sensor line and across it, radius (mm), opacity.
+  // A top camera's window faces down: nothing settles on it.
   function debrisFor(cam) {
     const data = new Float32Array(64);   // up to 16: a splinter is 5, specks at most 10
+    if (cam.top) return { data: data, n: 0 };
     let n = 0, seed = (Math.round(cam.spec.tilt * 31 + cam.spec.z) >>> 0) + 7;
     const r = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
     const add = (u, v, rad, op) => data.set([u, v, rad, op], 4 * n++);
