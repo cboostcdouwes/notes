@@ -367,8 +367,8 @@ try {
   });
   // Each turned top camera in its bottom camera's view plane, the planes crossing where the gap is narrowest: all look
   // through the one narrow gap, the top views onto the plates beside the bottom cameras. Spots in the planes light
-  // what the views see through it; a bar under the gap needs a wider one, and each pair's top twin of the one bar lights
-  // the other pair's view too.
+  // what the views see through it; a bar under the gap needs a wider one, and its one top twin can't sit where both
+  // pairs' turns put it.
   await check("shared view planes with spots let the top and bottom cameras look through one narrow gap", async () => {
     const shared = { "top-line": "turned", "opt-plates": true, "light-setup": "spot", exp: "1.05", gap: "30" };
     const best = await flipDiff(Object.assign({ "scan-lines": "shared" }, shared));
@@ -376,6 +376,13 @@ try {
       "a bar under a 100 mm gap": await flipDiff({ "scan-lines": "shared", "top-line": "turned", "opt-plates": true, gap: "100" }) };
     await setControls(p, BASELINE);
     for (const [name, share] of Object.entries(others)) expect(best < share / 2, "shared planes " + best + "% of pixels differ, " + name + " " + share + "%");
+  });
+  // The two pairs share the bar under the gap; one top bar between their turning lines gives each top camera the light
+  // its bottom twin gets. A top bar per pair would light each top view with both (over 40% differ).
+  await check("with shared view planes, the bar under the gap gets one top twin, and a flipped pallet from above differs from it upright from below in under a quarter of the pixels", async () => {
+    const share = await flipDiff({ "scan-lines": "shared", "top-line": "turned", "opt-plates": true });
+    await setControls(p, BASELINE);
+    expect(share < 25, share + "% of pixels differ");
   });
   await check("the live render of the 3D view keeps drawing while the feed runs", async () => {
     const q = await open(browser);

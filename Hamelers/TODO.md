@@ -51,17 +51,20 @@ Hamelers: pallet classifier. Most important first. Research log: `pallet-classif
   in the motion model and the shader, and six cutting planes per part instead of four for turning and hanging at once.
   Roughly a day; worth it if catching at the gap matters on the test conveyor.
 - **Flipped pallets (R17)**, simulator (EUR, broken bottom board, Compare > "Flipped from above vs upright from
-  below", pixels differing by more than 30/765). Page default since 2026-11-19 (user's settings): shared planes, two LED
-  bars, 100 mm gap, cameras at ±700 mm: 43–45% differ (two top bars to one bottom bar). Best found: **one 30 mm gap for all cameras (a belt could
+  below", pixels differing by more than 30/765). Page default since 2026-11-19 (user's settings): shared planes, the LED
+  bar under a 100 mm gap with one top bar over it, cameras at ±700 mm: 14–16% differ (4–7% without the station lamps).
+  The one top bar sits between where the two pairs' turns put it (95 mm off each, about 20° off in direction); a top
+  bar per pair lit each top view with both (43–45%). Exact with one bar only if the planes cross at mid-pallet height
+  (wider gap). Best found: **one 30 mm gap for all cameras (a belt could
   replace the rollers later), dual ±25° cameras beside the belt at ±750 mm, their views crossing at the gap centre at
   the rollers' centre height, each turned top camera sharing its bottom camera's plane (turned about where that plane
   crosses 72 mm up), black plates beside each camera's twin, a line-lens spot per camera in its plane 80 mm further
   out than the lens, 11 µs: 3.0–3.4% differ with the station lamps on, 2.0–2.5% without.** Views clear the Ø60
   rollers by 10 mm at f/4 (5 mm at a 20 mm gap); no sticking. Costs: the spots light the line from its side, 0.14–2.09×
   the centre's light within 550 mm of the centre (top and bottom alike, so the images still match); the two pairs'
-  spots cross-light each other near the belt above gaps of ~40 mm or more (80 mm: 17%). Two LED bars don't work with
-  this layout: each pair is turned about its own line, so there are two top bars to one bottom bar (43% at a 100 mm
-  gap), and a bar under the gap lights only 60 mm up the views at a 60 mm gap. Residual 2%: a few board edges, cause
+  spots cross-light each other near the belt above gaps of ~40 mm or more (80 mm: 17%). With the LED bar under the gap
+  instead, the views need a wider gap (a bar under a 60 mm gap lights only 60 mm up them) and the one top bar matches
+  only approximately (see the page default above). Residual 2%: a few board edges, cause
   not traced. With a belt, the ±25° views pass under the belt ends: drop the return runs away from the gap (snub
   pulleys). Earlier variants: planes crossing at mid-pallet height with two bars, 120 mm gap 18% (0.3% without lamps);
   rollers' own spacing with spots under the belt centre, top views through the next roller space 0.6%; the bar under

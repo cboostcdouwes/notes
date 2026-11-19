@@ -116,7 +116,7 @@
         const beside = opts().lightSetup === "beside";
         rig.add(tip(box(0.05, 0.03, 1.0, ledM, c.lightPos[0] / 1000, c.lightPos[1] / 1000, 0), "LED line light, 1 m bar, " +
           (c.top ? Math.round(c.lightPos[1] - c.planeY) + " mm above a " + c.planeY + " mm high deck, facing down" : Math.round(-c.lightPos[1]) + " mm below the belt") +
-          (beside ? ", beside the camera behind its own window." : c.lightPos[0] === 0 ? (c.top ? ", centred over the scan line." : ", centred under the gap.") : ".")));
+          (beside ? ", beside the camera behind its own window." : c.lightPos[0] === 0 ? (c.top ? ", centred over the gap." : ", centred under the gap.") : ".")));
         if (beside) rig.add(ownWindowMesh(c.lightPos, 0, 1000));
       }
       if (c.spot) rig.add(spotMesh(c, ledM));

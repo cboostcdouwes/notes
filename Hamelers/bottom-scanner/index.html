@@ -2009,15 +2009,17 @@ void main() {
   // upright one turned that way, so the turned cameras see it exactly as the bottom ones see it upright, passing the
   // other way round; the mirrored ones see it reflected along travel. Exactly for a pallet 2 × TOP_MIRROR_Y high.
   // planeY: the plane a camera's view is fitted to and rectified on; mapDir: carries a bottom camera's direction over.
+  // lightX: the line the camera's lights are turned about (see topLineFor).
   const TOP_MIRROR_Y = 72;   // half a EUR pallet's 144 mm height (assumed)
   const TOP_LINE = {
     mirrored: { name: "mirror image", point: (v) => [v[0], 2 * TOP_MIRROR_Y - v[1], v[2]], dir: (v) => [v[0], -v[1], v[2]] },
     turned: { name: "turned half way round the scan line", point: (v, x) => [2 * x - v[0], 2 * TOP_MIRROR_Y - v[1], v[2]], dir: (v) => [-v[0], -v[1], v[2]] } };
-  function topLineCam(c, how) {
-    const point = (v) => TOP_LINE[how].point(v, c.twinX), dir = TOP_LINE[how].dir, lp = point([c.lightPos[0], c.lightPos[1], 0]);
+  function topLineCam(c, how, lightX) {
+    const point = (v) => TOP_LINE[how].point(v, c.twinX), lightPoint = (v) => TOP_LINE[how].point(v, lightX), dir = TOP_LINE[how].dir;
+    const lp = lightPoint([c.lightPos[0], c.lightPos[1], 0]);
     const spot = c.spot && Object.assign({}, c.spot, { pos: point(c.spot.pos), axis: dir(c.spot.axis), along: dir(c.spot.along) });
     return Object.assign({}, c, { top: true, how: how, C: point(c.C), d0: dir(c.d0), e: dir(c.e), axis: dir(c.axis), planeY: 2 * TOP_MIRROR_Y, mapDir: dir,
-      lineX: point([c.lineX, 0, 0])[0], lightPos: [lp[0], lp[1]], lights: c.lights.map((l) => point(l).concat(l[3])), spot: spot });
+      lineX: point([c.lineX, 0, 0])[0], lightPos: [lp[0], lp[1]], lights: c.lights.map((l) => lightPoint(l).concat(l[3])), spot: spot });
   }
   // Where line camera c's view crosses height y, along travel.
   const planeX = (c, y) => c.lineX + (c.C[0] - c.lineX) * (y - c.planeY) / (c.C[1] - c.planeY);
@@ -2769,7 +2771,7 @@ void main() {
         const beside = opts().lightSetup === "beside";
         rig.add(tip(box(0.05, 0.03, 1.0, ledM, c.lightPos[0] / 1000, c.lightPos[1] / 1000, 0), "LED line light, 1 m bar, " +
           (c.top ? Math.round(c.lightPos[1] - c.planeY) + " mm above a " + c.planeY + " mm high deck, facing down" : Math.round(-c.lightPos[1]) + " mm below the belt") +
-          (beside ? ", beside the camera behind its own window." : c.lightPos[0] === 0 ? (c.top ? ", centred over the scan line." : ", centred under the gap.") : ".")));
+          (beside ? ", beside the camera behind its own window." : c.lightPos[0] === 0 ? (c.top ? ", centred over the gap." : ", centred under the gap.") : ".")));
         if (beside) rig.add(ownWindowMesh(c.lightPos, 0, 1000));
       }
       if (c.spot) rig.add(spotMesh(c, ledM));
@@ -3014,7 +3016,18 @@ void main() {
   // setups in TOP_LINE_SETUPS only.
   const TOP_LINE_SETUPS = ["gap", "spot"];
   const topLineHow = () => ($("top-line").value !== "off" && TOP_LINE_SETUPS.includes($("light-setup").value) ? $("top-line").value : null);
-  const topLineFor = (bottom) => (topLineHow() ? bottom.map((c) => topLineCam(c, topLineHow())) : []);
+  // A light the bottom cameras share (the bar under the gap) gets one top twin, turned about the mean of their lines:
+  // each top camera then gets the same light as its bottom twin, from close to the same place. Turned about each
+  // camera's own line, the twins would be as many top bars, each lighting every top view.
+  function topLineFor(bottom) {
+    const how = topLineHow();
+    if (!how) return [];
+    const lightX = (c) => {
+      const sharing = bottom.filter((b) => String(b.lightPos) === String(c.lightPos));
+      return sharing.reduce((sum, b) => sum + b.twinX, 0) / sharing.length;
+    };
+    return bottom.map((c) => topLineCam(c, how, lightX(c)));
+  }
   function restart() {
     if (applyingSettings) { restartWanted = true; return; }   // applySettings restarts once at the end
     const o = opts();

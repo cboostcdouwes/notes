@@ -43,15 +43,17 @@
   // upright one turned that way, so the turned cameras see it exactly as the bottom ones see it upright, passing the
   // other way round; the mirrored ones see it reflected along travel. Exactly for a pallet 2 × TOP_MIRROR_Y high.
   // planeY: the plane a camera's view is fitted to and rectified on; mapDir: carries a bottom camera's direction over.
+  // lightX: the line the camera's lights are turned about (see topLineFor).
   const TOP_MIRROR_Y = 72;   // half a EUR pallet's 144 mm height (assumed)
   const TOP_LINE = {
     mirrored: { name: "mirror image", point: (v) => [v[0], 2 * TOP_MIRROR_Y - v[1], v[2]], dir: (v) => [v[0], -v[1], v[2]] },
     turned: { name: "turned half way round the scan line", point: (v, x) => [2 * x - v[0], 2 * TOP_MIRROR_Y - v[1], v[2]], dir: (v) => [-v[0], -v[1], v[2]] } };
-  function topLineCam(c, how) {
-    const point = (v) => TOP_LINE[how].point(v, c.twinX), dir = TOP_LINE[how].dir, lp = point([c.lightPos[0], c.lightPos[1], 0]);
+  function topLineCam(c, how, lightX) {
+    const point = (v) => TOP_LINE[how].point(v, c.twinX), lightPoint = (v) => TOP_LINE[how].point(v, lightX), dir = TOP_LINE[how].dir;
+    const lp = lightPoint([c.lightPos[0], c.lightPos[1], 0]);
     const spot = c.spot && Object.assign({}, c.spot, { pos: point(c.spot.pos), axis: dir(c.spot.axis), along: dir(c.spot.along) });
     return Object.assign({}, c, { top: true, how: how, C: point(c.C), d0: dir(c.d0), e: dir(c.e), axis: dir(c.axis), planeY: 2 * TOP_MIRROR_Y, mapDir: dir,
-      lineX: point([c.lineX, 0, 0])[0], lightPos: [lp[0], lp[1]], lights: c.lights.map((l) => point(l).concat(l[3])), spot: spot });
+      lineX: point([c.lineX, 0, 0])[0], lightPos: [lp[0], lp[1]], lights: c.lights.map((l) => lightPoint(l).concat(l[3])), spot: spot });
   }
   // Where line camera c's view crosses height y, along travel.
   const planeX = (c, y) => c.lineX + (c.C[0] - c.lineX) * (y - c.planeY) / (c.C[1] - c.planeY);

@@ -123,7 +123,18 @@
   // setups in TOP_LINE_SETUPS only.
   const TOP_LINE_SETUPS = ["gap", "spot"];
   const topLineHow = () => ($("top-line").value !== "off" && TOP_LINE_SETUPS.includes($("light-setup").value) ? $("top-line").value : null);
-  const topLineFor = (bottom) => (topLineHow() ? bottom.map((c) => topLineCam(c, topLineHow())) : []);
+  // A light the bottom cameras share (the bar under the gap) gets one top twin, turned about the mean of their lines:
+  // each top camera then gets the same light as its bottom twin, from close to the same place. Turned about each
+  // camera's own line, the twins would be as many top bars, each lighting every top view.
+  function topLineFor(bottom) {
+    const how = topLineHow();
+    if (!how) return [];
+    const lightX = (c) => {
+      const sharing = bottom.filter((b) => String(b.lightPos) === String(c.lightPos));
+      return sharing.reduce((sum, b) => sum + b.twinX, 0) / sharing.length;
+    };
+    return bottom.map((c) => topLineCam(c, how, lightX(c)));
+  }
   function restart() {
     if (applyingSettings) { restartWanted = true; return; }   // applySettings restarts once at the end
     const o = opts();
