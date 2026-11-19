@@ -203,7 +203,7 @@ Checklist:
 - Round 1 (2026-11-18): three generators (G RL environments, H motion planning, J optimal control); after the checks no option leads on verified requirements alone: D4 (lattice) leads on coulds, D2 (geodesic step) if R13 holds, D1m (sliding, masked slivers) if physical sliding is required; D7, D8, D9, D10 not applicable on R8a/R10/R11.
 
 ## Decision
-Draft
+Reviewed (2026-11-18, user: "The review is complete")
 
 **Choice: D2, geodesic-step dynamics with an exact geodesic oracle (T1), point agent among polygon walls.**
 - State: 2D position of a point agent (drawn as a circle); walls: grid cells of a fixed ASCII map as polygons (no pinch points: wall cells touching only diagonally are not allowed).
@@ -240,21 +240,24 @@ Draft
 - Step cost grows with the number of graph nodes (O(V^2) visibility tests per query); fine for small fixed maps.
 
 **Open child decisions:**
-- Interface style for R12 (gymnax-style functional API vs Gymnasium FuncEnv vs Jumanji); decide at implementation.
+- ~~Interface style for R12~~ resolved at implementation (2026-11-18): gymnax-style functional API (pure `reset`/`step` on NamedTuple state and params, auto-reset, `info["final_observation"]`), no gymnax dependency; chosen by Claude as the JAX-native default, open to the user's override.
 - Scoring method that tells staircase edges apart from wall edges (uses the R8b channel); decide with the first critic experiment.
 - Optional add-ons: A2 discontinuity-catalogue layout, A3 action-space edge maps, A4 OGBench layouts.
 
-**Plan (one commit-sized step at a time, in the experiments project):**
-1. Geometry and exact geodesic distance: ASCII map → wall polygons, convex-corner graph with next-hop table, batched `visible`, `geodesic`; tests: manufactured layouts (empty room, thin wall, doorway, U-trap, two rooms), cross-check against extremitypathfinder on random pairs, goal placement rule.
+**Where it is documented:** the module docstrings of the environment package (user, 2026-11-18); this log stays the full record.
+
+**Plan (one commit-sized step at a time, as a separate package in the experiments project's uv workspace — user, 2026-11-18):**
+1. Geometry and exact geodesic distance: ASCII map → wall polygons, convex-corner graph with next-hop table, batched `visible`, `geodesic`; tests: manufactured layouts (empty room, thin wall, doorway, U-trap, two rooms), cross-check against extremitypathfinder on random pairs.
 2. Dynamics and environment: `project_free`, geodesic-step `f` (snaps to the target on arrival), reset/step with auto-reset, reward always 0; tests: displacement ≤ L, next states free, lower-bound property, determinism and tie rule, batched equals unbatched, exact landing on a reachable goal, step reward is 0 everywhere.
 3. Ground truth: success predicate, task reward, N, V*, Q* and the d channel; tests: greedy policy lands exactly on the goal in exactly N steps on every manufactured layout; plotting helpers.
+Status (2026-11-18): steps 1–3 implemented in `packages/gcrl-maze` (modules `geometry`, `env`, `truth`, `plotting`); 56 tests pass. Known gaps now tested: thin walls, concave corners, corners in sequence (rooms, spiral layouts), exact landing on a point goal (optimal policy lands in exactly N steps, also in float32 on 4 layouts × 1000 pairs). Tolerance: "exactly on g" means within `maze.tol` (64 ulp × map size). Throughput: 4.3 M steps/s (4096 envs, float32, RTX 2070 Super).
 4. Once the first step is in use: ask the user what using it showed, then amend *Decision* or reopen a round.
 
 Decision checklist:
 - [x] Stop condition: no new requirements, no ranking change, nothing deciding left unverified
 - [x] Why and Rejected: each on a requirement the user confirmed; confirmed by the user (2026-11-18: "The why and rejected are correct")
 - [x] Known gaps and open child decisions: listed in *Decision*
-- [ ] Documentation: updated where the rule takes effect; overstated requirements corrected; commit message proposed
+- [x] Documentation: updated where the rule takes effect; overstated requirements corrected; commit message proposed — location: package module docstrings (user, 2026-11-18), written with plan steps 1–3
 - [x] Out of scope: noted where open work is kept — TODO.md in the notes folder
 - [x] Overview: choice, pros and cons, rejected, gaps, plan, files
-- [ ] Review: in open chat; nothing implemented before it
+- [x] Review: in open chat; nothing implemented before it — user, 2026-11-18: "The review is complete"

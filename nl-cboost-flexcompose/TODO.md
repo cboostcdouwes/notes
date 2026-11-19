@@ -23,6 +23,22 @@ with private repos.
   the C glue of the Python bindings (`site-packages/<pkg>/{msg,srv,action}/_*_s.c`, `_*_s.ep.rosidl_typesupport_*.c`)
   and Rust bindings (`share/<pkg>/rust/`, confirming design §12's Rust gap). The app's Dockerfile removes them in
   stage build; the starter needs the same, a `fix:` with an e2e fixture that has a message package.
+- **Service starter: `bootstrap.sh` runs rosdep over all of `src/`** (found 2026-11-19 in the PolyMX integration
+  box). The Dockerfile installs only for the service's packages and what they need (`--packages-up-to`), so a fresh
+  dev box installs more than the image, and fails on keys the image never meets: `packml_plc` (unused by the app)
+  exec-depends on `opcua-pip`, which rosdep refuses under PEP 668. The app's own box only works because `opcua` was
+  installed there earlier. Proposed: the same `--packages-up-to` selection in `bootstrap.sh` (starter, then the app).
+  Separate question: a pip key the service does need fails in both (rosdep wants `PIP_BREAK_SYSTEM_PACKAGES=1`).
+- PolyMX integration repo on the new starter (2026-11-19, uncommitted): imports the app; dev box up (project
+  `nl-polymx-automated-qc`, service `app`), simulated stack cycle passes; `./lock.sh` locks 10 repos. Next: commit,
+  lock commit and tag (user), `./release.sh`, a run on the machine; VS Code on Linux, then Windows.
+- **Service starter: `colcon build` has no parallelism cap** (found 2026-11-18). It runs as many packages and
+  compilers as there are cores; `packml_ros` takes about 1.2 GB per compiler. In the PolyMX dev box that ran the PC out
+  of memory and took the desktop with it; the image build failed in a 10 GB builder and passed with 17 GB free
+  (2026-11-19, 2 min 23 s). Proposed: build args with low defaults for `--parallel-workers` and `MAKEFLAGS` in the
+  starter's Dockerfile (a `fix:` with the e2e), then the app's copy; a note for the dev box build.
+- PolyMX app's release image built alone, 2026-11-19: `polymx-qc:test` (3.8 GB) passes every stage, the source check
+  included; `hse` and the three other libraries import, `State.COMPLETED` exists.
 - PolyMX app, temporary (step 6): rosdep skips `python3-yaskawa-hse-driver` (the `hse` library, not on PyPI; since
   2026-11-18 `Cboostbv/nl-cboost-yaskawa-hse` is in `dependencies.repos` and installed by pip like the other three)
   and `ament_python` (`nl-cboost-machine-state-manager` lists it as a dependency;

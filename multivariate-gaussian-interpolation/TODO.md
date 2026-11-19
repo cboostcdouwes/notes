@@ -1,12 +1,12 @@
 # TODO — multivariate-gaussian-interpolation
 
-## GCRL maze environment (decision: [gcrl-discontinuous-test-environment.md](gcrl-discontinuous-test-environment.md), D2 geodesic-step)
-- [ ] Step 1: geometry and exact geodesic distance (ASCII map → walls, corner graph, `visible`, `geodesic`), tests on manufactured layouts + extremitypathfinder cross-check
-- [ ] Step 2: dynamics and environment (`project_free`, geodesic-step `f` snapping to targets, reset/step with auto-reset, reward always 0, rollouts end only at the time limit)
-- [ ] Step 3: ground truth (success predicate, task reward, N, V*, Q*, d channel), exact-steps test, plotting helpers
+## GCRL maze environment (decision: [gcrl-discontinuous-test-environment.md](gcrl-discontinuous-test-environment.md), D2 geodesic-step; package `packages/gcrl-maze` in the uv workspace)
+- [x] Step 1: geometry and exact geodesic distance (ASCII map → walls, corner graph, `visible`, `geodesic`), tests on manufactured layouts + extremitypathfinder cross-check
+- [x] Step 2: dynamics and environment (`project_free`, geodesic-step `f` snapping to targets, reset/step with auto-reset, reward always 0, rollouts end only at the time limit)
+- [x] Step 3: ground truth (success predicate, task reward, N, V*, Q*, d channel), exact-steps test, plotting helpers
 - [ ] Step 4: after first use, ask what using it showed; amend the decision or reopen a round
 - Child decisions (open):
-  - [ ] Interface style for reuse with RL libraries (gymnax-style functional vs Gymnasium FuncEnv vs Jumanji) — decide in step 2
+  - [x] Interface style: gymnax-style functional (chosen at implementation; user may override)
   - [ ] Scoring method that separates staircase edges from wall edges (uses the d channel) — decide with the first critic experiment
 - Optional add-ons: discontinuity-catalogue layout (A2), exact action-space edge maps (A3), OGBench/D4RL layouts (A4)
 - Out of scope for now (won't): offline dataset generation; random layouts per episode (the design does not block per-layout graphs later)
