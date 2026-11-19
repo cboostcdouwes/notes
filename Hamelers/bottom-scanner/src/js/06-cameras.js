@@ -1,9 +1,22 @@
   // ---------------- camera models ----------------
-  // A bottom line camera looks up at its scan line across the belt at lineX along travel: a tilted camera's line lies
-  // o.lineOffset from the gap centre, away from the camera (a 0° camera's at the centre). Each camera's image is
-  // registered to the gap centre (traceLines): the encoder delays its lines by lineX.
+  // A bottom line camera looks up at its scan line across the belt at lineX along travel, placed by one of SCAN_LINES
+  // for its tilt t (rad); its turned top twin (TOP_LINE) is turned about the line across the belt at twinX, half a
+  // pallet's height up. Each camera's image is registered to the gap centre (traceLines): the encoder delays its lines
+  // by lineX.
+  // - centre: at the gap centre; twins turned about the line above it.
+  // - shared: the views cross at the gap centre at the rollers' centre height, where the gap is narrowest, so every
+  //   view passes the rollers there. Each twin is turned about the line where its bottom camera's view crosses half
+  //   the pallet's height, so the two share a view plane and both look through the one gap; with the cameras beside
+  //   the belt neither sees the other.
+  // - next: away from the camera, so that at the rollers' own spacing each turned top camera looks down through the
+  //   next space between the rollers.
+  const SCAN_LINES = {
+    centre: { lineX: () => 0, shared: false },
+    shared: { lineX: (t) => Math.tan(t) * ROLL_R, shared: true },
+    next: { lineX: (t) => Math.sign(t) * (ROLL_PITCH / 2 - TOP_MIRROR_Y * Math.tan(Math.abs(t))), shared: false } };
   function bottomCam(spec, px, o) {
-    const t = spec.tilt * Math.PI / 180, sx = Math.sin(t), cyy = Math.cos(t), lineX = Math.sign(spec.tilt) * (o.lineOffset || 0);
+    const t = spec.tilt * Math.PI / 180, sx = Math.sin(t), cyy = Math.cos(t), lines = SCAN_LINES[o.scanLines || "centre"], lineX = lines.lineX(t);
+    const twinX = lines.shared ? lineX + Math.tan(t) * TOP_MIRROR_Y : 0;
     const C = [lineX - WD * sx, -WD * cyy, spec.z], toLine = [lineX - C[0], -C[1], -C[2]];   // to the line's belt centre
     const dl = Math.hypot(...toLine), d0 = toLine.map((v) => v / dl);
     const nl = Math.hypot(toLine[0], toLine[1]), nv = [-toLine[1] / nl, toLine[0] / nl, 0];
@@ -18,24 +31,24 @@
     const focus = dl * Math.cos(angleTo(0) - axisPhi);          // focus plane through the belt centre
     const focal = (px * PIXEL_UM / 1000 / 2) / Math.tan((p1 - p0) / 2);   // mm, for this sensor width
     const lightPos = barPosition(spec, C, o);
-    const spot = o.lightSetup === "spot" ? spotBeam([lightPos[0], lightPos[1], 0], o.spotBeam, lineX) : null;
+    const spot = o.lightSetup === "spot" ? spotBeam([lightPos[0], lightPos[1], spec.z + (Math.sign(spec.z) || 1) * BESIDE_MM], o.spotBeam, lineX) : null;
     const lights = lightPos && !spot ? bar(lightPos[0], lightPos[1], -450, 450, 4, o.lightSetup === "beside" ? BAR_REF_MM : Math.hypot(lightPos[0], lightPos[1])) : [];
     return { kind: "line", spec: spec, C: C, d0: d0, e: e, phi0: p0, phi1: p1, dphi: dphi, axisPhi: axisPhi, axis: axis, z0: z0, z1: z1,
       mmPerPx: (z1 - z0) / (px - 1), nearMm: Math.abs(beltZ(p0 + dphi) - z0), farMm: Math.abs(z1 - beltZ(p1 - dphi)),
-      focus: focus, focal: focal, lights: lights, lightPos: lightPos, spot: spot, PX: px, planeY: 0, lineX: lineX };
+      focus: focus, focal: focal, lights: lights, lightPos: lightPos, spot: spot, PX: px, planeY: 0, lineX: lineX, twinX: twinX };
   }
   // Top line-scan cameras (option): copies of the bottom cameras and their LED bar above the belt, placed by one of
   // TOP_LINE about the height TOP_MIRROR_Y: mirrored in the horizontal plane there (on the same side of the scan line),
-  // or turned half way round the line across the belt there (on the other side). A pallet lying upside down is the
+  // or turned half way round the line across the belt there at x (the bottom camera's twinX; on the other side). A pallet lying upside down is the
   // upright one turned that way, so the turned cameras see it exactly as the bottom ones see it upright, passing the
   // other way round; the mirrored ones see it reflected along travel. Exactly for a pallet 2 × TOP_MIRROR_Y high.
   // planeY: the plane a camera's view is fitted to and rectified on; mapDir: carries a bottom camera's direction over.
   const TOP_MIRROR_Y = 72;   // half a EUR pallet's 144 mm height (assumed)
   const TOP_LINE = {
     mirrored: { name: "mirror image", point: (v) => [v[0], 2 * TOP_MIRROR_Y - v[1], v[2]], dir: (v) => [v[0], -v[1], v[2]] },
-    turned: { name: "turned half way round the scan line", point: (v) => [-v[0], 2 * TOP_MIRROR_Y - v[1], v[2]], dir: (v) => [-v[0], -v[1], v[2]] } };
+    turned: { name: "turned half way round the scan line", point: (v, x) => [2 * x - v[0], 2 * TOP_MIRROR_Y - v[1], v[2]], dir: (v) => [-v[0], -v[1], v[2]] } };
   function topLineCam(c, how) {
-    const { point, dir } = TOP_LINE[how], lp = point([c.lightPos[0], c.lightPos[1], 0]);
+    const point = (v) => TOP_LINE[how].point(v, c.twinX), dir = TOP_LINE[how].dir, lp = point([c.lightPos[0], c.lightPos[1], 0]);
     const spot = c.spot && Object.assign({}, c.spot, { pos: point(c.spot.pos), axis: dir(c.spot.axis), along: dir(c.spot.along) });
     return Object.assign({}, c, { top: true, how: how, C: point(c.C), d0: dir(c.d0), e: dir(c.e), axis: dir(c.axis), planeY: 2 * TOP_MIRROR_Y, mapDir: dir,
       lineX: point([c.lineX, 0, 0])[0], lightPos: [lp[0], lp[1]], lights: c.lights.map((l) => point(l).concat(l[3])), spot: spot });

@@ -29,9 +29,16 @@ with private repos.
   exec-depends on `opcua-pip`, which rosdep refuses under PEP 668. The app's own box only works because `opcua` was
   installed there earlier. Proposed: the same `--packages-up-to` selection in `bootstrap.sh` (starter, then the app).
   Separate question: a pip key the service does need fails in both (rosdep wants `PIP_BREAK_SYSTEM_PACKAGES=1`).
+- **Lock per service** (user's decision 2026-11-19: the services' builds are as separate as their dev boxes; the
+  machine-wide `override: true` is dropped). In the starters, uncommitted: `lock.repos` holds `<service>` and
+  `<service>/deps/<repo>`, the Dockerfile's context is `deps` (was `workspace`), design §13 and decision log, e2e.
+  After the commit: the same in the PolyMX app (`Dockerfile`: `deps` context, its pip wheel paths under `src/deps/`)
+  and integration repo (`lock.sh`, `release.sh`, `deps: ./nl-polymx-automated-qc-application/deps`, re-lock).
+  Could: `lock.sh` warns when two services lock different commits of a repository they share.
 - PolyMX integration repo on the new starter (2026-11-19, uncommitted): imports the app; dev box up (project
-  `nl-polymx-automated-qc`, service `app`), simulated stack cycle passes; `./lock.sh` locks 10 repos. Next: commit,
-  lock commit and tag (user), `./release.sh`, a run on the machine; VS Code on Linux, then Windows.
+  `nl-polymx-automated-qc`, service `app`), simulated stack cycle passes; `./lock.sh` locked 10 repos (the flat lock,
+  before the lock per service). Next: commit, the lock per service, lock commit and tag (user), `./release.sh`, a run
+  on the machine; VS Code on Linux, then Windows.
 - **Service starter: `colcon build` has no parallelism cap** (found 2026-11-18). It runs as many packages and
   compilers as there are cores; `packml_ros` takes about 1.2 GB per compiler. In the PolyMX dev box that ran the PC out
   of memory and took the desktop with it; the image build failed in a 10 GB builder and passed with 17 GB free
@@ -80,8 +87,8 @@ Release targets and both starters are done (design §13). The prototype's docume
   1. *Prebuilt underlay* (fits both answers best): a nightly image per service with the rosdep installs and the
      dependencies built in; the box builds only its own repo, `deps/` is cloned only to edit one. Open: the image
      must match the pins; `image:` is also the release's `BASE_IMAGE` (set it explicitly in the release override).
-     Also open (2026-11-16): a moving `:nightly` tag or dated tags; a machine's `override: true` pin differs from
-     the service's image; editing one dependency shadows it under prebuilt packages built against the old one;
+     Also open (2026-11-16): a moving `:nightly` tag or dated tags; editing one dependency shadows it under
+     prebuilt packages built against the old one;
      `bootstrap.sh` must source the underlay before rosdep; the nightly PC's SSH key; registry clean-up.
   2. *Shared compiler cache* (ccache/sccache, remote storage on the NAS): works for both types and existing boxes,
      C/C++ compiling only, not apt. Neither tool is in base 0.3.0.

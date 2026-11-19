@@ -28,10 +28,11 @@ Hamelers: pallet classifier. Most important first. Research log: `pallet-classif
   behind its own window: protected like the windows, but 62% of the signal of the bar under the gap (dual cameras,
   two bars). Side lights: raking light that shows relief, but 14% of the signal at the belt centre and 18× brighter
   550 mm out, so only useful as a second image with alternating lines (doubles the line rate and data). Focused LED
-  spot beside each camera (±2° across travel, one bar's LED power): about 19× the light of the bar under the gap, even
-  along the line (0.9× at 550 mm), covers the camera's view up to 224 mm above the belt; the best protected option.
-  Off-the-shelf beams with the same LED power per camera: 3 × 10°×50° oval spots (e.g. SVL SX30-WHI-L) 10.5×, ripple
-  0.46–1.40× along the line; 11 × 10° round spots 6.9×, 0.92–2.11×; both reach 300+ mm. Run continuously (DC driver);
+  spot per camera (±2° across travel, one bar's LED power), since 2026-11-19 in the camera's plane, level with its
+  lens and 80 mm further out (beside a ±750 mm camera, so a top twin sharing the plane doesn't see it): 8.9× the light
+  of the bar under the gap at the belt centre, 0.14–2.09× of that along the line, covers the whole view through any
+  gap the view passes; the best protected option. Off-the-shelf beams with the same LED power per camera: 3 × 10°×50°
+  oval spots (e.g. SVL SX30-WHI-L) 4.9×, 13 × 10° round spots 6.9× at the belt centre; both reach 300+ mm. Run continuously (DC driver);
   switch off between pallets for eye safety; check that the side station cameras don't look into a beam.
   No off-the-shelf compact LED found that projects a 1.3 m line from ~600 mm: ask vendors (Smart Vision Lights LXE300
   with narrow lens, 300–4000 mm, IP65, chainable, is a focused bar rather than a spot; Opto Engineering LTSP spots need
@@ -49,18 +50,20 @@ Hamelers: pallet classifier. Most important first. Research log: `pallet-classif
   the worst sticking case). Needs per-part motion (the board's angle following the pallet's position over the rollers)
   in the motion model and the shader, and six cutting planes per part instead of four for turning and hanging at once.
   Roughly a day; worth it if catching at the gap matters on the test conveyor.
-- **Flipped pallets (R17)**, simulator: top line-scan cameras (mirrored or turned), black plates behind the scan lines,
-  and Compare > "Flipped from above vs upright from below" (2026-11-19, EUR, broken bottom board, pixels differing by
-  more than 30/765): mirrored 59% at a 100 mm gap; turned + plates 56% at 100 mm (the top cameras look past the deck
-  onto the zinc rollers), 18% at 250 mm, 0.5% at 250 mm with the station lamps kept off the scan line. Mirrored stays
-  ~17% even then: it sees the pallet's other block faces. Between ~180 and ~230 mm the bar under the gap lights only the
-  bottom cameras' plates (+4%). So: **turned top cameras, black plates, gap >= ~230 mm, and no station-lamp light on
-  the scan line** (shield, or strobe the lamps with the area cameras). Costs: sticking at 250 mm 1.33 catches/pallet,
-  14 mm average stall (100 mm: 0.39, 4 mm), model only. Alternative to the wide gap: black sleeves on the two gap
-  rollers (not simulated). Or no special gap at all (geometry only, 2026-11-19): the ±25° views fit through the
-  normal 65 mm slot between Ø60 rollers at 125 mm pitch (11 mm clear at f/4); light them with a spot in each camera's
-  plane, not the bar under the gap, and put the scan line 29 mm off the slot centre so each turned top camera looks
-  down through the next slot. Cameras outside the belt width don't change this (same plane) but keep them out of the
-  falling debris; their far end of the line is seen at ~6× the near end's footprint. Still to do: trace the stand-in classifier's evidence in the pallet's real orientation (now
-  always upright); make flips follow heavy bottom damage instead of 3% at random; pallet heights other than 144 mm
-  (one-way 120, CHEP 156) put the top cameras' plane off the deck.
+- **Flipped pallets (R17)**, simulator default since 2026-11-19 (EUR, broken bottom board, Compare > "Flipped from
+  above vs upright from below", pixels differing by more than 30/765): **one 30 mm gap for all cameras (a belt could
+  replace the rollers later), dual ±25° cameras beside the belt at ±750 mm, their views crossing at the gap centre at
+  the rollers' centre height, each turned top camera sharing its bottom camera's plane (turned about where that plane
+  crosses 72 mm up), black plates beside each camera's twin, a line-lens spot per camera in its plane 80 mm further
+  out than the lens, 11 µs: 3.0–3.4% differ with the station lamps on, 2.0–2.5% without.** Views clear the Ø60
+  rollers by 10 mm at f/4 (5 mm at a 20 mm gap); no sticking. Costs: the spots light the line from its side, 0.14–2.09×
+  the centre's light within 550 mm of the centre (top and bottom alike, so the images still match); the two pairs'
+  spots cross-light each other near the belt above gaps of ~40 mm or more (80 mm: 17%). Two LED bars don't work with
+  this layout: each pair is turned about its own line, so there are two top bars to one bottom bar (43% at a 100 mm
+  gap), and a bar under the gap lights only 60 mm up the views at a 60 mm gap. Residual 2%: a few board edges, cause
+  not traced. With a belt, the ±25° views pass under the belt ends: drop the return runs away from the gap (snub
+  pulleys). Earlier variants: planes crossing at mid-pallet height with two bars, 120 mm gap 18% (0.3% without lamps);
+  rollers' own spacing with spots under the belt centre, top views through the next roller space 0.6%; the bar under
+  a 250 mm gap 18.6%; mirrored top cameras ~17%. Still to do: trace the stand-in classifier's evidence in the pallet's
+  real orientation (now always upright); make flips follow heavy bottom damage instead of 3% at random; pallet heights
+  other than 144 mm (one-way 120, CHEP 156) put the top cameras' plane off the deck.

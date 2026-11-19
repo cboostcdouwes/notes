@@ -39,9 +39,9 @@
   // - beside: each camera's own bar BESIDE_MM from its lens, on the side away from the belt, behind a window of its own
   //   at the window angle, turned toward the scan line. It is the same bar as the shared one under the gap (its power
   //   set for BAR_REF_MM), so from further away it gives less light.
-  // - spot: compact LED lights in their camera's view plane, level with its lens under the belt centre, so their light
-  //   passes the rollers wherever the view does and spreads alike to both belt edges; behind a small window of their
-  //   own like the bar's, with one bar's LED power per camera in their beams, from a face SPOT.faceR in
+  // - spot: compact LED lights in their camera's view plane, level with its lens and BESIDE_MM further out from the belt
+  //   centre, so their light passes the rollers wherever the view does, and a top twin sharing the plane (SCAN_LINES)
+  //   doesn't see them; behind a small window of their own like the bar's, with one bar's LED power per camera in their beams, from a face SPOT.faceR in
   //   radius. The beam (SPOT_BEAMS) is one stripe across the belt (a line lens), or a row of narrower units, each aimed
   //   at its own stretch of the line so that together they reach the belt's edges (SPOT.marginDeg beyond them),
   //   overlapping by SPOT.overlap of a unit's width.
@@ -65,7 +65,7 @@
   function barPosition(spec, C, o) {
     const t = spec.tilt * Math.PI / 180, sx = Math.sin(t), cyy = Math.cos(t);
     if (o.lightSetup === "side") return null;
-    if (o.lightSetup === "spot") return [C[0], C[1]];   // level with the lens, under the belt centre (bottomCam)
+    if (o.lightSetup === "spot") return [C[0], C[1]];   // level with the lens, further out (bottomCam)
     if (besideCamera(o.lightSetup)) { const s = Math.sign(spec.tilt) || 1; return [C[0] + s * BESIDE_MM * cyy, C[1] - s * BESIDE_MM * sx]; }
     return o.sharedLight ? [o.anyZero ? -80 : 0, -250] : [-350 * sx + (spec.tilt === 0 ? -80 : 0), -350 * cyy];
   }

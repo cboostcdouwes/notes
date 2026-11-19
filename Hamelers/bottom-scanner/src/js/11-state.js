@@ -1,5 +1,5 @@
   // ---------------- state ----------------
-  let PX = 1024, pitch = 1, specs = [], presetKey = "dual", sideOffset = 400;
+  let PX = 1024, pitch = 1, specs = [], presetKey = "dual", sideOffset = 750;
   let sBelt = 0, lastLine = 0, feed = [], nextOff = 0, uidN = 0, scanned = 0, paused = false, speed = 1, damageShare = 0.45, scatter = 1;
   let lineCounter = 0, seedN = 1, unusualOn = true;
   // Work per frame is steered by the measured frame time (GPU work isn't visible to JS timers): keep ~12+ fps.
@@ -8,7 +8,7 @@
   const liveEl = $("livecams"), gallery = $("gallery");
   let live = [], liveRaking = [];
   const LIVE_W = 512, LIVE_MM = 1700;
-  const opts = () => ({ fit: $("opt-fit").checked, rect: $("opt-rect").checked, sharedLight: $("opt-light").checked, lightSetup: $("light-setup").value, spotBeam: $("spot-beam").value, lineOffset: +$("line-x").value, anyZero: specs.some((s) => s.tilt === 0),
+  const opts = () => ({ fit: $("opt-fit").checked, rect: $("opt-rect").checked, sharedLight: $("opt-light").checked, lightSetup: $("light-setup").value, spotBeam: $("spot-beam").value, scanLines: $("scan-lines").value, anyZero: specs.some((s) => s.tilt === 0),
     fnum: +$("fnum").value, dirt: Math.min(1, +$("dirt").value + service.extraDirt()), transport: $("opt-transport").checked, station: $("opt-station").checked,
     expUs: Math.pow(10, +$("exp").value), light: +$("light").value, aexpMs: Math.pow(10, +$("aexp").value),
     louvre: +$("louvre").value, dust: +$("dust").value, glare: $("opt-glare").checked,

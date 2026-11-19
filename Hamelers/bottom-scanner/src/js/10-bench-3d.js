@@ -133,10 +133,10 @@
     if (opts().lightSetup === "side" || opts().lightSetup === "alternate") sideLights().forEach(([x, y, z]) => {
       rig.add(tip(box(0.1, 0.04, 0.03, ledM, x / 1000, y / 1000, (z + Math.sign(z) * 18) / 1000), "Side light, " + (-y) + " mm below the belt, aimed along the gap at the belt centre (raking light)."));
     });
-    if ($("opt-plates").checked) platesFor(lineCams()).forEach((q) => {   // as traced
+    if ($("opt-plates").checked) platesFor(lineCams(), gap).forEach((q) => {   // as traced
       const s = [0, 1, 2].map((i) => (q.hi[i] - q.lo[i]) / 1000), c = [0, 1, 2].map((i) => (q.lo[i] + q.hi[i]) / 2000);
       rig.add(tip(box(s[0], s[1], s[2], mats3d.black, c[0], c[1], c[2]), q.name === "black frame cover" ? "Side frame painted matt black where a top camera's view crosses it."
-        : "Matt black plate across a line camera's view " + PLATE.beyondMm + " mm past the pallet's plane: the background between the boards."));
+        : "Matt black plate across a line camera's view, level with its twin's lens on the other side of the belt: the background between the boards."));
     });
     applyFans();
   }

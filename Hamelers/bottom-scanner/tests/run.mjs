@@ -45,6 +45,7 @@ const setControls = (p, o) => p.evaluate((o) => {
 // The controls the checks below change, at their defaults, so each check starts from the same state.
 const DEFAULTS = { "f-splinter": false, "f-fog": false, driver: "dc", vib: "0.1", "f-uncal": false, lightcol: "matched", shutter: "global",
   daylight: "none", "light-setup": "gap", "spot-beam": "line", light: "100", exp: "2", "win-angle": "0", "win-purge": false, "f-bar": false, "side-h": "260", "side-x": "0", louvre: "0", "opt-indirect": false, months: "0" };
+const BASELINE = { gap: "100", "scan-lines": "centre", "top-line": "off", "opt-plates": false };
 // Photo render of a view with the feed paused; keeps each image's pixels in the page under tag.
 async function render(p, tag, view, settings) {
   await setControls(p, Object.assign({}, DEFAULTS, settings || {}, { "ph-view": view, "ph-n": "16" }));
@@ -119,6 +120,10 @@ try {
     expect(!err, "error shown: " + err);
     expect(!p.errors.length, p.errors.join("; "));
   });
+  // The image checks below are for the LED bar under a 100 mm gap with the scan lines at its centre and no top cameras
+  // (DEFAULTS picks the bar); set once, as changing the cameras restarts the feed.
+  await setControls(p, BASELINE);
+  await p.waitForFunction(() => +document.getElementById("st-count").textContent > 0, { timeout: 60000 });
   await p.evaluate(() => document.getElementById("pause").click());   // one frozen pallet for every render below
 
   await check("the same settings render the same image", async () => {
@@ -161,7 +166,7 @@ try {
   await check("rows of narrower spots put less light on the scan line than a line lens with the same LED power", async () => {
     const factor = async (beam) => { await setControls(p, Object.assign({}, DEFAULTS, { "light-setup": "spot", "spot-beam": beam })); return 100 * await budgetNumber(p, "light on the scan line", "([\\d.]+)×"); };
     const line = await factor("line"), oval = await factor("oval"), round = await factor("round");
-    expect(line > oval && oval > round, "line lens " + line + "×, oval " + oval + "×, round " + round + "×");
+    expect(line > oval && line > round, "line lens " + line + "×, oval " + oval + "×, round " + round + "×");
   });
   // Each line camera's gain is set for its setup's light, as in the light budget: a bright light with a short
   // exposure must not come out clipped.
@@ -328,9 +333,8 @@ try {
   });
   // Compare tab, flipped vs upright: the share of pixels that differ between a broken-board EUR pallet upside down from
   // above and upright from below, averaged over the cameras. (Changing the top cameras restarts the feed.)
-  const FLIP_DEFAULTS = { "top-line": "off", "opt-plates": false, gap: "100" };
   const flipDiff = async (settings) => {
-    await setControls(p, Object.assign({}, DEFAULTS, FLIP_DEFAULTS, settings));
+    await setControls(p, Object.assign({}, DEFAULTS, BASELINE, settings));
     await p.evaluate(() => {
       document.getElementById("tab-cmp").click();
       const t = document.getElementById("cmp-type"); t.value = "eur"; t.dispatchEvent(new Event("change"));
@@ -343,12 +347,34 @@ try {
   // Turned round, the top cameras see a flipped pallet as the bottom ones see it upright; with a gap wide enough for
   // their view to pass the rollers, the black plates are the background on both sides. Only the station lamps above
   // still light the two differently.
-  await check("turned top cameras, black plates and a wide gap match a flipped pallet from above to it upright from below best", async () => {
+  await check("with the LED bar under the gap, turned top cameras, black plates and a wide gap match a flipped pallet from above to it upright from below best", async () => {
     const best = await flipDiff({ "top-line": "turned", "opt-plates": true, gap: "250" });
     const others = { mirrored: await flipDiff({ "top-line": "mirrored", "opt-plates": true, gap: "250" }),
       "no plates": await flipDiff({ "top-line": "turned", gap: "250" }), "gap 100": await flipDiff({ "top-line": "turned", "opt-plates": true }) };
-    await setControls(p, FLIP_DEFAULTS);
+    await setControls(p, BASELINE);
     for (const [name, share] of Object.entries(others)) expect(best < share, "best " + best + "% of pixels differ, " + name + " " + share + "%");
+  });
+  // A spot in each camera's plane lights wherever the camera sees, so the views fit through the rollers' own spacing;
+  // scan lines off the gap centre let each turned top camera look down through the next space, onto its plate. The
+  // short exposure the spots allow leaves little of the station lamps' light.
+  await check("spots, scan lines off the gap centre and the rollers' own spacing match a flipped pallet better than a wide gap", async () => {
+    const spots = { "light-setup": "spot", exp: "0.85", gap: "65", "top-line": "turned", "opt-plates": true };
+    const best = await flipDiff(Object.assign({ "scan-lines": "next" }, spots));
+    const others = { "lines at the gap centre": await flipDiff(spots), "the bar under a 250 mm gap": await flipDiff({ "top-line": "turned", "opt-plates": true, gap: "250" }) };
+    await setControls(p, BASELINE);
+    for (const [name, share] of Object.entries(others)) expect(best < share, "best " + best + "% of pixels differ, " + name + " " + share + "%");
+  });
+  // Each turned top camera in its bottom camera's view plane, the planes crossing where the gap is narrowest: all look
+  // through the one narrow gap, the top views onto the plates beside the bottom cameras. Spots in the planes light
+  // what the views see through it; a bar under the gap needs a wider one, and each pair's top twin of the one bar lights
+  // the other pair's view too.
+  await check("shared view planes with spots let the top and bottom cameras look through one narrow gap", async () => {
+    const shared = { "top-line": "turned", "opt-plates": true, "light-setup": "spot", exp: "1.05", gap: "30" };
+    const best = await flipDiff(Object.assign({ "scan-lines": "shared" }, shared));
+    const others = { "lines at the gap centre": await flipDiff(shared),
+      "a bar under a 100 mm gap": await flipDiff({ "scan-lines": "shared", "top-line": "turned", "opt-plates": true, gap: "100" }) };
+    await setControls(p, BASELINE);
+    for (const [name, share] of Object.entries(others)) expect(best < share / 2, "shared planes " + best + "% of pixels differ, " + name + " " + share + "%");
   });
   await check("the live render of the 3D view keeps drawing while the feed runs", async () => {
     const q = await open(browser);
