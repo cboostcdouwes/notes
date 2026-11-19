@@ -41,7 +41,7 @@
   // own spacing, no gap made for the scanner
   const NORMAL_GAP = ROLL_PITCH - 2 * ROLL_R;
   const GAP_CHOICES = [40, 60, NORMAL_GAP, 80, 100, 120, 150, 250, 350];
-  let gap = 30;   // the shared view planes (SCAN_LINES) clear the rollers by 10 mm at f/4
+  let gap = 100;
   const rollerCentres = (g, n) => { const out = []; for (let k = 0; k < n; k++) out.push(g / 2 + ROLL_R + k * ROLL_PITCH, -(g / 2 + ROLL_R + k * ROLL_PITCH)); return out; };
   const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;

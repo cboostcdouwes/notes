@@ -45,7 +45,7 @@ const setControls = (p, o) => p.evaluate((o) => {
 // The controls the checks below change, at their defaults, so each check starts from the same state.
 const DEFAULTS = { "f-splinter": false, "f-fog": false, driver: "dc", vib: "0.1", "f-uncal": false, lightcol: "matched", shutter: "global",
   daylight: "none", "light-setup": "gap", "spot-beam": "line", light: "100", exp: "2", "win-angle": "0", "win-purge": false, "f-bar": false, "side-h": "260", "side-x": "0", louvre: "0", "opt-indirect": false, months: "0" };
-const BASELINE = { gap: "100", "scan-lines": "centre", "top-line": "off", "opt-plates": false };
+const BASELINE = { "opt-unusual": true, gap: "100", "scan-lines": "centre", "top-line": "off", "opt-plates": false };
 // Photo render of a view with the feed paused; keeps each image's pixels in the page under tag.
 async function render(p, tag, view, settings) {
   await setControls(p, Object.assign({}, DEFAULTS, settings || {}, { "ph-view": view, "ph-n": "16" }));
@@ -121,7 +121,7 @@ try {
     expect(!p.errors.length, p.errors.join("; "));
   });
   // The image checks below are for the LED bar under a 100 mm gap with the scan lines at its centre and no top cameras
-  // (DEFAULTS picks the bar); set once, as changing the cameras restarts the feed.
+  // (DEFAULTS picks the bar), on a feed with unusual cases; set once, as changing the cameras restarts the feed.
   await setControls(p, BASELINE);
   await p.waitForFunction(() => +document.getElementById("st-count").textContent > 0, { timeout: 60000 });
   await p.evaluate(() => document.getElementById("pause").click());   // one frozen pallet for every render below
@@ -175,11 +175,12 @@ try {
     const clipped = await p.evaluate(() => { const D = window.__imgs["spots, dimmed"][0].data; let n = 0; for (let k = 0; k < D.length; k += 4) if (D[k + 1] >= 254) n++; return n / (D.length / 4); });
     expect(clipped < 0.02, Math.round(clipped * 100) + "% of the pixels clip");
   });
-  // Against the bar-lit image, pixel by pixel, so the wood's colour and the background drop out.
+  // Against the bar-lit image, pixel by pixel, so the wood's colour and the background drop out; over the bottom faces
+  // on the scan line (the brightest in the bar-lit image), not the faces higher up that the station lamps light too.
   await check("side lights light the ends of the scan line far more than its middle", async () => {
     await render(p, "side lights", "bottom", { "light-setup": "side" });
-    const mid = (await ratios(p, "base", "side lights", 0, [0.4, 0.6])).all;
-    const ends = ((await ratios(p, "base", "side lights", 0, [0, 0.25])).all + (await ratios(p, "base", "side lights", 0, [0.75, 1])).all) / 2;
+    const mid = (await ratios(p, "base", "side lights", 0, [0.4, 0.6])).bright;
+    const ends = ((await ratios(p, "base", "side lights", 0, [0, 0.25])).bright + (await ratios(p, "base", "side lights", 0, [0.75, 1])).bright) / 2;
     expect(ends > 2 * mid, "against the bar: ends " + ends.toFixed(3) + ", middle " + mid.toFixed(3));
   });
   await check("alternating lights give each bottom camera a second, raking-light image", async () => {

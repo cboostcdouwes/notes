@@ -94,7 +94,7 @@
   }
   // The side cameras, sideCam.height mm up and sideCam.along mm downstream of the scan line; each fires when the pallet
   // centre passes its own position. At the scan line and well above the belt they look down the gap at the LED bar.
-  const sideCam = { height: 260, along: 0 };
+  const sideCam = { height: 120, along: 150 };
   function sideCams() {
     const a = sideCam.along, h = sideCam.height, trig = (p, cx) => cx - a;
     return [areaCam("Left side", [a, h, -1250], [a, 70, 0], 58, 480, 240, trig, "Left side camera: block faces, burnt EPAL marks, labels, missing outer blocks."),

@@ -1,7 +1,7 @@
   // ---------------- state ----------------
-  let PX = 1024, pitch = 1, specs = [], presetKey = "dual", sideOffset = 750;
+  let PX = 1024, pitch = 1, specs = [], presetKey = "dual", sideOffset = 700;
   let sBelt = 0, lastLine = 0, feed = [], nextOff = 0, uidN = 0, scanned = 0, paused = false, speed = 1, damageShare = 0.45, scatter = 1;
-  let lineCounter = 0, seedN = 1, unusualOn = true;
+  let lineCounter = 0, seedN = 1, unusualOn = false;
   // Work per frame is steered by the measured frame time (GPU work isn't visible to JS timers): keep ~12+ fps.
   let lineCap = 48, frameMs = 16;   // measured tracing cost, ms per pixel
   const enabled = new Set(TYPES.map((t) => t.id));

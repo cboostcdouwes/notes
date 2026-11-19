@@ -42,8 +42,8 @@
         <button type="button" data-cams="-25" aria-pressed="false">−25°</button>
         <button type="button" data-cams="dual" aria-pressed="true">Dual ±25°, belt sides</button>
       </span>
-      <label class="field" for="tilt">Tilt <input id="tilt" type="range" min="-35" max="35" step="1" value="25"><output id="tilt-out">+25°</output></label>
-      <label class="field" for="side">Side offset <input id="side" type="range" min="0" max="1000" step="50" value="750"><output id="side-out">±750 mm</output></label>
+      <label class="field" for="tilt">Tilt <input id="tilt" type="range" min="-35" max="35" step="1" value="35"><output id="tilt-out">+35°</output></label>
+      <label class="field" for="side">Side offset <input id="side" type="range" min="0" max="1000" step="50" value="700"><output id="side-out">±700 mm</output></label>
       <label class="field" for="scan-lines" title="Where each tilted camera's scan line lies along travel; the gap stays centred. Shared planes: the views cross at the gap centre at the rollers' centre height, where the gap is narrowest, and each turned top camera shares its bottom camera's plane, so all look through the one gap. Next roller space: at the rollers' own 65 mm spacing, each turned top camera looks down through the next space.">Scan lines <select id="scan-lines"><option value="centre">at the gap centre</option><option value="shared" selected>shared planes (top and bottom)</option><option value="next">next roller space for the top views</option></select></label>
       <label class="field" for="sensor">Sensor <select id="sensor"><option value="1024" selected>1k px</option><option value="2048">2k px</option><option value="4096">4k px</option></select></label>
       <label class="field" for="fnum">Lens <select id="fnum"><option value="0">pinhole (no depth of field)</option><option value="2.8">f/2.8</option><option value="4" selected>f/4</option><option value="8">f/8</option></select></label>
@@ -51,12 +51,12 @@
       <label class="field" for="opt-rect"><input type="checkbox" id="opt-rect" checked> Perspective correction</label>
       <label class="field" for="top-line" title="Top line-scan cameras and LED bar, copies of the bottom ones about half a pallet's height: mirrored in that plane, or turned half way round the scan line there (as a pallet is when laid upside down). Only with the LED bar under the gap or the LED spots.">Top line-scan <select id="top-line"><option value="off">none</option><option value="mirrored">mirrored</option><option value="turned" selected>turned (opposite side)</option></select></label>
       <label class="field" for="opt-plates" title="Matt black plates across each line camera's view, 400 mm past the pallet, so the background between the boards is black."><input type="checkbox" id="opt-plates" checked> Black plates behind the scan lines</label>
-      <label class="field" for="exp" title="100 µs suits the LED bar; the LED spots put about 9× the bar's light on the belt centre, so 11 µs gives them the same image there, with 1/9 of the station lamps' light in it.">Line exposure <input id="exp" type="range" min="0.7" max="3.5" step="0.05" value="1.05"><output id="exp-out">11 µs</output></label>
+      <label class="field" for="exp" title="100 µs suits the LED bar; the LED spots put about 9× the bar's light on the belt centre, so 11 µs gives them the same image there, with 1/9 of the station lamps' light in it.">Line exposure <input id="exp" type="range" min="0.7" max="3.5" step="0.05" value="2"><output id="exp-out">100 µs</output></label>
       <label class="field" for="opt-glare"><input type="checkbox" id="opt-glare" checked> Lens glare</label>
       <label class="field" for="f-uncal"><input type="checkbox" id="f-uncal"> Uncalibrated lenses and sensors</label>
     </div>
     <div class="grp" role="tabpanel" id="set-light" aria-labelledby="settab-light" hidden>
-      <label class="field" for="light-setup">Setup <select id="light-setup"><option value="gap">LED bar under the gap</option><option value="beside">LED bar beside each camera, behind its own window</option><option value="spot" selected>LED spot beside each camera, focused to a line, behind its own window</option><option value="alternate">bar under the gap and side lights, alternating lines</option><option value="side">side lights only</option></select></label>
+      <label class="field" for="light-setup">Setup <select id="light-setup"><option value="gap" selected>LED bar under the gap</option><option value="beside">LED bar beside each camera, behind its own window</option><option value="spot">LED spot beside each camera, focused to a line, behind its own window</option><option value="alternate">bar under the gap and side lights, alternating lines</option><option value="side">side lights only</option></select></label>
       <label class="field" for="spot-beam">Spot beam <select id="spot-beam"><option value="line" selected>line lens, ±2° across, 1 per camera</option><option value="oval">10° × 50° oval spots</option><option value="round">10° round spots</option></select></label>
       <label class="field" for="opt-light"><input type="checkbox" id="opt-light" checked> One bar for all cameras (under the gap)</label>
       <label class="field" for="light">Light power <input id="light" type="range" min="10" max="400" step="10" value="100"><output id="light-out">100%</output></label>
@@ -74,13 +74,13 @@
       <label class="field" for="f-splinter"><input type="checkbox" id="f-splinter"> Splinter on the first bottom camera's window</label>
     </div>
     <div class="grp" role="tabpanel" id="set-conveyor-and-feed" aria-labelledby="settab-conveyor-and-feed" hidden>
-      <label class="field" for="gap" title="Clear opening between the two rollers at the scan line; 65 mm is the rollers' own spacing (Ø60 at 125 mm pitch), no gap made for the scanner.">Gap <input id="gap" type="range" min="10" max="350" step="5" value="30"><output id="gap-out">30 mm</output></label>
+      <label class="field" for="gap" title="Clear opening between the two rollers at the scan line; 65 mm is the rollers' own spacing (Ø60 at 125 mm pitch), no gap made for the scanner.">Gap <input id="gap" type="range" min="10" max="350" step="5" value="100"><output id="gap-out">100 mm</output></label>
       <label class="field" for="belt">Conveyor <input id="belt" type="range" min="0.2" max="1.5" step="0.01" value="0.45"><output id="belt-out">0.45 m/s</output></label>
       <label class="field" for="section">Middle section <input id="section" type="range" min="1" max="1.5" step="0.05" value="1.1"><output id="section-out">+10% faster</output></label>
       <label class="field" for="damage">Damaged <input id="damage" type="range" min="0" max="1" step="0.05" value="0.45"><output id="damage-out">45%</output></label>
       <label class="field" for="scatter">Scatter <input id="scatter" type="range" min="0" max="2" step="0.1" value="1"><output id="scatter-out">±80 mm, ±5°</output></label>
       <label class="field" for="opt-transport"><input type="checkbox" id="opt-transport" checked> Slip, jostle, sticking, touching</label>
-      <label class="field" for="opt-unusual"><input type="checkbox" id="opt-unusual" checked> Unusual cases</label>
+      <label class="field" for="opt-unusual"><input type="checkbox" id="opt-unusual"> Unusual cases</label>
     </div>
     <div class="grp" role="tabpanel" id="set-pallet-types" aria-labelledby="settab-pallet-types" hidden>
       <div class="types" id="types" aria-label="Pallet types in the feed"></div>
@@ -89,8 +89,8 @@
       <label class="field" for="opt-station"><input type="checkbox" id="opt-station" checked> Station cameras</label>
       <label class="field" for="aexp">Area exposure <input id="aexp" type="range" min="-1" max="1" step="0.05" value="0"><output id="aexp-out">1.0 ms</output></label>
       <label class="field" for="shutter">Area shutter <select id="shutter"><option value="global" selected>global</option><option value="rolling">rolling, 20 ms readout</option></select></label>
-      <label class="field" for="side-h">Side cameras: height <input id="side-h" type="range" min="30" max="400" step="10" value="260"><output id="side-h-out">260 mm</output></label>
-      <label class="field" for="side-x">along travel <input id="side-x" type="range" min="0" max="500" step="25" value="0"><output id="side-x-out">0 mm</output></label>
+      <label class="field" for="side-h">Side cameras: height <input id="side-h" type="range" min="30" max="400" step="10" value="120"><output id="side-h-out">120 mm</output></label>
+      <label class="field" for="side-x">along travel <input id="side-x" type="range" min="0" max="500" step="25" value="150"><output id="side-x-out">150 mm</output></label>
     </div>
     <div class="grp" role="tabpanel" id="set-service-and-faults" aria-labelledby="settab-service-and-faults" hidden>
       <label class="field" for="months">Since service <input id="months" type="range" min="0" max="12" step="0.5" value="0"><output id="months-out">0 months</output></label>

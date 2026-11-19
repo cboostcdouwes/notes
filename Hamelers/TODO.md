@@ -50,8 +50,9 @@ Hamelers: pallet classifier. Most important first. Research log: `pallet-classif
   the worst sticking case). Needs per-part motion (the board's angle following the pallet's position over the rollers)
   in the motion model and the shader, and six cutting planes per part instead of four for turning and hanging at once.
   Roughly a day; worth it if catching at the gap matters on the test conveyor.
-- **Flipped pallets (R17)**, simulator default since 2026-11-19 (EUR, broken bottom board, Compare > "Flipped from
-  above vs upright from below", pixels differing by more than 30/765): **one 30 mm gap for all cameras (a belt could
+- **Flipped pallets (R17)**, simulator (EUR, broken bottom board, Compare > "Flipped from above vs upright from
+  below", pixels differing by more than 30/765). Page default since 2026-11-19 (user's settings): shared planes, two LED
+  bars, 100 mm gap, cameras at ±700 mm: 43–45% differ (two top bars to one bottom bar). Best found: **one 30 mm gap for all cameras (a belt could
   replace the rollers later), dual ±25° cameras beside the belt at ±750 mm, their views crossing at the gap centre at
   the rollers' centre height, each turned top camera sharing its bottom camera's plane (turned about where that plane
   crosses 72 mm up), black plates beside each camera's twin, a line-lens spot per camera in its plane 80 mm further
@@ -67,3 +68,8 @@ Hamelers: pallet classifier. Most important first. Research log: `pallet-classif
   a 250 mm gap 18.6%; mirrored top cameras ~17%. Still to do: trace the stand-in classifier's evidence in the pallet's
   real orientation (now always upright); make flips follow heavy bottom damage instead of 3% at random; pallet heights
   other than 144 mm (one-way 120, CHEP 156) put the top cameras' plane off the deck.
+- **Simulator tests: freeze a known pallet.** The image checks render whatever random pallet the feed holds when the
+  tests pause it, and that depends on the random generator's whole history, so changing any page default can move a
+  check across its threshold (2026-11-19: vibration needed "unusual cases" pinned on in the tests' baseline). Fix:
+  reseed the feed on restart (same settings, same pallets; also makes shared settings codes reproduce the feed), or
+  give the tests a fixed pallet. Should; before the next default change.
