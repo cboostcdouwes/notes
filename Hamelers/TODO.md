@@ -57,6 +57,10 @@ Hamelers: pallet classifier. Most important first. Research log: `pallet-classif
   bottom cameras' plates (+4%). So: **turned top cameras, black plates, gap >= ~230 mm, and no station-lamp light on
   the scan line** (shield, or strobe the lamps with the area cameras). Costs: sticking at 250 mm 1.33 catches/pallet,
   14 mm average stall (100 mm: 0.39, 4 mm), model only. Alternative to the wide gap: black sleeves on the two gap
-  rollers (not simulated). Still to do: trace the stand-in classifier's evidence in the pallet's real orientation (now
+  rollers (not simulated). Or no special gap at all (geometry only, 2026-11-19): the ±25° views fit through the
+  normal 65 mm slot between Ø60 rollers at 125 mm pitch (11 mm clear at f/4); light them with a spot in each camera's
+  plane, not the bar under the gap, and put the scan line 29 mm off the slot centre so each turned top camera looks
+  down through the next slot. Cameras outside the belt width don't change this (same plane) but keep them out of the
+  falling debris; their far end of the line is seen at ~6× the near end's footprint. Still to do: trace the stand-in classifier's evidence in the pallet's real orientation (now
   always upright); make flips follow heavy bottom damage instead of 3% at random; pallet heights other than 144 mm
   (one-way 120, CHEP 156) put the top cameras' plane off the deck.

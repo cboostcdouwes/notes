@@ -1,11 +1,14 @@
   // ---------------- camera models ----------------
+  // A bottom line camera looks up at its scan line across the belt at lineX along travel: a tilted camera's line lies
+  // o.lineOffset from the gap centre, away from the camera (a 0° camera's at the centre). Each camera's image is
+  // registered to the gap centre (traceLines): the encoder delays its lines by lineX.
   function bottomCam(spec, px, o) {
-    const t = spec.tilt * Math.PI / 180, sx = Math.sin(t), cyy = Math.cos(t);
-    const C = [-WD * sx, -WD * cyy, spec.z];
-    const dl = Math.hypot(C[0], C[1], C[2]), d0 = [-C[0] / dl, -C[1] / dl, -C[2] / dl];
-    const nl = Math.hypot(C[1], C[0]), nv = [C[1] / nl, -C[0] / nl, 0];
+    const t = spec.tilt * Math.PI / 180, sx = Math.sin(t), cyy = Math.cos(t), lineX = Math.sign(spec.tilt) * (o.lineOffset || 0);
+    const C = [lineX - WD * sx, -WD * cyy, spec.z], toLine = [lineX - C[0], -C[1], -C[2]];   // to the line's belt centre
+    const dl = Math.hypot(...toLine), d0 = toLine.map((v) => v / dl);
+    const nl = Math.hypot(toLine[0], toLine[1]), nv = [-toLine[1] / nl, toLine[0] / nl, 0];
     const e = [d0[1] * nv[2] - d0[2] * nv[1], d0[2] * nv[0] - d0[0] * nv[2], d0[0] * nv[1] - d0[1] * nv[0]];
-    const angleTo = (z) => { const v = [-C[0], -C[1], z - C[2]]; return Math.atan2(v[0] * e[0] + v[1] * e[1] + v[2] * e[2], v[0] * d0[0] + v[1] * d0[1] + v[2] * d0[2]); };
+    const angleTo = (z) => { const v = [toLine[0], toLine[1], z - C[2]]; return Math.atan2(v[0] * e[0] + v[1] * e[1] + v[2] * e[2], v[0] * d0[0] + v[1] * d0[1] + v[2] * d0[2]); };
     const dirAt = (phi) => [0, 1, 2].map((i) => Math.cos(phi) * d0[i] + Math.sin(phi) * e[i]);
     const beltZ = (phi) => { const d = dirAt(phi); return C[2] + (-C[1] / d[1]) * d[2]; };
     let p0 = -HALF_FOV, p1 = HALF_FOV;
@@ -15,11 +18,11 @@
     const focus = dl * Math.cos(angleTo(0) - axisPhi);          // focus plane through the belt centre
     const focal = (px * PIXEL_UM / 1000 / 2) / Math.tan((p1 - p0) / 2);   // mm, for this sensor width
     const lightPos = barPosition(spec, C, o);
-    const spot = o.lightSetup === "spot" ? spotBeam([lightPos[0], lightPos[1], spec.z], o.spotBeam) : null;
+    const spot = o.lightSetup === "spot" ? spotBeam([lightPos[0], lightPos[1], 0], o.spotBeam, lineX) : null;
     const lights = lightPos && !spot ? bar(lightPos[0], lightPos[1], -450, 450, 4, o.lightSetup === "beside" ? BAR_REF_MM : Math.hypot(lightPos[0], lightPos[1])) : [];
     return { kind: "line", spec: spec, C: C, d0: d0, e: e, phi0: p0, phi1: p1, dphi: dphi, axisPhi: axisPhi, axis: axis, z0: z0, z1: z1,
       mmPerPx: (z1 - z0) / (px - 1), nearMm: Math.abs(beltZ(p0 + dphi) - z0), farMm: Math.abs(z1 - beltZ(p1 - dphi)),
-      focus: focus, focal: focal, lights: lights, lightPos: lightPos, spot: spot, PX: px, planeY: 0 };
+      focus: focus, focal: focal, lights: lights, lightPos: lightPos, spot: spot, PX: px, planeY: 0, lineX: lineX };
   }
   // Top line-scan cameras (option): copies of the bottom cameras and their LED bar above the belt, placed by one of
   // TOP_LINE about the height TOP_MIRROR_Y: mirrored in the horizontal plane there (on the same side of the scan line),
@@ -33,9 +36,12 @@
     turned: { name: "turned half way round the scan line", point: (v) => [-v[0], 2 * TOP_MIRROR_Y - v[1], v[2]], dir: (v) => [-v[0], -v[1], v[2]] } };
   function topLineCam(c, how) {
     const { point, dir } = TOP_LINE[how], lp = point([c.lightPos[0], c.lightPos[1], 0]);
+    const spot = c.spot && Object.assign({}, c.spot, { pos: point(c.spot.pos), axis: dir(c.spot.axis), along: dir(c.spot.along) });
     return Object.assign({}, c, { top: true, how: how, C: point(c.C), d0: dir(c.d0), e: dir(c.e), axis: dir(c.axis), planeY: 2 * TOP_MIRROR_Y, mapDir: dir,
-      lightPos: [lp[0], lp[1]], lights: c.lights.map((l) => point(l).concat(l[3])) });
+      lineX: point([c.lineX, 0, 0])[0], lightPos: [lp[0], lp[1]], lights: c.lights.map((l) => point(l).concat(l[3])), spot: spot });
   }
+  // Where line camera c's view crosses height y, along travel.
+  const planeX = (c, y) => c.lineX + (c.C[0] - c.lineX) * (y - c.planeY) / (c.C[1] - c.planeY);
   const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
   const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
   const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];

@@ -8,7 +8,7 @@
   const liveEl = $("livecams"), gallery = $("gallery");
   let live = [], liveRaking = [];
   const LIVE_W = 512, LIVE_MM = 1700;
-  const opts = () => ({ fit: $("opt-fit").checked, rect: $("opt-rect").checked, sharedLight: $("opt-light").checked, lightSetup: $("light-setup").value, spotBeam: $("spot-beam").value, anyZero: specs.some((s) => s.tilt === 0),
+  const opts = () => ({ fit: $("opt-fit").checked, rect: $("opt-rect").checked, sharedLight: $("opt-light").checked, lightSetup: $("light-setup").value, spotBeam: $("spot-beam").value, lineOffset: +$("line-x").value, anyZero: specs.some((s) => s.tilt === 0),
     fnum: +$("fnum").value, dirt: Math.min(1, +$("dirt").value + service.extraDirt()), transport: $("opt-transport").checked, station: $("opt-station").checked,
     expUs: Math.pow(10, +$("exp").value), light: +$("light").value, aexpMs: Math.pow(10, +$("aexp").value),
     louvre: +$("louvre").value, dust: +$("dust").value, glare: $("opt-glare").checked,
@@ -50,20 +50,23 @@
   const camLabel = (c) => (c.top ? "top " : "") + (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "°" + (c.spec.z ? (c.spec.z < 0 ? " left " : " right ") + Math.abs(c.spec.z) + " mm" : " centred") +
     " · FOV " + ((c.phi1 - c.phi0) * 180 / Math.PI).toFixed(0) + "° · " + (opts().rect ? "rectified" : "raw");
 
-  // What the gap does to the bottom cameras. In the travel/height plane the scan plane is a line from the camera
-  // through the gap centre, and the light bar is a point, so roller clearance is plain 2D geometry.
+  // What the gap does to line cameras cs. In the travel/height plane a camera's view is a line through its scan line,
+  // and the light bar is a point, so roller clearance is plain 2D geometry: rays, how far the views pass the rollers
+  // (a bottom camera's on its way up, a top camera's beyond the pallet, to its background below); lit, how high above
+  // the belt a bottom camera's light reaches.
   function gapReport(g, cs, fnum) {
-    const centres = [[-(g / 2 + ROLL_R), -ROLL_R], [g / 2 + ROLL_R, -ROLL_R]];
+    const centres = rollerCentres(g, 2).map((x) => [x, -ROLL_R]);
     const clearance = (a, b) => Math.min(...centres.map(([cx, cy]) => {
       const dx = b[0] - a[0], dy = b[1] - a[1], t = Math.max(0, Math.min(1, ((cx - a[0]) * dx + (cy - a[1]) * dy) / (dx * dx + dy * dy)));
       return Math.hypot(a[0] + t * dx - cx, a[1] + t * dy - cy) - ROLL_R;
     }));
     let rays = Infinity, lit = Infinity;   // lit stays Infinity without a bar (side lights only)
     cs.forEach((c) => {
-      rays = Math.min(rays, clearance([c.C[0], c.C[1]], [0, 0]) - (fnum > 0 ? c.focal / fnum / 2 : 0));
-      // highest point on the scan plane (x = y · C.x / C.y) the light still reaches past the rollers
-      if (!c.lightPos) return;
-      let y = 0; while (y < 300 && clearance(c.lightPos, [y * c.C[0] / c.C[1], y]) > 0) y += 2;
+      const layer = [0, -2 * ROLL_R].map((y) => [planeX(c, y), y]);   // the view across the rollers' layer
+      rays = Math.min(rays, clearance(...layer) - (fnum > 0 ? c.focal / fnum / 2 : 0));
+      // highest point on the scan plane the light still reaches past the rollers
+      if (!c.lightPos || c.top) return;
+      let y = 0; while (y < 300 && clearance(c.lightPos, [planeX(c, y), y]) > 0) y += 2;
       lit = Math.min(lit, y);
     });
     return { rays: rays, lit: lit };
@@ -72,9 +75,9 @@
   function lampGlare(camList) {
     const lamps = lampParts().filter((q) => q.mat === "lamp");
     return camList.filter((c) => {
-      const n = [c.C[1], -c.C[0]];   // in-plane normal of the line from the gap centre to the camera, in x-y
+      const n = [c.C[1], c.lineX - c.C[0]];   // in-plane normal of the line from the scan line to the camera, in x-y
       return lamps.some((q) => {
-        const v = [[q.lo[0], q.lo[1]], [q.hi[0], q.lo[1]], [q.lo[0], q.hi[1]], [q.hi[0], q.hi[1]]].map(([x, y]) => n[0] * x + n[1] * y);
+        const v = [[q.lo[0], q.lo[1]], [q.hi[0], q.lo[1]], [q.lo[0], q.hi[1]], [q.hi[0], q.hi[1]]].map(([x, y]) => n[0] * (x - c.lineX) + n[1] * y);
         return Math.min(...v) < 0 && Math.max(...v) > 0 && q.lo[1] > 0;   // above the belt, on both sides of the plane
       });
     });
@@ -83,6 +86,10 @@
     const r = gapReport(gap, cams, opts().fnum);
     $("st-gap").textContent = gap + " mm · " + (r.rays >= 0 ? "camera rays clear the rollers by " + r.rays.toFixed(0) + " mm" : "rollers cut into the camera view (" + r.rays.toFixed(0) + " mm)") +
       (r.lit === Infinity ? " · side lights along the gap" : " · light reaches " + (r.lit >= 300 ? "the whole pallet height" : r.lit <= 0 ? "nothing above the belt" : "up to " + r.lit + " mm above the belt"));
+    if (topLineCams.length) {
+      const t = gapReport(gap, topLineCams, opts().fnum).rays;
+      $("st-gap").textContent += " · " + (t >= 0 ? "top views pass the rollers by " + t.toFixed(0) + " mm" : "rollers in the top views' background (" + t.toFixed(0) + " mm)");
+    }
     const glare = lampGlare(cams);
     $("st-glare").textContent = glare.length ? "seen by the " + glare.map((c) => (c.spec.tilt > 0 ? "+" : "") + c.spec.tilt + "°").join(" and ") + " camera" + (glare.length > 1 ? "s" : "") + ": move or shield the lamps" : "no station lamp in a bottom camera's view";
     $("st-glare").style.color = glare.length ? "var(--bad)" : "";
@@ -112,8 +119,10 @@
     $("st-res").textContent = (opts().rect ? c0.mmPerPx.toFixed(2) : c0.nearMm.toFixed(2) + "–" + c0.farMm.toFixed(2)) + " mm · " + c0.PX + " px";
   }
 
-  // How the top line-scan cameras are placed (a key of TOP_LINE), or null for none; they copy the LED bar under the gap only.
-  const topLineHow = () => ($("top-line").value !== "off" && $("light-setup").value === "gap" ? $("top-line").value : null);
+  // How the top line-scan cameras are placed (a key of TOP_LINE), or null for none; they copy the bottom light of the
+  // setups in TOP_LINE_SETUPS only.
+  const TOP_LINE_SETUPS = ["gap", "spot"];
+  const topLineHow = () => ($("top-line").value !== "off" && TOP_LINE_SETUPS.includes($("light-setup").value) ? $("top-line").value : null);
   const topLineFor = (bottom) => (topLineHow() ? bottom.map((c) => topLineCam(c, topLineHow())) : []);
   function restart() {
     if (applyingSettings) { restartWanted = true; return; }   // applySettings restarts once at the end

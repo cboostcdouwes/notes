@@ -3,6 +3,7 @@ precision highp float; precision highp int;
 uniform sampler2D uNative; uniform int uMode; uniform int uRect; uniform int uPX; uniform int uH;
 uniform int uOutRow;            // output drawn this many rows below the traced rows, so several renders share the canvas
 uniform vec3 uC; uniform vec3 uD0; uniform vec3 uE; uniform float uPhi0; uniform float uDphi; uniform float uZ0; uniform float uZ1;
+uniform float uLineX;           // line-scan: where its scan line lies along travel, mm
 uniform float uPlaneY;          // line-scan: height of the plane its view is fitted to, mm (the belt plane; a top camera's mirror of it)
 uniform float uNoise; uniform float uSeed; uniform float uRowBase; uniform int uTone;
 uniform float uK;               // exposure relative to the reference (1 = mid-grey at half the full well)
@@ -92,7 +93,7 @@ void main() {
   if (uMode == 0) {
     if (uRect == 1) {   // perspective correction: uniform mm on the plane at uPlaneY
       float z = uZ0 + (uZ1 - uZ0) * float(ix) / float(uPX - 1);
-      vec3 v = vec3(0.0, uPlaneY, z) - uC;
+      vec3 v = vec3(uLineX, uPlaneY, z) - uC;
       f = (atan(dot(v, uE), dot(v, uD0)) - uPhi0) / uDphi;
     }
     c = fetchRow(f, row);

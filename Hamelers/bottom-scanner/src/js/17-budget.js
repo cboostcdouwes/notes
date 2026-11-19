@@ -30,17 +30,18 @@
     const snrChk = (s) => chk(!s.saturated && s.db >= 30, !s.saturated && s.db >= 20);
     const signal = (s) => (s.saturated ? "saturated: mid-grey already fills the full well" : Math.round(s.e) + " e⁻, SNR " + s.db.toFixed(0) + " dB, gain ×" + s.gain.toFixed(1));
     const pct = (x) => Math.round(x * 100) + "%", px = (x) => (x < 0.01 ? "<0.01" : x.toFixed(2)) + " px";
-    // How evenly the bottom lights of image which light the scan line: a bottom face near the pallet's edge against one
-    // at the centre.
+    // How evenly the bottom lights of image which light the scan line (the first camera's): a bottom face near the
+    // pallet's edge against one at the centre.
+    const x0 = cams[0].lineX;
     function evenRow(which, name) {
-      const L = bottomLights(which), edge = lineLightAt(L, SIDE_EVEN_Z) / lineLightAt(L, 0);
+      const L = bottomLights(which), edge = lineLightAt(L, x0, SIDE_EVEN_Z) / lineLightAt(L, x0, 0);
       return [name + " along the scan line", "a bottom face " + SIDE_EVEN_Z + " mm from the belt centre gets " + edge.toFixed(1) + "× the light at the centre (without shadows)", chk(edge <= 2 && edge >= 0.5, edge <= 4 && edge >= 0.25)];
     }
     // The spots' light along the scan line, which ripples where their units overlap: the darkest and brightest bottom
     // face within SIDE_EVEN_Z of the belt centre, against the centre.
     function spotRangeRow() {
-      const L = bottomLights(), mid = lineLightAt(L, 0), vals = [];
-      for (let z = -SIDE_EVEN_Z; z <= SIDE_EVEN_Z; z += 10) vals.push(lineLightAt(L, z) / mid);
+      const L = bottomLights(), mid = lineLightAt(L, x0, 0), vals = [];
+      for (let z = -SIDE_EVEN_Z; z <= SIDE_EVEN_Z; z += 10) vals.push(lineLightAt(L, x0, z) / mid);
       const lo = Math.min(...vals), hi = Math.max(...vals);
       return ["Spots along the scan line", "bottom faces within " + SIDE_EVEN_Z + " mm of the belt centre get " + lo.toFixed(2) + "–" + hi.toFixed(2) + "× the light at the centre (without shadows)", chk(hi / lo <= 2, hi / lo <= 4)];
     }

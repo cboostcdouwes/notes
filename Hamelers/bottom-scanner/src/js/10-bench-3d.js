@@ -135,41 +135,43 @@
     });
     if ($("opt-plates").checked) platesFor(lineCams()).forEach((q) => {   // as traced
       const s = [0, 1, 2].map((i) => (q.hi[i] - q.lo[i]) / 1000), c = [0, 1, 2].map((i) => (q.lo[i] + q.hi[i]) / 2000);
-      rig.add(tip(box(s[0], s[1], s[2], mats3d.black, c[0], c[1], c[2]), "Matt black plate across a line camera's view " + PLATE.beyondMm + " mm past the pallet's plane: the background between the boards."));
+      rig.add(tip(box(s[0], s[1], s[2], mats3d.black, c[0], c[1], c[2]), q.name === "black frame cover" ? "Side frame painted matt black where a top camera's view crosses it."
+        : "Matt black plate across a line camera's view " + PLATE.beyondMm + " mm past the pallet's plane: the background between the boards."));
     });
     applyFans();
   }
   // The own window of a light beside its camera (at lp in the travel/height plane, centred at z, len mm along the
-  // line): a pane above the light at the window angle, turned toward the scan line, as in the tracer (ownWindowT).
-  function ownWindowMesh(lp, z, len) {
-    const ang = service.winAngle * Math.PI / 180, s = lp[0] > 0 ? -1 : 1;
-    const n = new THREE.Vector3(s * Math.sin(ang), Math.cos(ang), 0), a = new THREE.Vector3(0, 0, 1), b = n.clone().cross(a);
+  // line): a pane on the belt's side of the light (facing: 1 below the belt, -1 above it) at the window angle, turned
+  // toward the scan line, as in the tracer (ownWindowT).
+  function ownWindowMesh(lp, z, len, facing) {
+    const ang = service.winAngle * Math.PI / 180, s = lp[0] > 0 ? -1 : 1, f = facing || 1;
+    const n = new THREE.Vector3(s * Math.sin(ang), f * Math.cos(ang), 0), a = new THREE.Vector3(0, 0, 1), b = n.clone().cross(a);
     const g = new THREE.Group(); g.matrixAutoUpdate = false;
-    g.matrix.makeBasis(b, a, n).setPosition(lp[0] / 1000, (lp[1] + 30) / 1000, z / 1000);
+    g.matrix.makeBasis(b, a, n).setPosition(lp[0] / 1000, (lp[1] + f * 30) / 1000, z / 1000);
     g.add(tip(box(0.07, (len + 20) / 1000, GLASS.thickMm / 1000, M("#a8d8ea", { transparent: true, opacity: 0.5, roughness: 0.05, depthWrite: false }), 0, 0, 0),
       "The light's own window, plain glass " + GLASS.thickMm + " mm, " + winAngleText(service.winAngle) + " from horizontal" + (service.purge ? ", with air purge." : ".")));
     return g;
   }
-  // Camera c's spot: its housing, its own small window, and its beam as a thin sheet up to the belt plane (shown with
-  // the fields of view).
+  // Camera c's spot: its housing, its own small window, and its beam as a thin sheet up to the plane the camera looks
+  // at (shown with the fields of view).
   function spotMesh(c, ledM) {
-    const g = new THREE.Group(), sp = c.spot, [x, y, z] = sp.pos.map((v) => v / 1000), r = (SPOT.faceR + 10) / 1000;
+    const g = new THREE.Group(), sp = c.spot, [x, y, z] = sp.pos.map((v) => v / 1000), r = (SPOT.faceR + 10) / 1000, facing = c.top ? -1 : 1;
     const beam = SPOT_BEAMS[opts().spotBeam];
-    g.add(tip(box(2 * r, 0.057, 2 * r, ledM, x, y - 0.0315, z), "LED spot" + (sp.n > 1 ? "s" : "") + " beside the camera: " + (sp.n > 1 ? sp.n + " × " : "") + beam.name + "."));
-    g.add(ownWindowMesh(c.lightPos, sp.pos[2], 2 * SPOT.faceR + 20));
+    g.add(tip(box(2 * r, 0.057, 2 * r, ledM, x, y - facing * 0.0315, z), "LED spot" + (sp.n > 1 ? "s" : "") + " beside the camera: " + (sp.n > 1 ? sp.n + " × " : "") + beam.name + "."));
+    g.add(ownWindowMesh(c.lightPos, sp.pos[2], 2 * SPOT.faceR + 20, facing));
     const P = new THREE.Vector3(x, y, z), sheetM = new THREE.MeshBasicMaterial({ color: new THREE.Color(css("--led")), transparent: true, opacity: 0.2, side: THREE.DoubleSide, depthWrite: false });
-    for (let u = 0; u < sp.n; u++) {   // each unit's beam as a thin sheet along the line, up to the belt plane
+    for (let u = 0; u < sp.n; u++) {   // each unit's beam as a thin sheet along the line, up to the camera's plane
       const un = spotUnit(sp, u), pts = [P], N = 8;
       for (let i = 0; i <= N; i++) {
         const t = Math.tan(Math.atan(sp.tan[1]) * (2 * i / N - 1)), d = un.axis.map((v, k) => v + t * un.along[k]);
-        pts.push(P.clone().add(new THREE.Vector3(...d).multiplyScalar(-y / d[1])));
+        pts.push(P.clone().add(new THREE.Vector3(...d).multiplyScalar((c.planeY / 1000 - y) / d[1])));
       }
       const geo = new THREE.BufferGeometry().setFromPoints(pts), idx = [];
       for (let i = 1; i <= N; i++) idx.push(0, i, i + 1);
       geo.setIndex(idx);
       const sheet = new THREE.Mesh(geo, sheetM);
       sheet.userData.kind = "line"; fans.push(sheet);
-      g.add(tip(sheet, "A spot's beam, up to the belt plane."));
+      g.add(tip(sheet, "A spot's beam, up to the " + (c.top ? "deck's plane." : "belt plane.")));
     }
     return g;
   }

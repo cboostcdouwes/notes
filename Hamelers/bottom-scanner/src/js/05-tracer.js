@@ -213,7 +213,7 @@
     gl.uniform1i(U.uTex, texReady ? 1 : 0); gl.uniform1f(U.uTexSize, TEX_SIZE);
     lampUniforms(U);
   }
-  const MAX_SPOTS = 2, MAX_SPOT_UNITS = 16;   // one per bottom camera, as uSpotAxis[]; units each, as spotShare's loop
+  const MAX_SPOTS = 4, MAX_SPOT_UNITS = 16;   // one per line camera, as uSpotAxis[]; units each, as spotShare's loop
   const MAX_LIGHTS = 32, HALL = [0.1, 0.1, 0.11];   // HALL: brightness of the hall above, as seen through gaps
   // L: from lightsFor
   function setLights(U, L, ambient) {

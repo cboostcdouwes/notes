@@ -13,8 +13,8 @@ uniform vec4 uLights[32]; uniform int uNL; uniform float uAmbient;
 uniform int uNBar;              // the first uNBar lights are LED bar points (see barFacing)
 uniform int uNSide;             // the next uNSide are side lights, aimed along the gap at the belt centre
 uniform int uNSpot;             // the next uNSpot are the spots beside the cameras, each a row of units: axis, along the line,
-uniform vec3 uSpotAxis[2]; uniform vec3 uSpotAlong[2]; uniform vec2 uSpotTan[2];   // a unit's half-angle tangents across and along,
-uniform vec3 uSpotUnits[2];     // and units, angle between them (rad), shape (1: elliptical cone, 0: rectangular)
+uniform vec3 uSpotAxis[4]; uniform vec3 uSpotAlong[4]; uniform vec2 uSpotTan[4];   // a unit's half-angle tangents across and along,
+uniform vec3 uSpotUnits[4];     // and units, angle between them (rad), shape (1: elliptical cone, 0: rectangular)
 uniform float uSpotFace;        // radius of a spot's emitting face, mm
 uniform float uLightWin;        // own windows of the lights beside the cameras: angle from horizontal, rad; < 0: none
 uniform vec2 uFace;             // scale of the lamps' face radiance in this view: x the LED bar, y the station lamps
@@ -201,10 +201,11 @@ float barWeight(vec3 lp, vec3 p) {
   float w = abs(v.y) * uLouvreTan;
   return cosT * (triCum(lp.z + uBarHalf - p.z, w) - triCum(lp.z - uBarHalf - p.z, w)) / (2.0 * uBarHalf);
 }
-// A light beside its camera (lp) sends light along u through its own window, turned toward the scan line at x = 0.
+// A light beside its camera (lp) sends light along u through its own window, turned toward the scan line at x = 0
+// and facing the belt (up below it, down above it).
 float ownWindowT(vec3 lp, vec3 u) {
   if (uLightWin < 0.0) return 1.0;
-  return glassT(dot(u, vec3((lp.x > 0.0 ? -1.0 : 1.0) * sin(uLightWin), cos(uLightWin), 0.0)));
+  return glassT(dot(u, vec3((lp.x > 0.0 ? -1.0 : 1.0) * sin(uLightWin), barFacing(lp) * cos(uLightWin), 0.0)));
 }
 // How many of spot k's units (spot at Lw) send light toward p, through its window (as beamShare in the page script).
 // Unit i is turned along the line by (i - (n - 1) / 2) times the angle between units.

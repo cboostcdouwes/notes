@@ -37,9 +37,11 @@
   const MAXROWS = 256, TEXW = 16, TEXH = 768, MAXPAL = 5;
   const MOTION_N = 1024, MOTION_U0 = -5200, MOTION_DU = 10400 / (MOTION_N - 1);   // pose samples every ~10 mm of belt progress
   const ROLL_R = 30, ROLL_PITCH = 125, ROLL_HALF = BELT_W / 2 - 30;
-  // gap = clear opening between the two rollers next to the scan line, surface to surface
-  const GAP_CHOICES = [40, 60, 80, 100, 150, 250, 350];
-  let gap = 100;
+  // gap = clear opening between the two rollers next to the scan line, surface to surface; NORMAL_GAP: the rollers'
+  // own spacing, no gap made for the scanner
+  const NORMAL_GAP = ROLL_PITCH - 2 * ROLL_R;
+  const GAP_CHOICES = [40, 60, NORMAL_GAP, 80, 100, 150, 250, 350];
+  let gap = NORMAL_GAP;
   const rollerCentres = (g, n) => { const out = []; for (let k = 0; k < n; k++) out.push(g / 2 + ROLL_R + k * ROLL_PITCH, -(g / 2 + ROLL_R + k * ROLL_PITCH)); return out; };
   const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;

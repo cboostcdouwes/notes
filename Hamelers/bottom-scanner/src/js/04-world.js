@@ -15,9 +15,15 @@
       : part("station lamp", x < 0 ? [x - 65, y - 50, z - 90] : [x + 3, y - 50, z - 90], x < 0 ? [x - 3, 760, z + 90] : [x + 65, 760, z + 90], "lamp", 0, { col: faceRadiance(I, 110 * 180) })));
     return out;
   }
+  // The conveyor's side frames: depth mm below the belt plane, width mm wide, just outside the belt.
+  const SIDE_FRAME = { depth: 90, width: 50 };
+  const sideFrameZ = (s) => [s * BELT_W / 2, s * (BELT_W / 2 + SIDE_FRAME.width)].sort((a, b) => a - b);   // s: -1 left, 1 right
   function worldParts(g) {
     const out = [], e = g / 2 + ROLL_R;
-    [[-4000, -e], [e, 4000]].forEach(([a, b]) => [-1, 1].forEach((s) => out.push(part("conveyor side frame", [a, -90, s * (BELT_W / 2 + 25) - 25], [b, 0, s * (BELT_W / 2 + 25) + 25], "steel", 0, { col: [0.16, 0.17, 0.18] }))));
+    [[-4000, -e], [e, 4000]].forEach(([a, b]) => [-1, 1].forEach((s) => {
+      const [z0, z1] = sideFrameZ(s);
+      out.push(part("conveyor side frame", [a, -SIDE_FRAME.depth, z0], [b, 0, z1], "steel", 0, { col: [0.16, 0.17, 0.18] }));
+    }));
     [-1200, 1200].forEach((x) => [-950, 950].forEach((z) => out.push(part("station post", [x - 30, -600, z - 30], [x + 30, 2200, z + 30], "steel", 1, { col: [0.3, 0.31, 0.33] }))));
     out.push(...lampParts());
     out.push(part("floor", [-5000, -640, -3000], [5000, -600, 3000], "floor", 0, { col: [0.13, 0.13, 0.14] }));
@@ -35,8 +41,10 @@
         : part("camera stand", [c.C[0] - 15, -600, c.C[2] - 15], [c.C[0] + 15, c.C[1] - 45, c.C[2] + 15], "steel", 1, steel));
       if (c.spot) {   // the housing only: its light leaves in the beam (spotShare, spotGlint), not from a glowing face
         const [x, y, z] = c.spot.pos, r = SPOT.faceR + 10;
-        out.push(part("LED spot", [x - r, y - 60, z - r], [x + r, y - 3, z + r], "steel", 1, { col: [0.06, 0.07, 0.08] }));
-        out.push(part("LED spot stand", [x - 10, -600, z - 10], [x + 10, y - 60, z + 10], "steel", 1, { col: [0.3, 0.31, 0.33] }));
+        out.push(c.top ? part("LED spot", [x - r, y + 3, z - r], [x + r, y + 60, z + r], "steel", 1, { col: [0.06, 0.07, 0.08] })
+          : part("LED spot", [x - r, y - 60, z - r], [x + r, y - 3, z + r], "steel", 1, { col: [0.06, 0.07, 0.08] }));
+        out.push(c.top ? part("LED spot hanger", [x - 10, y + 60, z - 10], [x + 10, TOP_FRAME_Y, z + 10], "steel", 1, steel)
+          : part("LED spot stand", [x - 10, -600, z - 10], [x + 10, y - 60, z + 10], "steel", 1, steel));
       }
       const k = String(c.lightPos);
       if (!c.lights.length || seen.has(k)) return;
@@ -63,17 +71,25 @@
   // sees between and past the pallet's boards is black: above the belt for a bottom camera, below for a top one. In the
   // travel/height plane a line camera's view is a line from its lens through the scan line, so each plate is a strip
   // across the belt. A plate that would cut into another line camera's view is left out (a 0° camera and a top one
-  // right above it look at each other). Assumed: flocked or black anodised, PLATE.albedo of the light diffusely.
+  // right above it look at each other). Past the belt's edges a top camera's view also crosses the side frames below
+  // the belt, which a bottom camera's never does: there the frame is black too. Assumed: flocked or black anodised,
+  // PLATE.albedo of the light diffusely.
   const PLATE = { beyondMm: 400, widthMm: 40, albedo: 0.03 };
   function platesFor(camList) {
-    const along = (c, y) => c.C[0] * (c.planeY - y) / (c.planeY - c.C[1]);   // where c's view crosses height y, along travel
-    const inView = (c, x0, x1, y) => (y - c.C[1]) * (y - c.planeY) < 0 && along(c, y) > x0 && along(c, y) < x1;   // between lens and plane
+    const inView = (c, x0, x1, y) => (y - c.C[1]) * (y - c.planeY) < 0 && planeX(c, y) > x0 && planeX(c, y) < x1;   // between lens and plane
     const out = [], w = PLATE.widthMm / 2;
     camList.forEach((c) => {
-      const y = c.planeY + (c.top ? -1 : 1) * PLATE.beyondMm, x = along(c, y);
+      const y = c.planeY + (c.top ? -1 : 1) * PLATE.beyondMm, x = planeX(c, y);
       if (camList.some((o) => o !== c && inView(o, x - w, x + w, y))) return;
       const k = (y - c.C[1]) / (c.planeY - c.C[1]), zs = [c.z0, c.z1].map((z) => c.C[2] + (z - c.C[2]) * k);   // the view's width there
-      out.push(part("black plate", [x - w, y, Math.min(...zs) - 50], [x + w, y + 3, Math.max(...zs) + 50], "black", 0, { col: [PLATE.albedo, PLATE.albedo, PLATE.albedo] }));
+      const black = { col: [PLATE.albedo, PLATE.albedo, PLATE.albedo] };
+      out.push(part("black plate", [x - w, y, Math.min(...zs) - 50], [x + w, y + 3, Math.max(...zs) + 50], "black", 0, black));
+      if (!c.top) return;
+      const xs = [planeX(c, 0), planeX(c, -SIDE_FRAME.depth)];
+      [-1, 1].forEach((s) => {
+        const [z0, z1] = sideFrameZ(s);
+        out.push(part("black frame cover", [Math.min(...xs) - w, -SIDE_FRAME.depth - 2, z0 - 2], [Math.max(...xs) + w, 1, z1 + 2], "black", 0, black));
+      });
     });
     return out;
   }

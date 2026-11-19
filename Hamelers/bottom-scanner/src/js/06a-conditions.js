@@ -39,8 +39,9 @@
   // - beside: each camera's own bar BESIDE_MM from its lens, on the side away from the belt, behind a window of its own
   //   at the window angle, turned toward the scan line. It is the same bar as the shared one under the gap (its power
   //   set for BAR_REF_MM), so from further away it gives less light.
-  // - spot: compact LED lights where the bar beside would be, at their camera's place across the belt, behind a small
-  //   window of their own like the bar's, with one bar's LED power per camera in their beams, from a face SPOT.faceR in
+  // - spot: compact LED lights in their camera's view plane, level with its lens under the belt centre, so their light
+  //   passes the rollers wherever the view does and spreads alike to both belt edges; behind a small window of their
+  //   own like the bar's, with one bar's LED power per camera in their beams, from a face SPOT.faceR in
   //   radius. The beam (SPOT_BEAMS) is one stripe across the belt (a line lens), or a row of narrower units, each aimed
   //   at its own stretch of the line so that together they reach the belt's edges (SPOT.marginDeg beyond them),
   //   overlapping by SPOT.overlap of a unit's width.
@@ -64,16 +65,17 @@
   function barPosition(spec, C, o) {
     const t = spec.tilt * Math.PI / 180, sx = Math.sin(t), cyy = Math.cos(t);
     if (o.lightSetup === "side") return null;
+    if (o.lightSetup === "spot") return [C[0], C[1]];   // level with the lens, under the belt centre (bottomCam)
     if (besideCamera(o.lightSetup)) { const s = Math.sign(spec.tilt) || 1; return [C[0] + s * BESIDE_MM * cyy, C[1] - s * BESIDE_MM * sx]; }
     return o.sharedLight ? [o.anyZero ? -80 : 0, -250] : [-350 * sx + (spec.tilt === 0 ? -80 : 0), -350 * cyy];
   }
-  // The spots at P, kind SPOT_BEAMS[kind]: the axis between the belt's edges on the scan line and the direction along
+  // The spots at P, kind SPOT_BEAMS[kind], for the scan line at lineX: the axis between the belt's edges on the scan line and the direction along
   // it; n units, aimed step radians apart along the line around the axis; each unit's half-angle tangents across and
   // along, its shape, and its intensity inside its beam (its share of one bar's light, pi times the bar's intensity for
   // a flat diffuse face, over the unit's solid angle).
-  function spotBeam(P, kind) {
+  function spotBeam(P, kind, lineX) {
     const b = SPOT_BEAMS[kind], rad = Math.PI / 180;
-    const ends = [-1, 1].map((s) => norm3(sub3([0, 0, s * BELT_W / 2], P)));
+    const ends = [-1, 1].map((s) => norm3(sub3([lineX, 0, s * BELT_W / 2], P)));
     const axis = norm3(ends[0].map((v, i) => v + ends[1][i])), toEnd = sub3(ends[1], ends[0]);
     const along = norm3(toEnd.map((v, i) => v - dot3(toEnd, axis) * axis[i]));
     const need = Math.acos(dot3(ends[0], ends[1])) / 2 + SPOT.marginDeg * rad;   // half the fan the units must fill
@@ -126,12 +128,13 @@
     });
     return e;
   }
-  const lineLightAt = (L, z) => lightAt(L, [0, 0, z]);   // on the scan line at the belt plane
-  // Light on the scan line at the belt centre for image which (cameras camList, default all), relative to the
-  // reference: 1 for the bar under the gap (the reference holds it, one bar or one per camera alike).
+  const lineLightAt = (L, x, z) => lightAt(L, [x, 0, z]);   // on the scan line at x, at the belt plane
+  // Light on the scan line at the belt centre for image which (cameras camList, default all; on the first one's line,
+  // as the others mirror it), relative to the reference: 1 for the bar under the gap (the reference holds it, one bar
+  // or one per camera alike).
   function setupLight(o, which, camList) {
     const L = bottomLights(which, camList);
-    return L.nBars && o.lightSetup !== "beside" ? 1 : lineLightAt(L, 0) / lineLightAt(REF_LIGHTS, 0);
+    return L.nBars && o.lightSetup !== "beside" ? 1 : lineLightAt(L, (camList || cams)[0].lineX, 0) / lineLightAt(REF_LIGHTS, 0, 0);
   }
   // Share of light l's intensity sent along u (unit, away from it): a bar's upward face (by its cosine), a side light's
   // face aimed at the belt centre, or a spot's beam (sp). A light beside its camera also passes its own window, at
@@ -148,7 +151,7 @@
   const SPOT_REACH_MAX = 300;   // mm, above the tallest pallet's bottom faces
   function spotReach(cam) {
     let h = 0;
-    while (h < SPOT_REACH_MAX && beamShare(cam.spot, norm3(sub3([h * cam.C[0] / cam.C[1], h, 0], cam.spot.pos))) > 0) h += 2;
+    while (h < SPOT_REACH_MAX && beamShare(cam.spot, norm3(sub3([planeX(cam, h), h, 0], cam.spot.pos))) > 0) h += 2;
     return h;
   }
   // Share of the bar's light that the louvre passes to the scan line at the belt centre, for the budget: onto a bottom
