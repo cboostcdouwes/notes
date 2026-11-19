@@ -3,6 +3,8 @@ double-sided linescan concept
 ## Learned
 - speeding up the middle conveyor section naturally spaces pallets out
 - EPAL pallet damage criteria
+- the gap in the conveyor is mostly limited by the geometry of the light bar's light and camera plane
+- four cameras at the corners seems best for detecting errors (tested by comparing the number of pixels changed between damaged/clean)
 
 ## Considerations
 ### Pros
@@ -12,6 +14,7 @@ double-sided linescan concept
 - can be made compact
 - semi-ortho perspective
 - can be made without a large cover; cleaning under the gap is easy (broom)
+- no limits on pallet rotation
 
 ### Cons
 - conveyor gap
