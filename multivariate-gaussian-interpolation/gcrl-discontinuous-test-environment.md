@@ -233,6 +233,8 @@ Reviewed (2026-11-18, user: "The review is complete")
 
 **Changes from the review (2026-11-18):** rollouts end only at the fixed time limit (R16; a rollout essentially never lands exactly on a continuous goal); goal is an exact point (R15) instead of a wall-free disk; the step function always returns 0 reward and the task reward exists only in the truth definitions (R7b replaces R7). Both keep the choice (every design could do the same; no ranking change) and simplify D2: N = ceil(d(s, g)/L), no goal-placement rule. Claim checked: with a point goal the closed form holds with r_goal = 0, provided a step lands exactly on its target when the path to it is ≤ L (spec item, to be tested in plan step 2).
 
+**Reported as a bug by the user (2026-11-20, see [gcrl-real-world-problem-statement.md](gcrl-real-world-problem-statement.md)):** the agent can never reach the goal exactly and must not be graded on an exact match. Affected here: R15 (exact point goal with success = equality), the step that snaps onto its target, the success predicate, the task reward and N, V*, Q* built on it. Not changed yet; this decision needs a new round for what the ground truth becomes (the geodesic distance d is unaffected).
+
 **Known gaps:**
 - Evidence is one layout (U-maze); thin walls, concave corners and several corners in sequence are untested; the draft used a goal disk (r = 0.2), the point goal (R15) relies on exact landing on the target, untested → the first implementation step carries these as tests (A1 ladder + extremitypathfinder cross-check).
 - Transfer: near corners the dynamics are path-following, not contact; conclusions about critics may transfer less to physical contact tasks (accepted by the user).

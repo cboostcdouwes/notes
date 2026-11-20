@@ -21,3 +21,12 @@
 - [ ] `toy2d_oblique.py` `draw_interfaces`: the `np.allclose` part of `closed` is always true
 - [ ] `sweep.py` `blend` repeats the value blending in `make_gauss`; move quadratic values and reach into `make_gauss` if they stay
 - [ ] `moving.py`: prints `nan` for OOD columns it does not compute
+
+## Real-world GCRL problem statement ([gcrl-real-world-problem-statement.md](gcrl-real-world-problem-statement.md))
+- [ ] Problem confirmed (confirmed 2026-11-20, withdrawn the same day)
+- [x] Direct draft of the formal statement: [gcrl-real-world-formal-statement.md](gcrl-real-world-formal-statement.md) (2026-11-20, no design research)
+- [x] Literature check of the draft (2026-11-20): section 7 of the formal statement; sources in the log
+- [x] Formal statement rewritten after the correction of 2026-11-20 (second draft)
+- [ ] User to confirm the rewritten problem paragraph; open: whether the statement fixes the grading or leaves it to the instance, and the reference for critics and reward models
+- [ ] Maze environment: the user reports exact match as a bug there (R15, exact landing, success predicate); both the exact landing and the success test with its values; reopen the maze decision for what the ground truth becomes, then fix
+- [ ] Review the draft: its marked choices and section 6 (exact match needs reachability, learned goal maps are gameable, evaluation start); design research if they need more than a quick answer

@@ -1,36 +1,92 @@
 # Goal-conditioned RL under real-world conditions: problem statement
 
 ## Problem
-(Not confirmed yet; first restatement, 2026-11-20.)
-The user wants a precise statement of the goal-conditioned control problem as it presents itself on a real system, where (a) only a limited number of rollouts can be collected and (b) the system gives no reward signal. The statement should say what the learner is given, what it may do, and what counts as having solved it. What the statement is for (guiding the experiments here, choosing or judging methods, a text for others, a real system to be controlled) is not known yet and is the first question.
+(Rewritten 2026-11-20 after the user's correction; the user confirmed the reading it rests on, the paragraph itself is not confirmed yet.)
+The user needs a precise definition of the goal-conditioned control problem under the conditions real systems impose, so that their own experiments have a fixed setup and any number of existing or new algorithms can be run and compared under it. The conditions: a goal is a point the agent is asked to go to, and nothing ever says whether it got there. The system gives no reward and no "close enough" signal; the agent is never tested on equality with the goal, by the benchmark or by itself, because that has probability 0; the agent does not report "reached" or a distance; whatever reward it uses internally it has to construct itself. What a goal is a point in (the full observation, a part of it, a latent representation) is a parameter. The total amount of interaction is scarce; resets are costly or absent; the agent first explores freely without being given goals, and is given goals only when it is evaluated. Only the absence of any reward or success signal is essential; the other conditions are important but may be relaxed. Methods are graded from outside in two ways, kept apart: by a measurement of their behaviour, and by the quality of what they learned. Out of scope: any choice of algorithm, and a specific real system.
 
 The user's words (2026-11-20): "I'd like to formalize the problem of GCRL in the real world: limited rollouts, no reward signal."
 
 ## Situation
 - The request came through `/research:problem-formulation` without a description; the user chose "Something new" over the open TODO items, then gave the sentence above. User, 2026-11-20.
+- Purpose: to steer the user's own experiments and to choose or judge methods; not a text for others, not the control of a concrete system. User, 2026-11-20.
+- "I'd like to test any number of existing or new algorithms using this formulation." User, 2026-11-20.
+- "The real world" is a class of conditions, not a concrete system. User, 2026-11-20.
+- What is wrong now: the user's own setup is not pinned down; methods can't be compared; existing statements assume too much, namely "a reward signal when an agent is close enough instead of an inferred exact match". User, 2026-11-20.
+- What limits rollouts: total interaction is scarce; resets are costly or absent. Not chosen as limits: the absence of parallel copies, and restrictions on allowed actions (safety). No numbers given. User, 2026-11-20.
+- What the learner is given besides its own interaction: "Nothing else" and "Not decided" were both chosen; read as: nothing by default, with extra inputs (earlier data, a simulator) left open. User, 2026-11-20; the reading is assumed.
+- "I'd like to have a free-form exploration phase before evaluating on goals; goals are not provided by the environment during training rollouts." User, 2026-11-20.
+- Who decides whether a goal was reached when a method is judged: only the agent's own inference. In simulated stand-ins, ground truth may also score methods, "both, kept apart": a score that needs no ground truth, and ground truth used separately to check it. User, 2026-11-20.
+- Part of: the next RL experiments in this project wait on it, and it belongs to a longer research line (where that line leads was not said). User, 2026-11-20.
+- Valued beyond correctness: mathematical precision, connection to the literature, direct testability. Not chosen: easy to read. User, 2026-11-20.
+- What "exact match" is exact in: a parameter of the statement. "I'd like to leave room for formulations like latent space goals." User, 2026-11-20.
+- **Correction by the user, 2026-11-20 (after the literature check):** "The exact match is a mistake on your part that I have tried to correct multiple times; the agent can never reach the goal, the probability is 0. The agent should not be graded on an exact match, externally or internally. The current maze environment has this as a bug in this regard. The agent also does not give a goal reached or distance to goal signal." This overrides every earlier line here that reads "exact match" as a success test, and the reading of "only the agent's own inference" as a success declaration by the agent.
+- Claude's misreading, for later sessions: the user's sentence "the usual formulations assume a reward signal when an agent is close enough instead of an inferred exact match" was read as "success = exact match, declared by the agent"; the question what the match is exact in was asked twice, went unanswered, and the reading was built on anyway.
+- Reading confirmed by the user ("Yes, that is it", 2026-11-20): the goal is a point the agent is asked to go to; nothing ever says whether it got there; the system gives no reward and no "close enough" signal; the agent is never tested on equality with the goal, by the benchmark or by itself; the agent does not report "reached" or a distance; whatever reward it uses internally it constructs itself.
+- Grading: by an outside measurement of behaviour and by the quality of what was learned (both ticked). The user asked "Is the grading an implementation detail?"; Claude's answer: which measurement is an instance choice, that one exists is part of the problem. Not yet answered by the user. User, 2026-11-20.
+- The maze bug is both the exact landing (the step that snaps onto its target) and the success test with the values built on it. User, 2026-11-20.
+- Essential condition: only "No reward or success signal, ever" was ticked; bounded interaction, no free resets and goal-free exploration first were left as important but relaxable. User, 2026-11-20.
+- The user confirmed the write-back "Correct as written". User, 2026-11-20.
+- What happens if nothing is done: asked, not answered. Assumed from the answers above: the next RL experiments start without a fixed setup and their results can't be compared.
 - The project is an experiments folder on Gaussian/vMF attention for discontinuous functions (2D regression toys, log in `EXPERIMENTS.md`) plus a maze environment package `packages/gcrl-maze`. Read: project folder, 2026-11-20.
-- The maze environment already encodes part of "no reward signal": its step never returns a reward other than 0, the task reward exists only in the ground-truth definitions, and agents must model the reward themselves (R7b, must, verified); rollouts end only at a fixed time limit, with no success signal (R16). Read: `gcrl-discontinuous-test-environment.md`, Requirements, 2026-11-20.
-- That environment was built as "a stand-in for complex discontinuous cost, expected reward, or world model functions in the context of GCRL"; its consumers are online GCRL training, critic evaluation against exact ground truth and world-model learning; offline dataset generation was out of scope. Read: same log, Situation, 2026-11-20.
-- The simulated environment has no rollout limit: 4.3 M steps/s with 4096 parallel environments. Read: same log, Decision status, 2026-11-20.
-- No RL training code exists yet in the project; whether to use a JAX RL library was undecided on 2026-11-18. Read: same log, Situation. Still true on 2026-11-20: assumed (the folder shows no new scripts since 2026-11-18).
-- Open TODO items that touch RL: "Experiment 4: Gaussian-attention critic in the maze environment", the scoring method for staircase vs wall edges, continuous drift. Read: `TODO.md`, 2026-11-20.
-- Nothing in the experiments log, the notes or the earlier log mentions a real system, real-world data, a rollout budget or sample efficiency. Read: grep over `EXPERIMENTS.md` and the notes folder, 2026-11-20.
-- Whether a concrete real system (a robot, a machine) is behind "the real world": not known.
-- What "limited rollouts" means (how many, how long, whether resets are possible, whether earlier data or a simulator exists): not known.
-- What "no reward signal" means (no reward at all, only the reached states, a success check available at evaluation only): not known. Assumed link: the same sense as R7b of the maze log.
-- What form the result should take (mathematical definition, written text, benchmark protocol, constraints on the maze experiments): not known.
-- Time horizon, what the user values, what happens if nothing is done: not known.
+- The maze environment already matches part of this: its step never returns a reward other than 0 and agents must model the reward themselves (R7b); rollouts end only at a fixed time limit, with no success signal (R16); the goal is an exact point, success means the state equals it exactly, no goal radius (R15). Read: `gcrl-discontinuous-test-environment.md`, Requirements, 2026-11-20.
+- The maze environment differs in three points: its observation contains the goal during every rollout; it auto-resets at the time limit; it has no interaction limit (4.3 M steps/s with 4096 parallel environments). Read: same log, Decision, 2026-11-20.
+- No RL training code exists yet in the project. Read: same log, Situation (2026-11-18); still true on 2026-11-20: assumed (no new scripts in the folder since).
+- Nothing in the experiments log, the notes or the earlier log mentions a real system, a rollout budget or sample efficiency. Read: grep over `EXPERIMENTS.md` and the notes folder, 2026-11-20.
 
 ## Related decisions
-- `gcrl-discontinuous-test-environment.md` (decided 2026-11-18, steps 1-3 implemented): the simulated test environment. Relation assumed: the problem statement here would set the conditions under which methods are run in that environment; not a parent or child until the user confirms.
+- `gcrl-discontinuous-test-environment.md` (decided 2026-11-18, steps 1-3 implemented): the simulated test environment in which the statement would first be applied. Not a parent or child. The statement may ask for changes there (goal in the observation, auto-reset, interaction limit); that is for the research that follows, not decided here.
+
+## Requirements
+R1-R5 and R13 were checked with the user on 2026-11-20. R6-R12 carry the priority their source claims and are not verified; verify them before a decision rests on one.
+
+| # | Requirement | Reason (what breaks without it) | Source | Priority | Verified |
+|---|---|---|---|---|---|
+| R1 | The learner never receives a reward or success signal from the system, during exploration or evaluation | The usual formulations assume a reward when the agent is close enough; real systems don't give one | user, 2026-11-20 | must | yes |
+| R2c | No grading on an exact match with the goal, by the benchmark or inside the agent: the goal is never reached exactly (probability 0). The agent emits no goal-reached signal and no distance-to-goal signal. | An exact-match test is false for every method, so it grades nothing | user, 2026-11-20 correction, reading confirmed (replaces R2, which is moved to the rounds file) | must | yes |
+| R3 | The total amount of interaction is bounded, and the bound is part of the problem | Real interaction is scarce; a method that needs unlimited rollouts does not solve the problem | user, 2026-11-20 | should | yes (left unticked as essential; relaxable, e.g. as a parameter) |
+| R4 | The learner can't freely put the system in a chosen start state | Real resets are costly or absent | user, 2026-11-20 | should | yes (left unticked as essential; relaxable, e.g. as a parameter) |
+| R5 | Interaction has two phases: free exploration in which no goals are given, then evaluation on goals given only then | User: "goals are not provided by the environment during training rollouts"; reason not stated | user, 2026-11-20 | should | yes (left unticked as essential; relaxable, e.g. as a parameter) |
+| R6 | By default the learner is given nothing besides its own interaction; whether extra inputs (earlier data, a simulator) may exist is left open | | user, 2026-11-20 ("Nothing else" and "Not decided") | should (claimed) | no |
+| R7b | Methods are graded from outside in two ways, kept apart: a measurement of their behaviour relative to the goal, and the quality of what they learned against a reference | Without a grading methods cannot be compared (R8); the agent itself supplies no success signal (R2c) | user, 2026-11-20 after the correction (replaces R7, moved to the rounds file) | must (claimed) | no |
+| R8 | Any algorithm, existing or new, can be run and compared under the statement; it presupposes no kind of method | The purpose is testing "any number of existing or new algorithms" | user, 2026-11-20 | must (claimed) | no |
+| R9 | The statement is mathematically precise: claims about methods can be checked against it | Valued by the user | user, 2026-11-20 | should (claimed) | no |
+| R10 | The statement maps onto existing formulations in the literature, so existing methods and results can be placed in it | Valued by the user; supports R8 for existing algorithms | user, 2026-11-20 | should (claimed) | no |
+| R11 | Every condition in the statement can be turned into a setting of an experiment or environment | Valued by the user; the statement steers the experiments | user, 2026-11-20 | should (claimed) | no |
+| R12 | The statement holds for a class of real systems, not one specific system | "A class of conditions" | user, 2026-11-20 | should (claimed) | no |
+| R13 | What a goal is, and what the match with it is exact in, is a parameter of the statement: full observations, parts of them and goals in a latent space all fit | User: "I'd like to leave room for formulations like latent space goals"; fixing it would rule out methods (R8) | user, 2026-11-20 | should | yes |
 
 ## Options
-None proposed by the user. ("Formalize" is read as the wish for a precise statement, not as a solution; to be confirmed.)
+None proposed by the user. "Formalize" is read as the wish for a precise definition, not as a solution.
+
+| # | Summary | Fits | Costs | Reversibility | Verdict |
+|---|---|---|---|---|---|
+| O1 | Direct translation written by Claude at the user's request (2026-11-20, "a minimal document in mathematical terms directly from the problem statement"): [gcrl-real-world-formal-statement.md](gcrl-real-world-formal-statement.md). Reward-free controlled process, goal map φ as parameter, budget B, reset cost c, two phases, agent-declared arrival time, observation score and state score | | its own choices are marked "(choice)": goal given as an observation, frozen outputs in evaluation; no alternatives searched | cheap | first draft not applicable (R2c); second draft (2026-11-20) drops the goal test, detector and declared arrival and grades by an outside cost and by learned-function error: not judged yet |
 
 ## Open questions
-1. What is the statement for? Decides its form, its level of rigour and who must be able to read it.
-2. Is there a concrete real system behind it, or is "real world" the class of conditions to imitate? Decides whether the constraints are measured facts or chosen parameters.
-3. What exactly is limited about rollouts, and what else is available (resets, earlier data, a simulator, demonstrations)? Decides the learner's inputs.
-4. What exactly is absent with "no reward signal", and how is success then defined and measured? Decides the objective and the evaluation.
-5. Relation to the maze environment and the attention-critic experiments. Decides whether this log is a parent of that work.
-6. Time horizon, what is valued beyond the stated need, what happens if nothing is done.
+1. During evaluation, does interaction count against the bound, and may the agent keep learning? Decides how R3 and R5 fit together. Asked in Remarks on 2026-11-20, not answered.
+2. Is a reset costly or absent? The two give different problems (episodic with a price, or one continuing stream). Not asked; may become a parameter.
+3. With goals in a latent space the agent itself may build (R13), what keeps "exact match by the agent's own inference" (R2) from being met trivially, and what does the ground-truth score (R7) compare against? Decides the success definition; for the research that follows.
+4. Where does the longer research line lead? Decides how general the statement has to be (R12).
+5. What happens if nothing is done (only assumed so far).
+6. R6-R12 are unverified.
+7. (Settled by the user's correction, 2026-11-20: no exact-match grading at all, R2c.) Exact match (R2, must) against noise: the literature check found that exact reaching has probability 0 in continuous goal spaces unless the system is deterministic and can land on goals; the tolerance-free alternatives use densities. Decides whether R2 holds as an event, becomes a density, or is limited to systems like the maze. To ask the user.
+8. Should the scores restrict goals to reachable ones and account for time taken (as autonomous exploration and SPL do)? Found by the literature check.
+9. (Partly answered: behaviour measurement and quality of what was learned, R7b; which measurement, and whether the statement fixes it, is open.) How are methods graded, if not on reaching the goal exactly and without a goal-reached or distance signal from the agent? Decides the whole scoring part (R7). Asked 2026-11-20.
+10. (Answered: both the exact landing and the success test with its values.) What exactly is the bug in the maze environment (the step that snaps onto its target, the truth's success predicate `f(s, a) == g`, the reward defined on exact equality, R15 of that log)? Decides what changes there.
+
+## Sources
+Literature check of the direct draft (O1), 2026-11-20. Reliability: "text" = the paper's own wording read; "partly" = some claims only through a fetch tool's summary (marked † in the draft).
+
+| Claim | Source (URL or `file:line`) | Date | Reliability |
+|---|---|---|---|
+| Autonomous exploration: reward-free finite MDP, RESET action, L-controllable goal states, AX_L / AX* criteria, sample complexity in time steps; "goal-conditioned counterpart" of reward-free exploration | https://arxiv.org/html/2012.14755v1 (Sec. 1, 2.1, 2.2) | 2026-11-20 | text (Sec. 3 onward not read) |
+| Reward-free exploration: exploration phase without reward, planning phase for given rewards | https://proceedings.mlr.press/v119/jin20d.html | 2026-11-20 | abstract only |
+| LEXA: unsupervised phase, then goal images zero-shot; success thresholds per environment | https://arxiv.org/html/2110.09514v1 (Sec. 1, 2, Alg. 1; Appendix A) | 2026-11-20 | partly (Appendix A by summary) |
+| Agent must signal DONE and is evaluated at that time; success = distance below threshold; SPL; time-limited exploration budget regime | arXiv:1807.06757, PDF pages 2-3 (Sec. 3, 4, Recommendation 1) | 2026-11-20 | text |
+| Exact goal reaching: indicator reward with tolerance, Dirac limit, "probability of reaching any goal exactly is 0", UVFA vanishes, HER biased in stochastic environments | https://arxiv.org/html/2106.08863v1 (Sec. 1, 2, 3.1, 3.2) | 2026-11-20 | text (Sec. 3.2 onward by summary) |
+| Contrastive RL: reward = density of reaching the goal at the next step; experiments use distance thresholds | https://arxiv.org/html/2206.07568 (Sec. 3, 5.1; Appendix E.1) | 2026-11-20 | partly (thresholds by summary) |
+| EARL: training MDP with reward, intervention dynamics, deployed and continuing evaluation | https://arxiv.org/html/2112.09605v2 (Sec. 4.1, 4.2) | 2026-11-20 | text (Appendix A, Sec. 6 not read) |
+| Zero-shot RL: offline reward-free transitions; reward given at test time as samples or explicit function | https://arxiv.org/html/2209.14935 (Sec. 2, 6) | 2026-11-20 | text |
+| URLB: reward-free pre-training then fine-tuning with extrinsic reward, N_PT and N_FT steps | https://ar5iv.labs.arxiv.org/html/2110.15191 | 2026-11-20 | search snippet |
+| Reward-free goal-conditioning wrapper: success by normalized distance < 0.1 (continuous) or exact match (discrete) | https://arxiv.org/html/2511.04598 (Method, Supplementary) | 2026-11-20 | text |
+
