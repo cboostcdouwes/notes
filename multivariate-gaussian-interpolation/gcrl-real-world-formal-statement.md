@@ -1,7 +1,7 @@
 # Reward-free goal-conditioned control: formal statement
 
 Formal version of the problem in [gcrl-real-world-problem-statement.md](gcrl-real-world-problem-statement.md)
-(R-numbers refer to it). Draft, no design research behind it. **(choice)** marks what the problem statement leaves open.
+(R-numbers refer to it). Draft, no design research behind it. Sections 1 to 5 are superseded by `PROBLEM_STATEMENT.md` in the experiments project (2026-11-20); sections 6 (related formulations) and 7 (the maze as an instance) live only here.
 
 ## 1. System
 
@@ -36,7 +36,7 @@ At any time $t$ the method exposes its current goal-conditioned policy $\pi_t(a 
 **Evaluation.** Done in separate environments, at any time $t$ during training, not as a phase after it; how they
 are provided is left to the environment.
 For $o^g \sim p_g$, $s_0 \sim \rho_0$, the experimenter runs $\pi_t$ for $T$ steps. The agent reports nothing: no
-"reached", no distance (R2c). **(choice)** evaluation does not advance $t$, and the agent does not learn from it.
+"reached", no distance (R2c).
 
 ## 4. Grading (R7c)
 
@@ -92,7 +92,7 @@ papers, not a survey. No paper found states this whole problem; every part of it
 
 ## 7. The maze as an instance
 
-$\mathcal{S} = \mathcal{O} =$ free space, $\Omega = \text{id}$, $P$ deterministic (geodesic step), $\ell = d$
-(exact geodesic distance, already implemented), $\pi^*$ in closed form. To match this statement it needs: no goal in the observation during
-training, and the exact-match parts removed (the step that snaps onto
-its target, the success test "state equals goal" and the values built on it).
+$\mathcal{S} = \mathcal{O}$ is the free space of the maze, $\Omega$ the identity, $P$ the deterministic geodesic step of
+length at most $L$, $\rho_0$ and $p_g$ uniform over the free space, and $\ell = d$ the exact geodesic distance. The
+environment resets every `max_steps` steps. $\pi^*$ steps along the shortest path, so its term in the score is
+$\frac{1}{T}\sum_{k=1}^{T} \max(d(s_0, s^g) - kL,\, 0)$. Implemented in `packages/gcrl-maze` (`env`, `evaluation`).
