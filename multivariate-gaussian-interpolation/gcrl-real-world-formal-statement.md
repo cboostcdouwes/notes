@@ -31,36 +31,37 @@ agent acts with $a_t \sim \mathfrak{A}(\cdot \mid h_t)$, where $\mathfrak{A}$ is
 The environment may reset the agent at any time: $s_{t+1} \sim \rho_0$ in place of $s_{t+1} \sim P(\cdot \mid s_t, a_t)$.
 The agent neither requests nor controls resets (R4b). A reset is announced: $z_{t+1} = 1$ exactly when one happened.
 
-At any time $t$ the method exposes its current goal-conditioned policy $\pi_t(a \mid h, o^g)$ and whatever functions
-it has learned (a critic $\hat{Q}_t$, a reward model $\hat{r}_t$, a world model $\hat{P}_t$).
+At any time $t$ the method exposes its current goal-conditioned policy $\pi_t(a \mid h, o^g)$.
 
-**Evaluation.** Done in separate copies of $\mathcal{M}$, at any time $t$ during training, not as a phase after it.
+**Evaluation.** Done in separate environments, at any time $t$ during training, not as a phase after it; how they
+are provided is left to the environment.
 For $o^g \sim p_g$, $s_0 \sim \rho_0$, the experimenter runs $\pi_t$ for $T$ steps. The agent reports nothing: no
 "reached", no distance (R2c). **(choice)** evaluation does not advance $t$, and the agent does not learn from it.
 
-## 4. Grading (R7)
+## 4. Grading (R7c)
 
-Grading is done from outside, with quantities the agent never sees, in two kinds kept apart. Sections 1 to 3 are
-the whole problem as the agent meets it; which $\ell$ and which function errors are used is a choice of the instance.
+Grading is done from outside, with a quantity the agent never sees. Sections 1 to 3 are the whole problem as the
+agent meets it; which $\ell$ is used is a choice of the instance.
 
-**Behaviour.** The instance supplies a cost $\ell : \mathcal{S} \times \mathcal{S} \to \mathbb{R}_{\ge 0}$ between a
-state and the goal state, with $\ell(s, s) = 0$: ground truth in simulation, an instrument on a real system.
+The instance supplies a cost $\ell : \mathcal{S} \times \mathcal{S} \to \mathbb{R}_{\ge 0}$ between a state and the
+goal state, with $\ell(s, s) = 0$: ground truth in simulation, an instrument on a real system.
 
-$$J_\ell(t) = \mathbb{E}_{o^g,\, s_0}\big[\, \ell(s_T, s^g) \,\big] \text{ under } \pi_t \qquad \text{(lower is better)}$$
+The score of the policy at training time $t$ is its regret against the optimal policy, over all $T$ steps of an
+evaluation run, both started from the same $s_0$ with the same goal:
 
-**(choice)** the cost is taken at the final step; an instance may aggregate over the trajectory instead.
-In the maze, $\ell$ can be the exact geodesic distance $d$.
+$$J_\ell(t) = \mathbb{E}_{o^g,\, s_0}\Big[\, \frac{1}{T}\sum_{k=1}^{T} \ell(s_k^{\pi_t}, s^g) \;-\; \frac{1}{T}\sum_{k=1}^{T} \ell(s_k^{\pi^*}, s^g) \,\Big], \qquad \pi^* = \arg\min_\pi \mathbb{E}\Big[\sum_{k=1}^{T} \ell(s_k^{\pi}, s^g)\Big]$$
 
-**Learned functions.** For a learned function $\hat{f}_t$ that has a reference $f^*$ in the instance, and an evaluation
-distribution $\mu$:
+$J_\ell(t) \ge 0$, with 0 exactly when $\pi_t$ does as well as possible. Where $\pi^*$ is not available (a real
+system), the first term alone is reported.
 
-$$E_f(t) = \mathbb{E}_{x \sim \mu}\big[\, \lVert \hat{f}_t(x) - f^*(x) \rVert \,\big]$$
+In the maze, $\ell$ is the exact geodesic distance $d$, $\pi^*$ steps along the shortest path, and its term is
+$\frac{1}{T}\sum_{k} \max(d(s_0, s^g) - kL,\, 0)$ with $L$ the step length.
 
-Only where a reference exists (simulation). For the dynamics, $f^* = P$. For a critic or reward model the reference
-depends on the reward the method built for itself, so there is no single $f^*$; what the reference is, is open
-(section 6.1).
+Methods are compared on the curve $J_\ell(t)$ only.
 
-Methods are compared on the curves $J_\ell(t)$ and $E_f(t)$.
+**Diagnostics, not grading.** What a method learned on the way (a critic, a reward model, a world model) may be
+inspected to explain its behaviour, for example a world model's error against $P$. It never enters the comparison:
+there is no reward here, so no $Q^*$ and no true reward to score against, and not every method has these functions.
 
 ## 5. Relaxations
 
@@ -71,20 +72,7 @@ Methods are compared on the curves $J_\ell(t)$ and $E_f(t)$.
 | nothing else given (R6) | inputs | giving a dataset $\mathcal{D}_0$ or a model $\tilde{P}$ at $t = 0$ |
 | no reward, success or distance signal (R1, R2c, must) | none | not relaxable |
 
-## 6. Open points
-
-1. **Reference for critics and reward models.** Without an exact-match reward there is no given $Q^*$. A reference
-   could be built from $\ell$ (for example the optimal cost-to-go under $\ell$), but a method whose own reward
-   differs is then not comparable on it.
-2. **Separate copies on a real system.** In simulation a copy is free. On a real system it means a second system,
-   or pausing training and restoring its state afterwards; the statement does not say which.
-3. **Choice of $\ell$.** Two instances with different $\ell$ can rank methods differently.
-4. **Which goals count.** $p_g$ and $T$ are free, so unreachable goals worsen every method's score alike. Autonomous
-   exploration scores only goals reachable within $L$ expected steps.
-5. **Efficiency.** $J_\ell$ at the final step ignores how the agent got there. Anderson et al. weight by optimal over
-   actual path length (SPL); autonomous exploration bounds the hitting time.
-
-## 7. Relation to existing formulations
+## 6. Relation to existing formulations
 
 Checked 2026-11-20 against the papers' text (parts read only through a summary are marked †); six searches, nine
 papers, not a survey. No paper found states this whole problem; every part of it has a precedent.
@@ -102,9 +90,9 @@ papers, not a survey. No paper found states this whole problem; every part of it
 | URLB (Laskin et al. 2021, arXiv:2110.15191) | reward-free pre-training with a step budget $N_{PT}$ | followed by fine-tuning with extrinsic reward for $N_{FT}$ steps |
 | Reward-free goal-conditioning wrapper (Åström et al. 2025, arXiv:2511.04598) | agents never see external reward; goal success judged without the environment | judged by a wrapper, not the agent; normalized distance $< 0.1$ in continuous environments, exact match only in discrete ones; no phases |
 
-## 8. The maze as an instance
+## 7. The maze as an instance
 
 $\mathcal{S} = \mathcal{O} =$ free space, $\Omega = \text{id}$, $P$ deterministic (geodesic step), $\ell = d$
-(exact geodesic distance, already implemented). To match this statement it needs: no goal in the observation during
+(exact geodesic distance, already implemented), $\pi^*$ in closed form. To match this statement it needs: no goal in the observation during
 training, and the exact-match parts removed (the step that snaps onto
 its target, the success test "state equals goal" and the values built on it).

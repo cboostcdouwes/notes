@@ -8,6 +8,7 @@
 | R5 | Interaction has two phases: free exploration in which no goals are given, then evaluation on goals given only then | User: "I'd like to have a free-form exploration phase before evaluating on goals; goals are not provided by the environment during training rollouts" | user, 2026-11-20, as read by Claude | R5b (user: "Training and evaluation are not two separate phases", 2026-11-20) |
 | R5b | Training and evaluation are one stream of interaction, not two phases; goals are not provided by the system | User: "Training and evaluation are not two separate phases"; reason not stated | user, 2026-11-20, as read by Claude | R5c (user: "Evaluation is done in separate environments and can be run at any time", 2026-11-20) |
 | R4 | The learner can't freely put the system in a chosen start state | Real resets are costly or absent | user, 2026-11-20 | R4b (user: "The agent does not request a reset; the environment can reset the agent at any time without outside control", 2026-11-20) |
+| R7b | Methods are graded from outside in two ways, kept apart: a measurement of their behaviour relative to the goal, and the quality of what they learned against a reference | Without a grading methods cannot be compared (R8); the agent itself supplies no success signal (R2c) | user, 2026-11-20 | R7c (2026-11-20) |
 
 ## Dropped requirements
 | # | Requirement | Why it isn't one (user's reason) | Source | Round |

@@ -27,6 +27,6 @@
 - [x] Direct draft of the formal statement: [gcrl-real-world-formal-statement.md](gcrl-real-world-formal-statement.md) (2026-11-20, no design research)
 - [x] Literature check of the draft (2026-11-20): section 7 of the formal statement; sources in the log
 - [x] Formal statement rewritten after the correction of 2026-11-20 (second draft)
-- [ ] User to confirm the rewritten problem paragraph; open: whether the statement fixes the grading or leaves it to the instance, and the reference for critics and reward models
-- [ ] Maze environment: the user reports exact match as a bug there (R15, exact landing, success predicate); both the exact landing and the success test with its values; reopen the maze decision for what the ground truth becomes, then fix
+- [ ] User to confirm the rewritten problem paragraph; grading settled 2026-11-20: behaviour cost only, learned functions are diagnostics
+- [ ] Maze environment: the user reports exact match as a bug there (R15, exact landing, success predicate); both the exact landing and the success test with its values; candidate fix after the grading decision of 2026-11-20: remove the snap, the success test and the step-count values, keep the geodesic distance as the cost; confirm in the maze log, then fix
 - [ ] Review the draft: its marked choices and section 6 (exact match needs reachability, learned goal maps are gameable, evaluation start); design research if they need more than a quick answer
