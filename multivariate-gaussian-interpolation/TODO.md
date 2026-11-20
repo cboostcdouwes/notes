@@ -19,6 +19,7 @@
 - [ ] Edge placement: importance-sample training points near high error, or an edge-aware loss
 - [ ] Annealing schedule shape (linear vs geometric; end point tested in E19) and annealing for few keys (8, 16) at 24k steps
 - [ ] Gaussian-attention critic in the maze environment (under `experiments/gcrl-maze/`)
+- Review tool for human sessions (`review.py`: summary, figures, replay; built 2026-11-20) was tested on synthetic sessions only, the replay window only headlessly; its path, visit-map and distance functions in `gcrl_maze.plotting` / `gcrl_maze.evaluation` are meant to be reused for RL rollouts
 - [ ] Human baseline in the maze (`experiments/gcrl-maze/human-baseline`, built 2026-11-20): play the twenty named layouts (`layout-01` to `layout-10` stepped, `layout-11` to `layout-20` real time), each with walls hidden before walls shown; the user must stay blind to the maps and to how they were built (don't describe them, don't show images, don't print them). Try the controls first on `--layout-seed 0 --layout-rooms 2`. Only tested headlessly with scripted controls, never with a real gamepad. `layout-01` and `layout-04` are older maps the user may know from earlier notes; the other eighteen were built on 2026-11-20 by a scratch script that is not kept
 - Stored results that the code does not reproduce (found 2026-11-20, differences up to 60 % in single metrics, same conclusions): `dead-key-reinit` (E12) and `linear-logit-term` (E5). Long MLP runs also change slightly with what ran earlier in the same process; run a leaf alone to reproduce its numbers
 
