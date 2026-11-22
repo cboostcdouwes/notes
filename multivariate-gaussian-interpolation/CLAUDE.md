@@ -46,8 +46,16 @@ lifts a rule, update it here in the same step.
 
 - **Implement a feature in full; no commit-sized steps.** Still list the changed files at the end.
   - Set by the user on 2026-11-18 ("This is not a git repo; commit-sized steps aren't needed. Implement it in
-    full").
-  - Ends when the project becomes a git repo; the global git workflow applies from then on.
+    full"), and kept on 2026-11-22 for when the project is a git repository ("The project will still use large
+    changes, as the version control will not be manually managed").
+  - Ends when the user says so.
+- **Once the project is a git repository, Claude may commit on its own; the commits are not reviewed.** This
+  replaces the global rule "never commit" for this repository only.
+  - Set by the user on 2026-11-22 ("autonomous commits are okay in this repository, they will not be reviewed").
+    The project is not a repository yet ("git will be added before implementation", 2026-11-22).
+  - My reading: committing finished work is allowed, and so are commits and refs that tools make for run records.
+    Rewriting history, pushing and anything else beyond committing still need the user's word.
+  - Ends when the user says so.
 - **Stored results have no history, so deletes need care.** Never symlink a project folder into the scratchpad.
   Delete scratch output by naming each directory, never with a `*/` glob, and list what a delete touches first.
   - Set by Claude on 2026-11-21, after `rm -rf <scratch>/alt/*/` followed a symlink and emptied
