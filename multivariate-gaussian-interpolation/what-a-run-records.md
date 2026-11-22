@@ -717,7 +717,7 @@ Checklist:
 - Round 3's answers (2026-11-22): each network's plain forward pass is stored beside the declared calls; a remake after six months or after a clean is enough. No new requirement, no ranking change.
 
 ## Decision
-Draft (2026-11-22; not reviewed by the user yet)
+Reviewed (by the user on 2026-11-22, in open chat after the overview: "Reviewed, execute step 1-2.")
 
 **The choice.** Every run made through the shared training function leaves a record written by own code on plain
 git (O11 with O19 and O21):
@@ -777,8 +777,7 @@ git (O11 with O19 and O21):
 **Known gaps** (none blocks the first step; each is checked or measured while building):
 - R19b: that disposable outputs stay out of the snapshots is not verified (the test was skipped on the user's
   word). Outputs sit outside the repository and are not versioned.
-- Run time with the experience recorded is not resolved (52.9 s against 42 to 49 s); to measure with the
-  experience as a setting.
+- Run time with the experience recorded: measured on 2026-11-22, about 9 % (see *Progress on the plan*, step 6).
 - Not run in a draft: the commit of everything before a run; a human session's record; continuing from a killed
   run's state; a remake with an old lock file's libraries; pointing the environment package at the temporary tree
   inside a remake (that it can take precedence was checked apart); the raw functions; stored functions for
@@ -806,9 +805,46 @@ resumes its round 2 on this one.
 
 Decision checklist:
 - [x] Stop condition: no new requirements, no ranking change, nothing deciding left unverified (round 3; R19b and R16's amount are known gaps, said above)
-- [ ] Why and Rejected: each on a requirement the user confirmed; confirmed by the user
+- [x] Why and Rejected: each on a requirement the user confirmed; confirmed by the user (shown in the overview; "Reviewed", 2026-11-22)
 - [x] Known gaps and open child decisions: listed in *Decision*
-- [ ] Documentation: updated where the rule takes effect; overstated requirements corrected; commit message proposed
-- [ ] Out of scope: noted where open work is kept
+- [x] Documentation: the project `CLAUDE.md` (the blindness rule's wording, a pointer to this decision; the commit rule was written on 2026-11-22), `TODO.md`, the parent log. No design document exists in the project; this *Decision* is the record. No commit message: the project is not a repository yet
+- [x] Out of scope: continuing a run (R13), the check of cited IDs (R14) and the later layers are in `TODO.md`
 - [x] Overview: choice, pros and cons, rejected, gaps, plan, files (given in the chat on 2026-11-22)
-- [ ] Review: in open chat; nothing implemented before it
+- [x] Review: in open chat, 2026-11-22; nothing was implemented before it
+
+**Progress on the plan**
+- Step 1, done 2026-11-22: `gcsl.train` calls `require_played`; `experiments/gcrl-maze/gcsl/test_gcsl.py` holds the
+  test (it failed before the change: training started with no session files; it passes after, and a played layout
+  still trains).
+- Step 2, done 2026-11-22 (the user: "Create the repository, then execute the rest of the steps."): `.gitignore`
+  in the project root (the Python environment and caches; `*.npz` and `*.mp4`); first commit `e7cca41`, 351
+  files, 19.3 MB: code, READMEs, the lock file, the six human session files, and the small files of existing
+  results (curves, figures, probe scripts, logs). Out: 39 network files and 21 videos, 10.65 GB. The layout file
+  is in the history in plain text, so the repository must not be published as it is (rule in `CLAUDE.md`).
+- Steps 3 to 5, done 2026-11-22, commits `adb8eca` (code and tests), `7c9dab6` (READMEs), `69f4558` (a fix to the
+  list): `experiments/gcrl-maze/gcsl/runs.py` is the record and its commands; `gcsl.train` opens a record and
+  returns its ID; every method declares its calls; the figure, `gcsl_video.py` and `wgcsl/value_function.py`
+  read records (`--label` replaces `--results`); `human-baseline/run.py` commits the code before a session and
+  the session's files after it; the list leaves out layouts not played in both conditions. 36 tests
+  (`test_runs.py`, `test_gcsl.py`, `human-baseline/test_run.py`).
+  - Checked in a scratch clone, each once, on layout-02 with one model and 8 environments: a run of the model
+    method through its script; list and sizes; the three videos from the record; a WGCSL run and its value
+    function figures; cleaning the large tier (the figure still redraws, the videos name the remake command);
+    a remake (0.0149 against 0.0165 shortfall, 0.0078 against 0.0096 with a perfect last step), after which the
+    videos show the remade run; a probe from an untracked script, found in its run's commit, and its remake;
+    removal refused for a run with a remake, done for the remake, refused for an empty ID.
+  - Sizes per run of the model method: record 11 KB, experience 2.9 MB, large 138 MB (81 evaluations of every
+    network, 126 MB, the same as the checkpoint file before the record; state 6 MB; stored functions 56 KB).
+  - Not checked: a run in the project itself (no run has been made there yet; only the default outputs folder,
+    `~/.cache/multivariate-gaussian-interpolation/runs`, was confirmed); a human session played with the changed
+    `run.py` (its two tests pass, the window was not opened); a remake with another lock file; two runs at once
+    on the final code.
+- Step 6, measured 2026-11-22 (wall time of a whole run of the model method through its script, layout-02, one
+  model, 8 environments, three runs each, taken in turns): before the record 51.1, 51.9, 51.1 s; with the
+  experience 56.8, 56.3, 56.6 s; without it 52.0, 52.1, 51.4 s. The record costs about 0.4 s (within the
+  spread); the experience costs about 4.8 s, 9 %. An earlier set of three (training time only) gave 54.1 s
+  against 50.1 s. Default: the experience is recorded (`--no-record-experience` switches it off), chosen by the
+  assistant because the experience cannot be had later without a remake and the setting is cheap to change;
+  the user named run time as a limit, so the choice is theirs to overturn. Where the 4.8 s go (compiling or
+  running) was not looked into.
+- Step 7, open: after the record has been in use, ask the user what using it showed.

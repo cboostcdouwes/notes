@@ -100,7 +100,13 @@ annotations/comments for the agent anywhere in the program."
 - [gcrl-discontinuous-test-environment.md](gcrl-discontinuous-test-environment.md): the maze environment (decided).
 - [gcrl-real-world-problem-statement.md](gcrl-real-world-problem-statement.md): the problem the agents are scored on.
 - The long-term project structure (run records, protocol, version control): discussed 2026-11-22, no log, undecided.
-- **What a run records**: [what-a-run-records.md](what-a-run-records.md), open, to be decided first (user, round 1).
+- **What a run records**: [what-a-run-records.md](what-a-run-records.md), decided and reviewed by the user on
+  2026-11-22 (it was to be decided first: user, round 1). What it gives this decision: a run's ID is its date, time
+  and a free label; its record is a folder of plain files in the repository with a score line per evaluation as it
+  happens (live results); the experience and the networks are two disposable tiers that are made again by a
+  remake, which is a new run naming its parent; a run stores what its networks can be asked as functions that
+  need no project code, with each network's plain forward pass, loadable for six months; a list by scanning the
+  records; pins. Its build is under way (its plan); round 2 of this decision can start on it.
   Its problem formulation started on 2026-11-22. First answers that touch this decision (user, 2026-11-22): a run
   is a method's training run in the maze, a probe or a human baseline session, so all three are things this
   decision's views may be asked to show; a stored run is also for making it again, continuing it and tracing a

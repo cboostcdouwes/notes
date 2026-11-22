@@ -12,8 +12,9 @@ lifts a rule, update it here in the same step.
   - Set by the user on 2026-11-20 ("I'd like to stay blind to the layouts until the proper runs") and 2026-11-21
     ("Evaluate on layouts 1 to 3 only, as I have not seen the others and I must remain blind to them").
   - Why: the user plays them with the walls hidden as the human baseline. Seeing one cannot be undone.
-  - Ends per layout, when the user has played it in both conditions. `gcsl.require_played` refuses the others;
-    every new script that takes a layout must go through it.
+  - Ends per layout, when the user has played it in both conditions. `gcsl.require_played` refuses the others:
+    training calls it by itself (`gcsl.train`), so probes are covered; every new script that shows or computes
+    something of a layout without training must call it.
 - **Layouts are named by number only** (`layout-01`, ...); never reveal another name for one.
   - Set by the user on 2026-11-20 ("Do not reveal the named layout names to me (name them `layout-01` etc.)").
   - Ends: never, unless the user says so.
@@ -49,19 +50,26 @@ lifts a rule, update it here in the same step.
     full"), and kept on 2026-11-22 for when the project is a git repository ("The project will still use large
     changes, as the version control will not be manually managed").
   - Ends when the user says so.
-- **Once the project is a git repository, Claude may commit on its own; the commits are not reviewed.** This
-  replaces the global rule "never commit" for this repository only.
+- **Claude may commit on its own in this repository; the commits are not reviewed.** This replaces the global
+  rule "never commit" for this repository only.
   - Set by the user on 2026-11-22 ("autonomous commits are okay in this repository, they will not be reviewed").
-    The project is not a repository yet ("git will be added before implementation", 2026-11-22).
-  - My reading: committing finished work is allowed, and so are commits and refs that tools make for run records.
-    Rewriting history, pushing and anything else beyond committing still need the user's word.
+    The project is a git repository since 2026-11-22 (branch `main`, no remote).
+  - My reading: committing finished work is allowed, and so are the commits the run record makes (the working
+    tree before a run, the record after it). Rewriting history, pushing and anything else beyond committing still
+    need the user's word. Commit messages are conventional commits.
+- **The repository must not be published as it is.** Its history holds the layout file in plain text, and a run
+  commits every file in the working tree, also untracked ones.
+  - Set by Claude on 2026-11-22, from the blindness rule and the run record's design. Ends when the user decides
+    how the layouts are kept out of a published history.
   - Ends when the user says so.
 - **Stored results have no history, so deletes need care.** Never symlink a project folder into the scratchpad.
   Delete scratch output by naming each directory, never with a `*/` glob, and list what a delete touches first.
   - Set by Claude on 2026-11-21, after `rm -rf <scratch>/alt/*/` followed a symlink and emptied
     `experiments/gcrl-maze/wgcsl/results`; the user restored it from a snapshot (snapper keeps them under
     `/home/.snapshots`, readable by root only).
-  - Ends when results are under version control or backed up in a way the user confirms.
+  - Ends when results are under version control or backed up in a way the user confirms. On 2026-11-22 the
+    records and small result files are in git; the large outputs (networks, videos, experience) are not, and
+    the run record's own commands (`runs.py clean`, `runs.py remove`) are the way to delete those.
 - **Say how much evidence a result has**: layout, models, environments and the number of seeds. One model's
   score varies a lot between seeds (the same method: 1.3 % and 5.2 % of steps wasted), so only large differences
   count. (Claude's working rule.)
@@ -71,10 +79,21 @@ lifts a rule, update it here in the same step.
 - **The problem and its scores:** `PROBLEM_STATEMENT.md` in the project root. A change of goal goes through that
   file, with the user's decision and its date.
 - **Open work and what was found:** `TODO.md` next to this file. Keep it current.
+- **Design decisions:** the research logs next to this file. Decided: what a run records
+  (`what-a-run-records.md`, its *Decision* and plan). Open: inspecting results (`inspecting-experiment-results.md`).
 - **Experiments:** `experiments/README.md` and, for the maze, `experiments/gcrl-maze/README.md`, with one README
   per experiment folder (`human-baseline`, `gcsl`, `wgcsl`, `quasimetric`). The environment is the package
   `packages/gcrl-maze`.
-- **Probes:** try-outs that are not part of a method are kept under an experiment's `results/probes/<name>/`,
-  with their scripts as `.py.txt` and their curves. They run on `gcsl.py` patched in memory.
+- **Runs and their records:** every run through `gcsl.train` commits the working tree, writes a record under
+  `runs/<id>/` in the repository (ID: date, time and a label) and puts its experience and large outputs under
+  `~/.cache/multivariate-gaussian-interpolation/runs/` (or `$RUN_OUTPUTS`). `experiments/gcrl-maze/gcsl/runs.py`
+  lists, sizes, pins, remakes, cleans and removes runs; `experiments/gcrl-maze/README.md` describes it.
+- **Probes:** try-outs that are not part of a method. A probe that trains leaves a record like any run, with its
+  script in the run's commit: give it a label (`--label NAME`, or the script's name). The probes made before
+  2026-11-22 are under an experiment's `results/probes/<name>/`, with their scripts as `.py.txt` and their
+  curves; they ran on `gcsl.py` patched in memory and have no record, and their patches may not fit the code
+  any more.
 - **Running:** from an experiment's folder, `uv run python <script>.py NUMBER`; `--plot-only` redraws a figure
-  without training.
+  from the records without training; `--label NAME` keeps a try-out apart from the method's own runs.
+- **Tests:** from `experiments/gcrl-maze`, `uv run pytest gcsl human-baseline`; the environment's are in
+  `packages/gcrl-maze`.
