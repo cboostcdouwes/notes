@@ -106,6 +106,10 @@ annotations/comments for the agent anywhere in the program."
   decision's views may be asked to show; a stored run is also for making it again, continuing it and tracing a
   reported number back to it; disk space and run time are limits; not every run is kept for good. To weigh in
   round 2 against R1, R9 and R11, not before.
+  Second answer (user, 2026-11-22): large run outputs are to be disposable and made again by rerunning, with
+  approximately the same results ("the same conclusions"). For this decision that means a view of "run X at step
+  N" may be computed from networks that are not the ones the first run had; whether an address and a remark may
+  rest on that is open in the child log (its open question 3) and bears on R15 and on A8's addresses.
   This decision's round 2 starts after it: an address needs a run's name, live results need a write at every
   evaluation, and "what data it saw" needs the data stored.
 
