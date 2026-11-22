@@ -101,6 +101,11 @@ annotations/comments for the agent anywhere in the program."
 - [gcrl-real-world-problem-statement.md](gcrl-real-world-problem-statement.md): the problem the agents are scored on.
 - The long-term project structure (run records, protocol, version control): discussed 2026-11-22, no log, undecided.
 - **What a run records**: [what-a-run-records.md](what-a-run-records.md), open, to be decided first (user, round 1).
+  Its problem formulation started on 2026-11-22. First answers that touch this decision (user, 2026-11-22): a run
+  is a method's training run in the maze, a probe or a human baseline session, so all three are things this
+  decision's views may be asked to show; a stored run is also for making it again, continuing it and tracing a
+  reported number back to it; disk space and run time are limits; not every run is kept for good. To weigh in
+  round 2 against R1, R9 and R11, not before.
   This decision's round 2 starts after it: an address needs a run's name, live results need a write at every
   evaluation, and "what data it saw" needs the data stored.
 
