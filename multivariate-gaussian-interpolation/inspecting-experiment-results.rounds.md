@@ -12,6 +12,9 @@
 | R16 | It costs little effort to keep working as methods and experiments change. The effort to build it, and breakage when tools it depends on change, do not count | | user, 2026-11-22; scope round 1 ("Neither") | R16b (round 2): libraries preferred over own code the user would keep |
 | R1 | A run of any method in the project can be inspected the same way, without the inspection depending on that method | | user's request, 2026-11-22 | R1b (round 2): "Where it can" |
 | R22 | Results stay on the workstation; a page with them is published elsewhere only when the user asks for one | | user, round 1 | R22b (round 2): "Local network ok" |
+| R26 | The controls live inside the viewer's own interface, not in a separate input box around it | | user, round 2 | R26b (round 3): "Must be Rerun's UI" |
+| R24 | A remark can mark the part of the view by drawing on it, anywhere; at least by selecting an area | | user, round 2 | R24b (round 3): "Area is enough" |
+| R14 | It can be used from another machine over a network | | user, 2026-11-22 | R14b (round 3): "Live page only" |
 | R21 | Everything about a run can be seen combined in one interactive view, with elements that can be switched on and off | | user, round 1 | R21b (round 2): "Layers I can switch" |
 
 ## Dropped requirements
@@ -159,3 +162,14 @@ Start, the user's choice of what to try: "Custom Rust viewer" (not chosen: "Pyth
 servers: "Stop them" (stopped). The trade-off said before the choice: own Rust code against Rerun's unstable
 internals weighs against R16b ("less own code"); a spike, not a decision. Pushback, if the spike leads to choosing
 it, is due at the decision.
+Done in round 3: the spike of H1 by one agent (`r3/`, offscreen tests, MCP probe); the researcher read Rerun's
+MCP docs, `viewer_control.proto` and `ViewerClient` (H2); bias and rejection checks. No web search by the
+researcher; the spike read Rerun's repository at 0.43.2.
+After the checks (2026-11-23): A2b, H3, H4 added; H1's lead thin (R24 ~ against ?; R26's reason not asked); B4b's
+and A3's R26 corrected to ✓ and B4b's R18b to ~ (the user's verdict on the look); H1's R17 and R18b to ?.
+
+## Round 3: the user's answers (2026-11-23)
+R26: "Must be Rerun's UI" (R26b, a must); R24: "Area is enough" (R24b); R14: "Live page only" (R14b); remarks:
+"No remarks". The question named H1's cost (Rust that breaks with Rerun releases, desktop only); the user chose
+knowing it. Effect: H1 leads; A2 and A2b not applicable on R26b; H2 trails on R24b. H1's R16b ~ stays the known
+cost. Not yet: the user seeing H1's window (R17, R18b by eye), R2, R12, R21b's priority.
