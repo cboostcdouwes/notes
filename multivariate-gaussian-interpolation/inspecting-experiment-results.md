@@ -1175,5 +1175,22 @@ Decision checklist:
   learned time-to-goal over the map 0.57 s, the method's own network). 12 Python and 2 Rust tests pass. Committed
   (`5637238`). `.mcp.json` registers Rerun's MCP server (the user's word, 2026-11-23); Claude Code asks the user to
   approve it on its next start. The live page (`live.py`) lists training runs only.
+- 2026-11-23, on the user's request ("Fix the bug and build the replay, on both pages"): runs in progress are shown
+  (the core read outputs through `runs.with_outputs`, which accepts finished runs only: R13 was not met); the
+  agents of every training environment are replayed per recorded stretch, in the window on the evaluations' step
+  timeline (a dot, a trail of 6 steps, the commanded goal) and on the live page (the last 1,200 steps of the latest
+  stretch, looped, for a running run; 322 kB per page). Not real time: a stretch is written when it ends (at most
+  about 3 s late in today's runs); the user chose this over callbacks from the compiled training loop. Checked with a
+  run trained while both followed it (`viewer-live-check`, removed afterwards with `runs.py remove`). Also: ports as
+  settings, the core no longer reserves 75 % of the GPU (the user's open viewer had taken 6 GB), the companion
+  answers only once loaded. 15 Python tests pass. Commits `2f70f8e`, `d84dbca` (the check run's removal) and the
+  README. Known cost: while a run trains, each new evaluation recomputes the goal and start layers of all moments
+  (4 to 7 s, recompiled as the number of moments grows).
+- 2026-11-24, on the user's request ("Limit the recompute to the new moments"): the core computes any subset of
+  moments, and a refresh keeps the compiled calls and each moment's networks (it had dropped them every 5 s, so each
+  new evaluation compiled again); the companion logs only the new moments' visits and goal and start layers. With a
+  run trained while the window followed it (removed afterwards): 1.1 to 1.7 s per check, 4.4 s the first time,
+  against 4 to 7 s before. 16 Python tests. Commits `def5769`, README. The check run's code commit (`ed103a4`) also
+  took in the user's uncommitted `human-baseline/results/summary.png`.
 - Open: step 6, once the user has used the viewer; the spike folder `~/.cache/claude-r3-spike/` (Rerun's source and
   the drafts) can go after that.
