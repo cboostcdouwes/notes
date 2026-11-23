@@ -136,6 +136,16 @@
 - [ ] Before protocol 1.0: decide what a major protocol bump means for older read-only clients (reads are open to
       every version today).
 
+## Web debug panel (branch `feature/web-panel`, probe in `web-panel/`)
+
+- [ ] Commit the first step: `client/serve_panel.py`, `web` extra, end-to-end test, DP-15 – DP-18 (2026-11-23)
+- [ ] Decide what a dropped browser link must do to a tab's claims: today only a dead panel process runs the
+      fallback; a closed tab, a silent link (~23.5 s) and a dead launcher (orphan holds claims) don't
+- [ ] Interlock pairs as a three-way switch (`Vacuum | Off | Release`), built from the interlock: add the interlock
+      kind to `SignalInfo`; decide whether `FlipperUp`/`FlipperDown` becomes one too
+- [ ] Decide whether the server enforces the `SledVacuum`/`SledRelease` order (pair spans two terminals, so an
+      ordered rather than atomic interlock); nothing enforces it today
+
 ## Small fixes
 
 - [ ] Stale `SLED_AXIS_CONFIG` references: README *Sled travel limits* says the limits live in
