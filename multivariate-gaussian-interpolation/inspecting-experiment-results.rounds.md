@@ -173,3 +173,31 @@ R26: "Must be Rerun's UI" (R26b, a must); R24: "Area is enough" (R24b); R14: "Li
 "No remarks". The question named H1's cost (Rust that breaks with Rerun releases, desktop only); the user chose
 knowing it. Effect: H1 leads; A2 and A2b not applicable on R26b; H2 trails on R24b. H1's R16b ~ stays the known
 cost. Not yet: the user seeing H1's window (R17, R18b by eye), R2, R12, R21b's priority.
+
+## Round 3: the user tries H1 (2026-11-23)
+"Show the draft Rerun version": H1 started on the desktop. The user's remark through the pencil (09:48): "I want to
+see the OOD value function here, can the walls be hidden?" (a stroke round the top-left corridor and the wall above
+it on the quasimetric-model map; the stroke had no map coordinates). Faults seen in that remark: no map coordinates
+for the stroke, the toolbar's moment stale against the address, the screenshot caught the remark box fading out.
+Asked: "Make the learned layer also show OOD areas. Can the pencil map area be fixed?" Done: the learned
+time-to-goal over the whole map, walls included (`core.value_map`); walls can already be hidden with the layer's eye
+icon. On the quasimetric-model network at its last moment, goal (11.2, 10.7): learned steps in free space 0.2 to
+67.4 (median 35.4), inside walls 2.0 to 74.8 (median 37.1); one network, one goal. New requirement R27, priority
+to ask in round 4.
+The pencil: offered (1) the screenshot only, (2) reading the views' bounds from Rerun's blueprint store, about 50
+lines, (3) asking Rerun upstream for a hover or view-transform event, (4) patching Rerun. The user: "50 more lines
+is acceptable as it's temporary, and the rerun viewer brings many other benefits. Go for option 2." Built and
+tested (see the log's spike section); it took about 80 lines and 65 of tests.
+Incident: the session scratch folder was emptied around 20:19 (the core, the scratch clone and its runs, all
+drafts, `remarks.jsonl` with the user's remark and its screenshot). The project, its `.venv` and the notes were
+untouched. The core and the viewer were rebuilt from the session transcripts into `~/.cache/claude-r3-spike/work/`,
+the two runs made again (new IDs `20261123-204911-quasimetric-model`, `20261123-205038-gcsl`); the remark's
+text and address are kept here, its screenshot is lost. The first clone had linked the project's `.venv` into the
+scratch folder; the new clone does not.
+Then (2026-11-23): "Also display the value function from the start to any point of the map, I'm especially
+curious about the OOD values of that map." Added: `core.value_from` (learned time from the start to every grid point,
+walls included; the true one over free space) and the layers `learned_from_start` and `true_from_start`, logged
+for every moment when the start changes. Quasimetric-model at its last moment, start (3, 11): learned 0.2 to 54.4
+steps in free space (median 20.8), 2.7 to 60.2 inside walls (median 26.7); 1.35 times the true steps (median, free
+space); d(start, x) and d(x, start) differ by 0.9 steps (median) in free space and 2.0 inside walls. One network, one
+start. Part of R27.

@@ -161,6 +161,7 @@ annotations/comments for the agent anywhere in the program."
 | R26b | The controls (goal, start, remark) are part of the viewer's own interface, not HTML around or over it | | user, round 3 (2026-11-23: "Must be Rerun's UI", offered as "the controls have to be part of Rerun's own interface", with H1's cost named in the question); replaces R26 | must (as answered; what breaks not asked) | yes (2026-11-23) |
 | R24b | A remark can mark the area of the view it is about (an area or a point is enough); drawing it freehand is a could | To show the assistant exactly where the remark is about | user, round 3 (2026-11-23: "Area is enough"); replaces R24 | should (the area); could (the pencil) | yes |
 | R16b | It costs the user little effort to keep working as methods and experiments change: what a maintained library does is preferred over own code the user would have to keep. The effort to build it does not count | Own code has to be maintained; a library is "more future proof" | user, round 2 (2026-11-23: "I have a preference for using libraries wherever possible as they are more future proof and I don't have to maintain them myself (R16)"); replaces R16, whose scope (round 1) excluded breakage by tool updates. What "future proof" means: "Less own code" (round 2 follow-up); a library's API changes stay acceptable | should | yes |
+| R27 | A method's learned functions can be seen also where the agent has never been (inside walls, out of the data's reach), next to the same function where it has | To see what the method makes of states it was not trained on | user's remark in H1, 2026-11-23 ("I want to see the OOD value function here, can the walls be hidden?") | not asked (round 4) | yes (meaning); priority not asked |
 | R17 | Getting from a question about a run to seeing the answer is quick | | user, 2026-11-22 (value) | should | yes |
 | R18b | It is pleasant to use: moving through training glides, and values can be read under the cursor | Stepping through static pictures was offered and not accepted | user, round 1 ("Smooth matters"); replaces R18 | should | yes |
 | R19 | A layout is shown by its number only, never by another name | The user must not learn another name for a layout | project `CLAUDE.md` (user, 2026-11-20); raised by the round-1 bias check | must | yes (standing rule) |
@@ -713,7 +714,10 @@ static, with no value under the cursor and no zoom; the process must be restarte
 grid scrolls sideways.
 
 ### The spike and its stress test (round 3)
-`r3/` in the session scratch folder: `viewer/` (Rust crate: `src/lib.rs` about 329 lines, `src/main.rs` 23,
+Moved on 2026-11-23 to `~/.cache/claude-r3-spike/work/` (`r2/` the core and a scratch clone with two runs made
+again, `r3/` the viewer) after the session scratch folder was emptied; rebuilt from the session transcripts.
+Changes after the user tried it (2026-11-23): the learned layer covers the walls too (R27); strokes get map
+coordinates that hold through pan and zoom (below). Originally `r3/` in the session scratch folder: `viewer/` (Rust crate: `src/lib.rs` about 329 lines, `src/main.rs` 23,
 `tests/drive.rs` 127), the adapted companion `app.py` (42 lines changed from round 2's), `drive.sh`, `mcp_probe.py`,
 screenshots. Build folder `~/.cache/claude-r3-spike/target` (4.2 GB) and a Rerun source clone
 `~/.cache/claude-r3-spike/rerun-src` (89 MB), both kept for now.
@@ -741,8 +745,17 @@ Harms a few steps ahead, for H1:
   read it (W2).
 - **Desktop only**: looking from a phone or another machine (done once in round 2) is lost unless a custom web build
   is made, which Rerun does not support outside its repository.
-- **A remark's map coordinates can be wrong** after the user zooms; the screenshot with the strokes stays right, so
-  the assistant should trust the picture over the coordinates until the transform is read properly.
+- **A remark's map coordinates** were wrong after a pan or zoom; fixed on the user's choice (2026-11-23, of four
+  ways offered: rely on the screenshot, read the bounds, ask Rerun upstream, patch Rerun). The viewer reads each map
+  view's visual bounds from the blueprint store (`StoreHub`, `ViewportBlueprint::from_db`, `EntityDb::latest_at_component`:
+  Rerun's internal crates) and fits one centre and one scale per view from two clicks, which holds through any pan
+  and zoom because Rerun letterboxes the bounds and keeps their aspect. Tested: unit tests against Rerun's letterbox
+  formula (a pan and a zoom, a wide and a tall view, error under 0.001 map units); offscreen, after a real pan and
+  zoom, a stroke's centre came out at (5.605, 6.945) where Rerun's own click there reported (5.6, 6.9). Still
+  wrong until the next two clicks after a change of the panel layout (a window resize drops the fit); needs two
+  clicks on a map before strokes get coordinates. Cost: about 80 lines of Rust and 65 of tests; `lib.rs` 538 lines.
+  Rerun keeps the view's transform and the hover position private (`ui_2d.rs`, `AppState.view_states` is
+  `pub(crate)`), so any exact route goes through internals: weighs on R16b.
 - **Disk and build**: 4.2 GB of build output per checkout; a clean build per Rerun upgrade.
 
 ### The drafts and their stress test (round 2)
@@ -946,3 +959,4 @@ Checklist:
 - After round 2's answers (2026-11-23): Rerun (A2) leads on the user's trial ("awesome, much better than the hand-rolled version") and R16b (less own code); the own page is kept only as a simple live-run page (R25); R23 a must; R24 a pencil anywhere in the interface. Round 3 tries a custom Rerun viewer in Rust, on the user's choice.
 - Round 3 (2026-11-23): the custom Rerun viewer (H1) spiked and tested offscreen; Rerun's MCP server gives the assistant the viewer with no own code. Before the checks H1 led; after them H1 and A2b (the stock web viewer with controls floating over it, not drafted) are close, deciding on R26's reason, R24's priority and R14.
 - After round 3's answers (2026-11-23): R26b (controls part of Rerun's own interface) is a must, so H1 leads and A2, A2b fall out; R24b an area is enough (the pencil a could); R14b the phone needs only the live page. Next: the user tries H1 on the desktop (R17, R18b by eye), the remaining questions (R2, R12, R21b's priority), then the decision.
+- The user tried H1 (2026-11-23): one remark came through; R27 new (learned functions out of the data's reach), its priority for round 4; the pencil's map coordinates fixed by reading the views' bounds (Rerun internals, about 80 lines). No ranking change.
