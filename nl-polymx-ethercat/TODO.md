@@ -147,6 +147,17 @@
 - [ ] Decide whether the server enforces the `SledVacuum`/`SledRelease` order (pair spans two terminals, so an
       ordered rather than atomic interlock); nothing enforces it today
 
+## Light lift offset (branch `feature/light-lift-offset`, `light-lift-offset.md`)
+
+- [x] Agree the step plan (2026-11-23; revised: offset is the only calibration)
+- [ ] Step 1: `offset_um` in `light-lift.toml` replaces `home_below_sled_base_um`; height = light 1
+      (written and tested 2026-11-23, awaiting commit)
+- [ ] Step 2: `SetOffset` and `offset_um` in the state
+- [ ] Step 3: Python client
+- [ ] Step 4: debug panel; decide the step-button question in the design doc's *Open*
+- [ ] When step 1 lands: mark the *JAT ECOMODUL axis* item on measuring `home_below_sled_base_um`
+      as superseded (sled base dropped, user 2026-11-23)
+
 ## Small fixes
 
 - [ ] Stale `SLED_AXIS_CONFIG` references: README *Sled travel limits* says the limits live in
