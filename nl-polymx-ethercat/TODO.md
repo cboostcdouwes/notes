@@ -138,9 +138,10 @@
 
 ## Web debug panel (branch `feature/web-panel`, probe in `web-panel/`)
 
-- [ ] Commit the first step: `client/serve_panel.py`, `web` extra, end-to-end test, DP-15 – DP-18 (2026-11-23)
+- [x] First step: `client/serve_panel.py`, `web` extra, end-to-end test, DP-15 – DP-18 (`c966ab6`, 2026-11-23)
+- [ ] Commit the compose step: `panel` service (profile `panel`), `docker/panel/Dockerfile`, DP-19 (2026-11-23)
 - [ ] Decide what a dropped browser link must do to a tab's claims: today only a dead panel process runs the
-      fallback; a closed tab, a silent link (~23.5 s) and a dead launcher (orphan holds claims) don't
+      fallback; a closed tab and a silent link (~23.5 s) don't, nor a dead launcher outside a container
 - [ ] Interlock pairs as a three-way switch (`Vacuum | Off | Release`), built from the interlock: add the interlock
       kind to `SignalInfo`; decide whether `FlipperUp`/`FlipperDown` becomes one too
 - [ ] Decide whether the server enforces the `SledVacuum`/`SledRelease` order (pair spans two terminals, so an
