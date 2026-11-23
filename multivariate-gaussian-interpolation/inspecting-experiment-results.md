@@ -153,7 +153,7 @@ annotations/comments for the agent anywhere in the program."
 | R9 | A relevant result can be found without knowing where it is stored | "it's difficult to navigate and find relevant results"; outputs are spread over many files | user, 2026-11-22 | must | yes (part of the problem the user confirmed, 2026-11-22) |
 | R10b | The user chooses the run, the moment in training and any point of the map as goal and as state, among kinds of view that exist, without the assistant writing code | Today every new look needs a new script from the assistant; a fixed set of goals and states is not enough | user, round 1 ("Any point"); replaces R10 | must | yes |
 | R11 | Any runs, methods and seeds can be put side by side | Comparing runs is hard today | user, 2026-11-22 | must | yes (part of the problem the user confirmed, 2026-11-22). Scope from round 1: runs made after the run record is in place; "Old runs don't matter" |
-| R12 | A view makes clear what the agent is doing and why it fails | Today's outputs are "hard to interpret" | user, 2026-11-22 | should (as claimed) | no |
+| R12 | A view makes clear what the agent is doing and why it fails | Today's outputs are "hard to interpret" | user, 2026-11-22 | should | yes: the views of round 4 (arrows, path, learned and true values to the goal and from the start, visits, score curve) are "Enough for now"; new ones come later as needed (R3) (user, round 4) |
 | R13 | A run's results can be seen as they come in, while it trains | Without it the work is slower, not broken (the user's answer) | user's remark and answer, 2026-11-22 | should | yes |
 | R14b | Runs in progress can be followed from the phone or another machine through the light page of live runs (R25); the full viewer may be desktop only | | user, round 3 (2026-11-23: "Live page only"); replaces R14 | could (as R14 and R25) | yes |
 | R15 | The user can attach a remark to what they are looking at, and the assistant receives it together with what it refers to | To tell the assistant exactly which run, moment and place is meant, and to leave questions and instructions next to the evidence for a later session; without it the assistant may look at the wrong thing and observations get lost between sessions | user's remark and answer ("Both"), 2026-11-22 | should ("Important, not essential", user, round 1) | yes |
@@ -161,12 +161,12 @@ annotations/comments for the agent anywhere in the program."
 | R26b | The controls (goal, start, remark) are part of the viewer's own interface, not HTML around or over it | Several UI frameworks or layers stacked on one another seem prone to breakage (user, round 4: "I really dislike having multiple stacked UI frameworks or layers as that seems prone to breakage.") | user, round 3 (2026-11-23: "Must be Rerun's UI", offered as "the controls have to be part of Rerun's own interface", with H1's cost named in the question); replaces R26 | must (as answered; what breaks not asked) | yes (2026-11-23) |
 | R24b | A remark can mark the area of the view it is about (an area or a point is enough); drawing it freehand is a could | To show the assistant exactly where the remark is about | user, round 3 (2026-11-23: "Area is enough"); replaces R24 | should (the area); could (the pencil) | yes |
 | R16b | It costs the user little effort to keep working as methods and experiments change: what a maintained library does is preferred over own code the user would have to keep. The effort to build it does not count. Own Rust that the assistant updates with each Rerun upgrade, with a rebuild of about 12 minutes, is acceptable long-term (user, round 4: "Fine long-term") | Own code has to be maintained; a library is "more future proof" | user, round 2 (2026-11-23: "I have a preference for using libraries wherever possible as they are more future proof and I don't have to maintain them myself (R16)"); replaces R16, whose scope (round 1) excluded breakage by tool updates. What "future proof" means: "Less own code" (round 2 follow-up); a library's API changes stay acceptable | should | yes |
-| R27 | A method's learned functions can be seen also where the agent has never been (inside walls, out of the data's reach), next to the same function where it has | To see what the method makes of states it was not trained on | user's remark in H1, 2026-11-23 ("I want to see the OOD value function here, can the walls be hidden?") | not asked (round 4) | yes (meaning); priority not asked |
+| R27 | A method's learned functions can be seen also where the agent has never been (inside walls, out of the data's reach), next to the same function where it has | To see what the method makes of states it was not trained on | user's remark in H1, 2026-11-23 ("I want to see the OOD value function here, can the walls be hidden?"); priority: user, round 4 ("Should") | should | yes |
 | R17 | Getting from a question about a run to seeing the answer is quick | | user, 2026-11-22 (value) | should | yes |
 | R18b | It is pleasant to use: moving through training glides, and values can be read under the cursor | Stepping through static pictures was offered and not accepted | user, round 1 ("Smooth matters"); replaces R18 | should | yes |
 | R19 | A layout is shown by its number only, never by another name | The user must not learn another name for a layout | project `CLAUDE.md` (user, 2026-11-20); raised by the round-1 bias check | must | yes (standing rule) |
 | R20 | A shown result says how much evidence it has: layout, models, environments, seeds | One model's score varies a lot between seeds | project `CLAUDE.md` (the assistant's working rule); user, round 2 (2026-11-23: "Could") | could | yes |
-| R21b | The elements of the view (layers) can be switched on and off; maps, curves and runs may sit in panels with their own controls | | user, round 2 (2026-11-23, "Layers I can switch"); replaces R21 | should (assumed: no priority given) | yes (meaning); priority not asked |
+| R21b | The elements of the view (layers) can be switched on and off; maps, curves and runs may sit in panels with their own controls | | user, round 2 (2026-11-23, "Layers I can switch"); replaces R21 | must (user, round 4: "Must"; what breaks not asked) | yes |
 | R22b | Results stay on the workstation and the local network; a service outside it (a cloud service, a published page) gets them only when the user asks | | user, round 2 (2026-11-23: "Local network ok"); replaces R22 | must (as stated; what breaks was offered, not chosen) | yes (scope); its reason not given |
 | R23 | A human baseline session can be inspected like a run and put next to an agent's runs on the same layout | The person is the baseline every method is measured against; the child decision counts a session as a run | user, round 2 (2026-11-23: "Must"); first inferred from the child log | must | yes (user, 2026-11-23; what breaks without it not asked) |
 | W3 | Existing runs can be inspected | "Old runs don't matter": only runs made after the run record is in place need to be inspectable. Would come back if an old result has to be re-examined | user, round 1 | won't | yes |
@@ -1071,5 +1071,109 @@ Checklist:
 - Round 3 (2026-11-23): the custom Rerun viewer (H1) spiked and tested offscreen; Rerun's MCP server gives the assistant the viewer with no own code. Before the checks H1 led; after them H1 and A2b (the stock web viewer with controls floating over it, not drafted) are close, deciding on R26's reason, R24's priority and R14.
 - After round 3's answers (2026-11-23): R26b (controls part of Rerun's own interface) is a must, so H1 leads and A2, A2b fall out; R24b an area is enough (the pencil a could); R14b the phone needs only the live page. Next: the user tries H1 on the desktop (R17, R18b by eye), the remaining questions (R2, R12, R21b's priority), then the decision.
 - The user tried H1 (2026-11-23): one remark came through; R27 new (learned functions out of the data's reach), its priority for round 4; the pencil's map coordinates fixed by reading the views' bounds (Rerun internals, about 80 lines). No ranking change.
+- Round 4's follow-up (2026-11-23): R27 "Should"; R21b "Must"; R12 "Enough for now". No new requirement, no ranking change; R2's scope (other problems such as `attention-toys`) never asked, not deciding (every option ~). Decision drafted.
 - Round 4's answers (2026-11-23): R26b's reason: stacked UI frameworks or layers seem prone to breakage (the marimo, overlay and stock-viewer routes stay out); H1's Rust upkeep "Fine long-term" (R16b); H1 feels "Good" (R17, R18b ✓, verified). H1 leads, no ranking change.
 - Round 4 (2026-11-23): H1 still leads; after the checks H2 is not applicable on R26b (remarks typed in the chat), so B4b is runner-up; A2c (Rerun's widget in marimo) and H5 (upstream request) added. R26b decides the ranking and its reason was never asked: asked now with R16b's scope, R18b by eye, and the priorities of R27 and R21b.
+
+## Decision
+Reviewed (by the user on 2026-11-23, in open chat after the overview: "Reviewed, this is an AI-managed repository;
+make all steps autonomously except for the ones that require my input."). The proposed places stand:
+`experiments/gcrl-maze/viewer/` for the code, `remarks/` in the repository for remarks.
+
+**Choice: H1, a custom Rerun viewer**, on the shared core (A8), with the own page kept as a light page of live runs
+(R25, a could). Parts:
+- the core: an address (kind of view, run, moment, goal, start) in, numbers out, reading runs through the run record
+  and asking networks only through the functions each run stored; the blindness check where runs are listed;
+- a Python companion that logs the core's layers for every moment into the viewer and answers clicks and remarks;
+- the viewer: an own `eframe` app wrapping Rerun's `re_viewer::App` (Rust, pinned to the Python SDK's Rerun
+  version), with a toolbar inside the window (click mode none, goal, start; a pencil whose strokes get map
+  coordinates from the views' bounds; a remark box), Rerun's own layer tree, timeline, hover and panels;
+- the assistant reads the same views through the core (numbers) and Rerun's MCP server (state, screenshots), and
+  the remarks as JSON lines with the address, strokes and a screenshot.
+
+**Why** (each on a requirement the user confirmed):
+- R26b (must): goal, start and the remark box are part of the viewer's own interface; the user's reason (round 4):
+  stacked UI frameworks or layers seem prone to breakage. H1 is the only Rerun route that meets it.
+- R24b (should): a remark marks an area, with map coordinates that hold through pan and zoom (tested).
+- R17, R18b (should): the user used it and finds it "Good"; Rerun's look was preferred over the own page in round 2.
+- R21b (must): layers on and off, panels with their own controls, natively in Rerun.
+- R10b, R15, R7b (musts): any point by click; remarks with their address reach the assistant (tried by the user);
+  the assistant gets the numbers and a picture.
+- R16b (should): its cost, own Rust against Rerun's internal crates updated with each Rerun upgrade, is accepted
+  long-term (user, round 4).
+
+**Rejected**:
+- A2 (Rerun's web viewer in an own page), A2b (controls over the web viewer), A2c (Rerun's widget in marimo), H2
+  (the stock viewer read from Python, remarks in the chat): R26b, must (stacked frameworks; text entry outside Rerun).
+- B4b (the own page): R18b, the user preferred Rerun's look and feel; kept as the light page of live runs.
+- A3 (Bokeh): R18b, steps instead of gliding. B7 (napari): R18b, blocks per moment.
+- Round 1's options that show only stored views: R10b (any point).
+- H3, H4, H5: parts, not rivals (a screen pencil, remarks logged into the recording, requests to Rerun upstream).
+
+**Known gaps**:
+- Desktop only: a custom web build is not supported outside Rerun's repository (R14b needs only the live page).
+- Each Rerun upgrade: Rust edits and a build of 11 to 12 minutes; a 4 to 6 GB build folder.
+- The map fit needs two clicks per map, and is wrong after a change of the panel layout until two more clicks; a
+  click gives a position only over a layer image.
+- The viewer must start before the companion and loses its data when restarted; a new goal re-logs every moment
+  (14 to 15 s in the drafts; a compiled loop over the stored networks measured 10 to 16 ms for arrows and 225 ms
+  for paths).
+- R23 (a human session next to agent runs) is not drafted; R11 tried with two runs only; R20 (evidence label) not
+  drafted; R2's scope not asked.
+- The core's address and the remark format are one-way once remarks cite them.
+
+**Open child decisions**: where the viewer and the core live in the repository and how the Rust crate is built
+next to the Python project; the remark file's place and format; the light page of live runs; whether to file H5.
+The plan proposes a default for the first two, to be settled in the review.
+
+**Out of scope, kept in `TODO.md`**: R2's scope (problems other than the maze, such as `attention-toys`); the
+evidence label (R20); requests to Rerun upstream (H5); a web build.
+
+**Plan** (large steps, as the project's rules allow; the drafts in `~/.cache/claude-r3-spike/work/` are the
+starting point and are kept until step 2 is in use):
+1. **The core** in the project, proposed at `experiments/gcrl-maze/viewer/core.py`: the address-to-numbers views of
+   the draft (maze, curves, moments, field, path, value to the goal, value from the start, visits) with tests, one
+   per rule (blindness check, a wall point refused for a path, learned values over the whole map, the moment a
+   run shows at a time cursor), and a compiled loop over the stored networks so a new goal fills all moments in
+   well under a second; the assistant's command `python core.py KIND RUN key=value`.
+2. **The viewer**: the Python companion and the Rust crate (`viewer/` next to the core, `rerun-sdk` and the
+   `rerun` crate pinned to the same version, build output outside the repository), from the spike with its fixes;
+   one command starts the viewer and then the companion; the companion lists runs only through the core.
+   Remarks, proposed: `remarks/` in the repository, one JSON line per remark and its screenshot, committed like
+   human sessions. The assistant's access: the core's command and Rerun's MCP server (`rerun viewer-mcp`),
+   registered for Claude Code on the user's word.
+3. **Runs side by side** (R11): choose which runs, methods and seeds are shown, beyond the two of the drafts.
+4. **A human baseline session as a run** (R23): its paths on the map next to the agents' on the same layout.
+5. **The light page of live runs** (R25, a could), from the round-2 page, reading the record's score lines.
+6. Once step 2 is in use: ask the user what using it showed; amend this *Decision* or reopen a round.
+
+Decision checklist:
+- [x] Stop condition: no new requirements, no ranking change, nothing deciding left unverified (user, 2026-11-23: "stop the rounds")
+- [x] Why and Rejected: each on a requirement the user confirmed; confirmed by the user (2026-11-23: "Confirmed")
+- [x] Known gaps and open child decisions: listed in *Decision*
+- [x] Documentation: updated where the rule takes effect; overstated requirements corrected; commit message proposed (the notes `CLAUDE.md` points at this decision; nothing is built, so no project document changes yet; no requirement was overstated in a document; commit message for the notes in the chat)
+- [x] Out of scope: noted where open work is kept (`TODO.md`)
+- [x] Overview: choice, pros and cons, rejected, gaps, plan, files (in the chat, 2026-11-23)
+- [x] Review: in open chat; nothing implemented before it (2026-11-23)
+
+**Progress on the plan**
+- 2026-11-23, steps 1, 2, 3 and 5 written in `experiments/gcrl-maze/viewer/` (`core.py`, `companion.py`, `app/`,
+  `live.py`, `README.md`, `test_core.py`, `drive.sh`); `rerun-sdk==0.43.2` added to the project. Step 4 (human
+  sessions) is part of the core and the companion: a session is an item with its blocks as moments, its evaluation
+  paths, visits and score curve. Tests: 12 pass (two small runs trained in a repository of their own; 28 s).
+  The core gives every moment of a run at once: arrows 0.17 s, paths 0.24 s, value maps about 0.9 s after the first
+  compile (scratch runs, 81 moments). The spike's build folder moved to the project's
+  (`~/.cache/multivariate-gaussian-interpolation/viewer-build`). Committed: by the human baseline sessions' own commits of the working tree (`2389001`, `8c24ff9`, with
+  `.mcp.json`), before the user allowed the assistant's `git commit`. Then done, below.
+- 2026-11-23, later: two runs made in the project (`20261123-231605-quasimetric-model`, shortfall 0.018;
+  `20261123-231702-gcsl`, 0.384; layout-02, one model, 8 environments, one seed each). The window driven offscreen
+  against them (`viewer/drive.sh`): goal and start by clicks, a pan and a zoom, a stroke at map (5.605, 7.055) where
+  Rerun's own click gives (5.6, 6.9) y-down, that is (5.6, 7.1) y-up; the remark saved with the shown moments. Fixed
+  on the way: the remark's moment comes from the window's control interface (`ViewerClient.get_state`), since the
+  window's time events miss the jump to the newest data; image layers and arrows go as one column each; the loop
+  over moments is compiled once per run. Opening with two runs 13 s; a new goal or start about 1 s of compute (the
+  learned time-to-goal over the map 0.57 s, the method's own network). 12 Python and 2 Rust tests pass. Committed
+  (`5637238`). `.mcp.json` registers Rerun's MCP server (the user's word, 2026-11-23); Claude Code asks the user to
+  approve it on its next start. The live page (`live.py`) lists training runs only.
+- Open: step 6, once the user has used the viewer; the spike folder `~/.cache/claude-r3-spike/` (Rerun's source and
+  the drafts) can go after that.

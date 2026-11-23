@@ -7,7 +7,7 @@ lifts a rule, update it here in the same step.
 ## Lasting rules
 
 - **The user stays blind to every layout they have not played in both conditions of the human baseline**
-  (on 2026-11-23: `layout-11` to `layout-20`). Don't print, draw or describe their maps, how they were built or
+  (on 2026-11-23, after `layout-12` was played in both conditions: `layout-13` to `layout-20`). Don't print, draw or describe their maps, how they were built or
   what they are like, not even as a hint; don't train or evaluate on them or show anything computed from them.
   - Set by the user on 2026-11-20 ("I'd like to stay blind to the layouts until the proper runs") and 2026-11-21
     ("Evaluate on layouts 1 to 3 only, as I have not seen the others and I must remain blind to them").
@@ -50,6 +50,13 @@ lifts a rule, update it here in the same step.
     full"), and kept on 2026-11-22 for when the project is a git repository ("The project will still use large
     changes, as the version control will not be manually managed").
   - Ends when the user says so.
+- **This is an AI-managed repository: carry out decided plans autonomously**, asking only for what needs the
+  user's input (a choice that is theirs, access, registering tools for Claude Code, anything outside the repository).
+  - Set by the user on 2026-11-23 ("this is an AI-managed repository; make all steps autonomously except for the
+    ones that require my input"), on the results viewer's plan.
+  - Ends when the user says so.
+- **The notes folder is backed up automatically**: don't propose commit messages for changes in it.
+  - Set by the user on 2026-11-23 ("The notes folder is backed op automatically").
 - **Claude may commit on its own in this repository; the commits are not reviewed.** This replaces the global
   rule "never commit" for this repository only.
   - Set by the user on 2026-11-22 ("autonomous commits are okay in this repository, they will not be reviewed").
@@ -80,10 +87,16 @@ lifts a rule, update it here in the same step.
   file, with the user's decision and its date.
 - **Open work and what was found:** `TODO.md` next to this file. Keep it current.
 - **Design decisions:** the research logs next to this file. Decided: what a run records
-  (`what-a-run-records.md`, its *Decision* and plan). Open: inspecting results (`inspecting-experiment-results.md`).
+  (`what-a-run-records.md`, its *Decision* and plan). Decided and reviewed (2026-11-23): inspecting
+  results (`inspecting-experiment-results.md`): a custom Rerun viewer in Rust on a shared Python core; being
+  built (its *Progress on the plan*). Its drafts are in `~/.cache/claude-r3-spike/work/` until the viewer is in use.
 - **Experiments:** `experiments/README.md` and, for the maze, `experiments/gcrl-maze/README.md`, with one README
   per experiment folder (`human-baseline`, `gcsl`, `wgcsl`, `quasimetric`). The environment is the package
   `packages/gcrl-maze`.
+- **Looking at runs and sessions:** the results viewer, `experiments/gcrl-maze/viewer/` (its README):
+  `uv run python companion.py` opens the window; `core.py KIND ITEM key=value` gives me the numbers of any view;
+  remarks the user leaves are in `remarks/remarks.jsonl` in the repository, with screenshots; Rerun's MCP server
+  (`.mcp.json`) reads the open window.
 - **Runs and their records:** every run through `gcsl.train` commits the working tree, writes a record under
   `runs/<id>/` in the repository (ID: date, time and a label) and puts its experience and large outputs under
   `~/.cache/multivariate-gaussian-interpolation/runs/` (or `$RUN_OUTPUTS`). `experiments/gcrl-maze/gcsl/runs.py`
