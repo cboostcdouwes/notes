@@ -115,6 +115,16 @@ Release targets and both starters are done (design §13). The prototype's docume
      clones and the dev box; untested whether Dev Containers forwards the credential helper).
   5. A token secret mount next to the SSH mount in the service Dockerfile, when CI needs the in-build clone.
   Suggested: 1 first, then `research:design` for 2-5 with CI as the deciding case.
+  **Search for a simpler design (2026-11-23, asked by the user; nothing decided or changed):** with the lock per
+  service, `deps/` sits inside each service's build context, so option 2 needs no `--build-context`: the Dockerfile
+  drops the stages `resolve` and `deps` and copies the checkout (`COPY . src`), `.dockerignore` holds `**/.git`
+  instead of `deps`, the integration override's `additional_contexts` go (the file is then empty), `release.sh`
+  loses the agent guard and the `mkdir deps` loop, the `release:build` fragment its `ssh:`. Spike on the e2e
+  fixture (scratchpad, not kept): builds without an agent; own packages by `colcon list --base-paths src | awk
+  '$2 !~ "^src/deps/"'`; a second checkout with other `.git` data and file times hits the cache for every step.
+  Cost: an image built outside a release needs `deps/` filled first (`cdr` on the host, or `bootstrap.sh --update`
+  in a host-src box); an as-image service with dependencies needs that before its first `up`. Needs the user's word
+  on `fact-ssh-access` (reword to "git can read the private repos"). Waiting for the user's choice.
 - **Machines may pull** (REQUIREMENTS.md `release-offline`, `release-registry-pull`): the release file sets
   `pull_policy: never`, which fits today: pulling from an online registry is a Won't. Waits for a request for an
   online update process; then update §13, the `release` target and the README. Until then only §13's wording is
