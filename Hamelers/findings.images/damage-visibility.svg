@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1268" width="700" height="634" font-family="Helvetica, Arial, sans-serif">
+<rect width="1400" height="1268" fill="#fff"/>
+<rect x="560" y="34" width="26" height="26" rx="4" fill="#2a78d6"/><text x="598" y="56" font-size="26" fill="#0b0b0b">single centred camera, 25°</text>
+<rect x="940" y="34" width="26" height="26" rx="4" fill="#eb6834"/><text x="978" y="56" font-size="26" fill="#0b0b0b">double cameras, ±25°</text>
+<path d="M560.0 110 V1188" stroke="#4a4f55" stroke-width="2"/>
+<text x="560.0" y="1220" text-anchor="middle" font-size="24" fill="#4a4f55">0k</text>
+<path d="M675.0 110 V1188" stroke="#e3e6ea" stroke-width="1.5"/>
+<text x="675.0" y="1220" text-anchor="middle" font-size="24" fill="#4a4f55">50k</text>
+<path d="M790.0 110 V1188" stroke="#e3e6ea" stroke-width="1.5"/>
+<text x="790.0" y="1220" text-anchor="middle" font-size="24" fill="#4a4f55">100k</text>
+<path d="M905.0 110 V1188" stroke="#e3e6ea" stroke-width="1.5"/>
+<text x="905.0" y="1220" text-anchor="middle" font-size="24" fill="#4a4f55">150k</text>
+<path d="M1020.0 110 V1188" stroke="#e3e6ea" stroke-width="1.5"/>
+<text x="1020.0" y="1220" text-anchor="middle" font-size="24" fill="#4a4f55">200k</text>
+<path d="M1135.0 110 V1188" stroke="#e3e6ea" stroke-width="1.5"/>
+<text x="1135.0" y="1220" text-anchor="middle" font-size="24" fill="#4a4f55">250k</text>
+<path d="M1250.0 110 V1188" stroke="#e3e6ea" stroke-width="1.5"/>
+<text x="1250.0" y="1220" text-anchor="middle" font-size="24" fill="#4a4f55">300k</text>
+<text x="905.0" y="1256" text-anchor="middle" font-size="26" fill="#222">pixels changed vs. intact pallet</text>
+<text x="546" y="143" text-anchor="end" font-size="24" fill="#0b0b0b">loose bottom board, turned</text>
+<path d="M560 124 H869.2692 Q873.2692 124 873.2692 128 V135 Q873.2692 139 869.2692 139 H560 Z" fill="#2a78d6"><title>loose bottom board, turned: single 136,204 px</title></path>
+<text x="881.2692" y="138" font-size="18" fill="#52514e">136,204</text>
+<path d="M560 141 H1218.3126 Q1222.3126 141 1222.3126 145 V152 Q1222.3126 156 1218.3126 156 H560 Z" fill="#eb6834"><title>loose bottom board, turned: double 287,962 px</title></path>
+<text x="1230.3126" y="155" font-size="18" fill="#52514e">287,962</text>
+<text x="546" y="189" text-anchor="end" font-size="24" fill="#0b0b0b">non-standard repair: board too thin</text>
+<path d="M560 170 H724.0334 Q728.0334 170 728.0334 174 V181 Q728.0334 185 724.0334 185 H560 Z" fill="#2a78d6"><title>non-standard repair: board too thin: single 73,058 px</title></path>
+<text x="736.0334" y="184" font-size="18" fill="#52514e">73,058</text>
+<path d="M560 187 H973.8571 Q977.8571 187 977.8571 191 V198 Q977.8571 202 973.8571 202 H560 Z" fill="#eb6834"><title>non-standard repair: board too thin: double 181,677 px</title></path>
+<text x="985.8571" y="201" font-size="18" fill="#52514e">181,677</text>
+<text x="546" y="235" text-anchor="end" font-size="24" fill="#0b0b0b">sagging bottom board (borderline)</text>
+<path d="M560 216 H697.0475 Q701.0475 216 701.0475 220 V227 Q701.0475 231 697.0475 231 H560 Z" fill="#2a78d6"><title>sagging bottom board (borderline): single 61,325 px</title></path>
+<text x="709.0475" y="230" font-size="18" fill="#52514e">61,325</text>
+<path d="M560 233 H883.8765000000001 Q887.8765000000001 233 887.8765000000001 237 V244 Q887.8765000000001 248 883.8765000000001 248 H560 Z" fill="#eb6834"><title>sagging bottom board (borderline): double 142,555 px</title></path>
+<text x="895.8765000000001" y="247" font-size="18" fill="#52514e">142,555</text>
+<text x="546" y="281" text-anchor="end" font-size="24" fill="#0b0b0b">broken bottom board, loose piece turned</text>
+<path d="M560 262 H658.442 Q662.442 262 662.442 266 V273 Q662.442 277 658.442 277 H560 Z" fill="#2a78d6"><title>broken bottom board, loose piece turned: single 44,540 px</title></path>
+<text x="670.442" y="276" font-size="18" fill="#52514e">44,540</text>
+<path d="M560 279 H801.6722 Q805.6722 279 805.6722 283 V290 Q805.6722 294 801.6722 294 H560 Z" fill="#eb6834"><title>broken bottom board, loose piece turned: double 106,814 px</title></path>
+<text x="813.6722" y="293" font-size="18" fill="#52514e">106,814</text>
+<text x="546" y="327" text-anchor="end" font-size="24" fill="#0b0b0b">broken bottom board</text>
+<path d="M560 308 H650.093 Q654.093 308 654.093 312 V319 Q654.093 323 650.093 323 H560 Z" fill="#2a78d6"><title>broken bottom board: single 40,910 px</title></path>
+<text x="662.093" y="322" font-size="18" fill="#52514e">40,910</text>
+<path d="M560 325 H778.1432 Q782.1432 325 782.1432 329 V336 Q782.1432 340 778.1432 340 H560 Z" fill="#eb6834"><title>broken bottom board: double 96,584 px</title></path>
+<text x="790.1432" y="339" font-size="18" fill="#52514e">96,584</text>
+<text x="546" y="373" text-anchor="end" font-size="24" fill="#0b0b0b">missing top board</text>
+<path d="M560 354 H641.9993 Q645.9993 354 645.9993 358 V365 Q645.9993 369 641.9993 369 H560 Z" fill="#2a78d6"><title>missing top board: single 37,391 px</title></path>
+<text x="653.9993" y="368" font-size="18" fill="#52514e">37,391</text>
+<path d="M560 371 H646.8684 Q650.8684 371 650.8684 375 V382 Q650.8684 386 646.8684 386 H560 Z" fill="#eb6834"><title>missing top board: double 39,508 px</title></path>
+<text x="658.8684" y="385" font-size="18" fill="#52514e">39,508</text>
+<text x="546" y="419" text-anchor="end" font-size="24" fill="#0b0b0b">wane on a bottom board</text>
+<path d="M560 400 H580.6583 Q584.6583 400 584.6583 404 V411 Q584.6583 415 580.6583 415 H560 Z" fill="#2a78d6"><title>wane on a bottom board: single 10,721 px</title></path>
+<text x="592.6583" y="414" font-size="18" fill="#52514e">10,721</text>
+<path d="M560 417 H615.3929 Q619.3929 417 619.3929 421 V428 Q619.3929 432 615.3929 432 H560 Z" fill="#eb6834"><title>wane on a bottom board: double 25,823 px</title></path>
+<text x="627.3929" y="431" font-size="18" fill="#52514e">25,823</text>
+<text x="546" y="465" text-anchor="end" font-size="24" fill="#0b0b0b">strap caught in the pallet</text>
+<path d="M560 446 H576.0514000000001 Q580.0514000000001 446 580.0514000000001 450 V457 Q580.0514000000001 461 576.0514000000001 461 H560 Z" fill="#2a78d6"><title>strap caught in the pallet: single 8,718 px</title></path>
+<text x="588.0514000000001" y="460" font-size="18" fill="#52514e">8,718</text>
+<path d="M560 463 H594.2513 Q598.2513 463 598.2513 467 V474 Q598.2513 478 594.2513 478 H560 Z" fill="#eb6834"><title>strap caught in the pallet: double 16,631 px</title></path>
+<text x="606.2513" y="477" font-size="18" fill="#52514e">16,631</text>
+<text x="546" y="511" text-anchor="end" font-size="24" fill="#0b0b0b">oil stain</text>
+<path d="M560 492 H569.1514 Q573.1514 492 573.1514 496 V503 Q573.1514 507 569.1514 507 H560 Z" fill="#2a78d6"><title>oil stain: single 5,718 px</title></path>
+<text x="581.1514" y="506" font-size="18" fill="#52514e">5,718</text>
+<path d="M560 509 H585.3227 Q589.3227 509 589.3227 513 V520 Q589.3227 524 585.3227 524 H560 Z" fill="#eb6834"><title>oil stain: double 12,749 px</title></path>
+<text x="597.3227" y="523" font-size="18" fill="#52514e">12,749</text>
+<text x="546" y="557" text-anchor="end" font-size="24" fill="#0b0b0b">skewed block, over 1 cm overhang</text>
+<path d="M560 538 H562.85315 Q565.7063 538 565.7063 540.85315 V550.14685 Q565.7063 553 562.85315 553 H560 Z" fill="#2a78d6"><title>skewed block, over 1 cm overhang: single 2,481 px</title></path>
+<text x="573.7063" y="552" font-size="18" fill="#52514e">2,481</text>
+<path d="M560 555 H583.9197 Q587.9197 555 587.9197 559 V566 Q587.9197 570 583.9197 570 H560 Z" fill="#eb6834"><title>skewed block, over 1 cm overhang: double 12,139 px</title></path>
+<text x="595.9197" y="569" font-size="18" fill="#52514e">12,139</text>
+<text x="546" y="603" text-anchor="end" font-size="24" fill="#0b0b0b">missing corner block</text>
+<path d="M560 584 H561.22475 Q562.4495 584 562.4495 585.22475 V597.77525 Q562.4495 599 561.22475 599 H560 Z" fill="#2a78d6"><title>missing corner block: single 1,065 px</title></path>
+<text x="570.4495" y="598" font-size="18" fill="#52514e">1,065</text>
+<path d="M560 601 H582.9307 Q586.9307 601 586.9307 605 V612 Q586.9307 616 582.9307 616 H560 Z" fill="#eb6834"><title>missing corner block: double 11,709 px</title></path>
+<text x="594.9307" y="615" font-size="18" fill="#52514e">11,709</text>
+<text x="546" y="649" text-anchor="end" font-size="24" fill="#0b0b0b">missing centre block</text>
+<rect x="560" y="630" width="1.5" height="15" fill="#2a78d6"><title>missing centre block: single 0 px</title></rect>
+<text x="569.5" y="644" font-size="18" fill="#52514e">0</text>
+<path d="M560 647 H573.5352 Q577.5352 647 577.5352 651 V658 Q577.5352 662 573.5352 662 H560 Z" fill="#eb6834"><title>missing centre block: double 7,624 px</title></path>
+<text x="585.5352" y="661" font-size="18" fill="#52514e">7,624</text>
+<text x="546" y="695" text-anchor="end" font-size="24" fill="#0b0b0b">paint splashes</text>
+<path d="M560 676 H563.35225 Q566.7045 676 566.7045 679.35225 V687.64775 Q566.7045 691 563.35225 691 H560 Z" fill="#2a78d6"><title>paint splashes: single 2,915 px</title></path>
+<text x="574.7045" y="690" font-size="18" fill="#52514e">2,915</text>
+<path d="M560 693 H570.5843 Q574.5843 693 574.5843 697 V704 Q574.5843 708 570.5843 708 H560 Z" fill="#eb6834"><title>paint splashes: double 6,341 px</title></path>
+<text x="582.5843" y="707" font-size="18" fill="#52514e">6,341</text>
+<text x="546" y="741" text-anchor="end" font-size="24" fill="#0b0b0b">rotten wood</text>
+<path d="M560 722 H563.3166 Q566.6332 722 566.6332 725.3166 V733.6834 Q566.6332 737 563.3166 737 H560 Z" fill="#2a78d6"><title>rotten wood: single 2,884 px</title></path>
+<text x="574.6332" y="736" font-size="18" fill="#52514e">2,884</text>
+<path d="M560 739 H569.9334 Q573.9334 739 573.9334 743 V750 Q573.9334 754 569.9334 754 H560 Z" fill="#eb6834"><title>rotten wood: double 6,058 px</title></path>
+<text x="581.9334" y="753" font-size="18" fill="#52514e">6,058</text>
+<text x="546" y="787" text-anchor="end" font-size="24" fill="#0b0b0b">markings illegible</text>
+<rect x="560" y="768" width="1.5" height="15" fill="#2a78d6"><title>markings illegible: single 0 px</title></rect>
+<text x="569.5" y="782" font-size="18" fill="#52514e">0</text>
+<path d="M560 785 H562.6128 Q565.2256 785 565.2256 787.6128 V797.3872 Q565.2256 800 562.6128 800 H560 Z" fill="#eb6834"><title>markings illegible: double 2,272 px</title></path>
+<text x="573.2256" y="799" font-size="18" fill="#52514e">2,272</text>
+<text x="546" y="833" text-anchor="end" font-size="24" fill="#0b0b0b">mould</text>
+<path d="M560 814 H560.9866999999999 Q561.9734 814 561.9734 814.9866999999999 V828.0133000000001 Q561.9734 829 560.9866999999999 829 H560 Z" fill="#2a78d6"><title>mould: single 858 px</title></path>
+<text x="569.9734" y="828" font-size="18" fill="#52514e">858</text>
+<path d="M560 831 H562.3161 Q564.6322 831 564.6322 833.3161 V843.6839 Q564.6322 846 562.3161 846 H560 Z" fill="#eb6834"><title>mould: double 2,014 px</title></path>
+<text x="572.6322" y="845" font-size="18" fill="#52514e">2,014</text>
+<text x="546" y="879" text-anchor="end" font-size="24" fill="#0b0b0b">film or tape stuck on a block</text>
+<rect x="560" y="860" width="1.5" height="15" fill="#2a78d6"><title>film or tape stuck on a block: single 0 px</title></rect>
+<text x="569.5" y="874" font-size="18" fill="#52514e">0</text>
+<path d="M560 877 H561.52145 Q563.0429 877 563.0429 878.52145 V890.47855 Q563.0429 892 561.52145 892 H560 Z" fill="#eb6834"><title>film or tape stuck on a block: double 1,323 px</title></path>
+<text x="571.0429" y="891" font-size="18" fill="#52514e">1,323</text>
+<text x="546" y="925" text-anchor="end" font-size="24" fill="#0b0b0b">chipped block corner (borderline)</text>
+<rect x="560" y="906" width="1.5" height="15" fill="#2a78d6"><title>chipped block corner (borderline): single 111 px</title></rect>
+<text x="569.5" y="920" font-size="18" fill="#52514e">111</text>
+<path d="M560 923 H560.97865 Q561.9573 923 561.9573 923.97865 V937.02135 Q561.9573 938 560.97865 938 H560 Z" fill="#eb6834"><title>chipped block corner (borderline): double 851 px</title></path>
+<text x="569.9573" y="937" font-size="18" fill="#52514e">851</text>
+<text x="546" y="971" text-anchor="end" font-size="24" fill="#0b0b0b">split board, nail shanks visible</text>
+<rect x="560" y="952" width="1.5" height="15" fill="#2a78d6"><title>split board, nail shanks visible: single 378 px</title></rect>
+<text x="569.5" y="966" font-size="18" fill="#52514e">378</text>
+<path d="M560 969 H560.95105 Q561.9021 969 561.9021 969.95105 V983.04895 Q561.9021 984 560.95105 984 H560 Z" fill="#eb6834"><title>split board, nail shanks visible: double 827 px</title></path>
+<text x="569.9021" y="983" font-size="18" fill="#52514e">827</text>
+<text x="546" y="1017" text-anchor="end" font-size="24" fill="#0b0b0b">cracked bottom board</text>
+<rect x="560" y="998" width="1.5" height="15" fill="#2a78d6"><title>cracked bottom board: single 170 px</title></rect>
+<text x="569.5" y="1012" font-size="18" fill="#52514e">170</text>
+<rect x="560" y="1015" width="1.5" height="15" fill="#eb6834"><title>cracked bottom board: double 410 px</title></rect>
+<text x="569.5" y="1029" font-size="18" fill="#52514e">410</text>
+<text x="546" y="1063" text-anchor="end" font-size="24" fill="#0b0b0b">split block (borderline)</text>
+<rect x="560" y="1044" width="1.5" height="15" fill="#2a78d6"><title>split block (borderline): single 70 px</title></rect>
+<text x="569.5" y="1058" font-size="18" fill="#52514e">70</text>
+<rect x="560" y="1061" width="1.5" height="15" fill="#eb6834"><title>split block (borderline): double 271 px</title></rect>
+<text x="569.5" y="1075" font-size="18" fill="#52514e">271</text>
+<text x="546" y="1109" text-anchor="end" font-size="24" fill="#0b0b0b">woodworm holes</text>
+<rect x="560" y="1090" width="1.5" height="15" fill="#2a78d6"><title>woodworm holes: single 119 px</title></rect>
+<text x="569.5" y="1104" font-size="18" fill="#52514e">119</text>
+<rect x="560" y="1107" width="1.5" height="15" fill="#eb6834"><title>woodworm holes: double 231 px</title></rect>
+<text x="569.5" y="1121" font-size="18" fill="#52514e">231</text>
+<text x="546" y="1155" text-anchor="end" font-size="24" fill="#0b0b0b">protruding nail, underside</text>
+<rect x="560" y="1136" width="1.5" height="15" fill="#2a78d6"><title>protruding nail, underside: single 58 px</title></rect>
+<text x="569.5" y="1150" font-size="18" fill="#52514e">58</text>
+<rect x="560" y="1153" width="1.5" height="15" fill="#eb6834"><title>protruding nail, underside: double 153 px</title></rect>
+<text x="569.5" y="1167" font-size="18" fill="#52514e">153</text>
+</svg>

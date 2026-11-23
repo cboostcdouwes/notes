@@ -21,9 +21,10 @@ wants an adjustable offset between the lights while keeping the single height co
 - R4: A changed offset applies on the next `Move`; `SetOffset` moves nothing.
 - R5: After a server start the offset is `offset_um` from `light-lift.toml` (today's measured
   sensor difference, 2000). `SetOffset` changes it in memory until the next restart.
-- R6: `SetOffset` needs no session claim: any client may set it at any time (kept after the
-  offset became the calibration; the risk of a client without the claim putting the lights out
-  of level was raised and accepted).
+- R6: `SetOffset` claims the lights like `Move` (user, 2026-11-23, step 3). It was first
+  built without a claim; that made it a third kind of call next to open reads and session
+  commands, with no API version check and no ownership receipt, and the Python client marked its
+  session uncertain after it, so the next command failed with `SessionNotReady`.
 - R7: The offset is read like the height: `offset_um` in `GetState` and `GetStateChange`, no
   separate `GetOffset`.
 
@@ -37,10 +38,11 @@ wants an adjustable offset between the lights while keeping the single height co
   the current offset: `min - min(0, d) ..= max - max(0, d)`. With `offset_um = 2000` the drive
   positions and the range (0..=76000) equal today's `[0, 2000]`.
 - Proto: `rpc SetOffset (SetOffsetRequest) returns (Empty)`, `SetOffsetRequest { int32
-  offset_um }`. `GetStateResponse.position_um` becomes light 1's height; `offset_um` is added:
+  offset_um }`, a session command like `Move`. `GetStateResponse.position_um` becomes light 1's
+  height; `offset_um` is added:
   the offset the next `Move` applies (not necessarily the lights' current spacing, by R4).
-- `SetOffset` is refused (`InvalidArgument`) for the same offsets startup refuses. Allowed in
-  any state, also while moving. `GetStateChange` sends a new response when the offset changes.
+- `SetOffset` is refused (`InvalidArgument`) for the same offsets startup refuses, and claims
+  nothing then. Allowed in any state, also while moving. `GetStateChange` sends a new response when the offset changes.
 
 ## Steps
 
@@ -52,9 +54,11 @@ wants an adjustable offset between the lights while keeping the single height co
 3. Python client: `set_light_lift_offset()`, `LightLiftStatus.offset_um`; tests; client README.
 4. Debug panel: offset readout and input next to the height; tests.
 
-## Open (for step 4)
+## Panel (step 4, user 2026-11-23)
 
-- Panel step buttons promise "a mis-click moves a light by at most a millimetre". After a
-  `SetOffset`, by R4, the next step also moves light 2 by the whole change in offset. Options:
-  accept and reword, or have the panel's offset control follow `SetOffset` with a `Move` to the
-  current height (panel-side only, server semantics unchanged).
+- The panel's offset Set applies the offset at once: `SetOffset`, then a `Move` to the reported
+  height, when the lights are Idle with a reported height. Otherwise it sets the offset only and
+  logs that it applies on the next move. So the step buttons keep their "at most a millimetre",
+  except for an offset set while the lights were not idle, or by another client.
+- A refused follow-up `Move` (the current height out of reach at the new offset) is logged in
+  red as "set, not applied"; the new offset stays set.

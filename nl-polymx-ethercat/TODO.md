@@ -67,7 +67,10 @@
       `home_below_sled_base_um` on the machine (0 for now); check the homing speeds (2 mm/s) and method 18
       once the sensor is mounted. Stroke 0-80 mm of the ~90 mm measured on the bench. Known: the base plate is
       4 mm above the bottom end (machine, 2026-11-10; in `ecomodul/light-lift-test.toml`), so with the sensor
-      `home_below_sled_base_um` = 4000 minus the sensor's switch point above the bottom end
+      `home_below_sled_base_um` = 4000 minus the sensor's switch point above the bottom end.
+      The sled-base part is superseded (2026-11-23, `cb49be0`): the sled base is dropped as a reference,
+      clients calibrate heights themselves, and `offset_um` replaced `home_below_sled_base_um`. The homing
+      speed and method checks still stand
 - [ ] Bench: both axes keep software limits [-40000, 0] from the driver's setup, so manual moves to + targets are
       refused with "internal limit" (statusword bit 11)
 - [ ] Motion test passed on axis 1 (bench, 2026-11-09, with the deadlock fix) and on axis 2 (after dropping the
@@ -150,13 +153,13 @@
 ## Light lift offset (branch `feature/light-lift-offset`, `light-lift-offset.md`)
 
 - [x] Agree the step plan (2026-11-23; revised: offset is the only calibration)
-- [ ] Step 1: `offset_um` in `light-lift.toml` replaces `home_below_sled_base_um`; height = light 1
+- [x] Step 1: `offset_um` in `light-lift.toml` replaces `home_below_sled_base_um`; height = light 1
+      (`cb49be0`)
+- [x] Step 2: `SetOffset` and `offset_um` in the state (`7215c76`)
+- [x] Step 3: Python client, and `SetOffset` claims like `Move` (`1ba5cf4`)
+- [ ] Step 4: debug panel; Set applies the offset at once to idle lights, a refused move is logged
       (written and tested 2026-11-23, awaiting commit)
-- [ ] Step 2: `SetOffset` and `offset_um` in the state
-- [ ] Step 3: Python client
-- [ ] Step 4: debug panel; decide the step-button question in the design doc's *Open*
-- [ ] When step 1 lands: mark the *JAT ECOMODUL axis* item on measuring `home_below_sled_base_um`
-      as superseded (sled base dropped, user 2026-11-23)
+- [x] Mark the *JAT ECOMODUL axis* item on measuring `home_below_sled_base_um` as superseded
 
 ## Small fixes
 
