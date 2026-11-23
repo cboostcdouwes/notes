@@ -158,9 +158,9 @@ annotations/comments for the agent anywhere in the program."
 | R14b | Runs in progress can be followed from the phone or another machine through the light page of live runs (R25); the full viewer may be desktop only | | user, round 3 (2026-11-23: "Live page only"); replaces R14 | could (as R14 and R25) | yes |
 | R15 | The user can attach a remark to what they are looking at, and the assistant receives it together with what it refers to | To tell the assistant exactly which run, moment and place is meant, and to leave questions and instructions next to the evidence for a later session; without it the assistant may look at the wrong thing and observations get lost between sessions | user's remark and answer ("Both"), 2026-11-22 | should ("Important, not essential", user, round 1) | yes |
 | R25 | A run in progress can be followed in a simple form (for example a light page of live runs), apart from the full viewer | | user, round 2 (2026-11-23: "The web page version could be kept in simplified form for keeping track of live runs only.") | could ("could be kept") | yes |
-| R26b | The controls (goal, start, remark) are part of the viewer's own interface, not HTML around or over it | | user, round 3 (2026-11-23: "Must be Rerun's UI", offered as "the controls have to be part of Rerun's own interface", with H1's cost named in the question); replaces R26 | must (as answered; what breaks not asked) | yes (2026-11-23) |
+| R26b | The controls (goal, start, remark) are part of the viewer's own interface, not HTML around or over it | Several UI frameworks or layers stacked on one another seem prone to breakage (user, round 4: "I really dislike having multiple stacked UI frameworks or layers as that seems prone to breakage.") | user, round 3 (2026-11-23: "Must be Rerun's UI", offered as "the controls have to be part of Rerun's own interface", with H1's cost named in the question); replaces R26 | must (as answered; what breaks not asked) | yes (2026-11-23) |
 | R24b | A remark can mark the area of the view it is about (an area or a point is enough); drawing it freehand is a could | To show the assistant exactly where the remark is about | user, round 3 (2026-11-23: "Area is enough"); replaces R24 | should (the area); could (the pencil) | yes |
-| R16b | It costs the user little effort to keep working as methods and experiments change: what a maintained library does is preferred over own code the user would have to keep. The effort to build it does not count | Own code has to be maintained; a library is "more future proof" | user, round 2 (2026-11-23: "I have a preference for using libraries wherever possible as they are more future proof and I don't have to maintain them myself (R16)"); replaces R16, whose scope (round 1) excluded breakage by tool updates. What "future proof" means: "Less own code" (round 2 follow-up); a library's API changes stay acceptable | should | yes |
+| R16b | It costs the user little effort to keep working as methods and experiments change: what a maintained library does is preferred over own code the user would have to keep. The effort to build it does not count. Own Rust that the assistant updates with each Rerun upgrade, with a rebuild of about 12 minutes, is acceptable long-term (user, round 4: "Fine long-term") | Own code has to be maintained; a library is "more future proof" | user, round 2 (2026-11-23: "I have a preference for using libraries wherever possible as they are more future proof and I don't have to maintain them myself (R16)"); replaces R16, whose scope (round 1) excluded breakage by tool updates. What "future proof" means: "Less own code" (round 2 follow-up); a library's API changes stay acceptable | should | yes |
 | R27 | A method's learned functions can be seen also where the agent has never been (inside walls, out of the data's reach), next to the same function where it has | To see what the method makes of states it was not trained on | user's remark in H1, 2026-11-23 ("I want to see the OOD value function here, can the walls be hidden?") | not asked (round 4) | yes (meaning); priority not asked |
 | R17 | Getting from a question about a run to seeing the answer is quick | | user, 2026-11-22 (value) | should | yes |
 | R18b | It is pleasant to use: moving through training glides, and values can be read under the cursor | Stepping through static pictures was offered and not accepted | user, round 1 ("Smooth matters"); replaces R18 | should | yes |
@@ -233,14 +233,42 @@ Rows A to E come from the round-1 generators (reports in `inspecting-experiment-
 | G2 | A reactive notebook kept as a plain Python file (marimo) that also serves as an app (from the round-2 bias check) | The assistant reads and runs it headless; widgets re-run only what depends on them; no CDN widgets as in E1 | Smoothness of a slider over 81 moments and a click on a map not checked; not drafted | cheap (a shell on the core) | trailing (R18b ?, R10b ?), unverified: not drafted |
 | G3 | Networks evaluated in the browser (from the round-2 bias check): the page receives each moment's weights and runs the plain forward pass itself, so dragging a goal glides too | Goal and moment both glide with no server round trip | Works only where a view is a plain forward pass; `act` and the method's own calls are more (policy output handling, the model's step), so views would need method code in JavaScript | cheap | not a rival: a later speed-up of the leader for plain forward passes; alone not applicable (R1, must: a view would depend on the method) |
 | G4 | Staging (from the round-2 bias check): build the core and the plainest display or command first (A8, C1), use it for a while, then choose the display on evidence | Chooses on real use rather than drafts; nothing built that is thrown away | Until the display exists, ✗ R18b and ~ R8, R17 (as A8 in round 1) | cheap | not a rival: a way to order the build of either leader; asked in round 2's questions |
-| H1 | A custom Rerun viewer in Rust (round 3 spike, `r3/`): an own `eframe` app wraps `re_viewer::App` (Rerun's `extend_viewer_ui` and `custom_callback` examples) and adds a toolbar inside the window (click mode none, goal, start; a pencil); a map click arrives through `StartupOptions.on_event` with its scene position and is posted to the Python companion, which logs new data; the pencil draws over the whole window, a box pops up, and the remark is saved with a screenshot including the strokes, the strokes in screen and map coordinates, and the address; the assistant reads the viewer through Rerun's own MCP server (`rerun viewer-mcp`) | Controls and pencil inside Rerun; native gliding and hover; the assistant's access needs no own code (MCP, tested against the custom viewer) | About 350 lines of Rust and egui against interfaces Rerun says will "break with every release"; first build 11 min 38 s, a 4.2 GB build folder, a 234 MB binary; desktop only (a custom web viewer is "not supported outside of the Rerun repository"); a stroke's map coordinates are fitted from two clicks and wrong after a pan or zoom; the viewer must start before Python; its native window was never seen painted (the screen was locked), only offscreen | cheap to drop (a shell on the core); the Rust wrapper tied to each Rerun release | leading (after round 3's answers): the only option whose controls are part of Rerun's interface (R26b, must); its cost is R16b ~ |
-| H2 | The stock Rerun viewer with a Python companion that reads its selection (found by the researcher in round 3, in Rerun 0.43.2's source; not drafted): `rerun.experimental.ViewerClient` reports what the user selected (entity, instance index, view), the time cursor and screenshots; a grid of clickable points logged over the map turns a selected instance into a position for the goal or start; remarks are typed in the chat and the assistant fetches the view through MCP | No own interface code: Python only, on an experimental but documented client; controls inside Rerun (R26) | A goal on a grid point, not any point; choosing goal or start needs two grids or another selection trick (unverified); no pencil or area (R24); a remark typed in the chat is matched to the view the assistant reads afterwards, not when it was made; `experimental` module | cheap | trailing (R24b: no area tool in the stock viewer; R15 ~: remarks typed outside Rerun) (after round 3's answers) |
+| H1 | A custom Rerun viewer in Rust (round 3 spike, `r3/`): an own `eframe` app wraps `re_viewer::App` (Rerun's `extend_viewer_ui` and `custom_callback` examples) and adds a toolbar inside the window (click mode none, goal, start; a pencil); a map click arrives through `StartupOptions.on_event` with its scene position and is posted to the Python companion, which logs new data; the pencil draws over the whole window, a box pops up, and the remark is saved with a screenshot including the strokes, the strokes in screen and map coordinates, and the address; the assistant reads the viewer through Rerun's own MCP server (`rerun viewer-mcp`) | Controls and pencil inside Rerun; native gliding and hover; the assistant's access needs no own code (MCP, tested against the custom viewer) | 470 lines of Rust and egui code (round 4; `lib.rs` 538 with tests) against interfaces Rerun says will "break with every release", including reads of the blueprint store through internal crates (`StoreHub`, `ViewportBlueprint::from_db`) because Rerun keeps a view's transform and hover position private; first build 11 to 12 minutes, a 4 to 6 GB build folder, a 234 MB binary; desktop only (a custom web viewer is "not supported outside of the Rerun repository"); a stroke gets map coordinates after two clicks on that map, holding through pan and zoom (tested, round 4) but wrong after a change of the panel layout until two more clicks; a click gives a position only where an entity (a layer image) lies under it; the viewer must start before Python. Used by the user on the desktop (round 4) | cheap to drop (a shell on the core); the Rust wrapper tied to each Rerun release | leading (round 4): the only option whose controls, remark box included, are part of Rerun's interface (R26b, must) and that marks an area (R24b); its cost is R16b ~ |
+| H2 | The stock Rerun viewer with a Python companion that reads its selection (found by the researcher in round 3, in Rerun 0.43.2's source; not drafted): `rerun.experimental.ViewerClient` reports what the user selected (entity, instance index, view), the time cursor and screenshots; a grid of clickable points logged over the map turns a selected instance into a position for the goal or start; remarks are typed in the chat and the assistant fetches the view through MCP | No own interface code: Python only, on an experimental but documented client; controls inside Rerun (R26) | A goal on a grid point, not any point; choosing goal or start needs two grids or another selection trick (unverified); no pencil or area (R24); a remark typed in the chat is matched to the view the assistant reads afterwards, not when it was made; `experimental` module | cheap | not applicable (R26b, must): the remark is typed in the chat, not in Rerun's interface (round-4 rejection check). Read in source, not tested: a click on an image selects its pixel, ctrl-click adds more in order, so points and outlines can be marked (R24b ~) and a goal can be any pixel without a grid (R10b ~) |
 | A2b | Rerun's stock web viewer in an own page with the controls floating over it (from the round-3 bias check): a small toolbar (none, goal, start, pencil) and a transparent canvas for the pencil drawn over the embedded viewer instead of a strip above it; a click's position from the viewer's `selection_change` event (as in round 2's draft); the remark box pops up over the view; the assistant reads the viewer through the screenshot of the page and the web viewer's JavaScript API | No Rust; works on a phone and from another machine; the pencil and the controls sit on the view; stays on Rerun's documented JavaScript API | Still HTML over the viewer, which the user may not count as "customizing the Rerun UI" (R26 ?); strokes' map coordinates drift after a zoom as in H1; the page's own code grows by the overlay; not drafted | cheap (a shell on the core) | not applicable (R26b, must): HTML over the viewer (after round 3's answers) |
+| A2c | Rerun's notebook widget inside a marimo app (from the round-4 bias check; read in source, not drafted): the viewer as an anywidget in a plain-Python marimo file served as an app; `Viewer.on_event` gives Python each click's scene position (`rerun_sdk/rerun/notebook.py:570`, `_event.py:50`); goal or start and the remark box as marimo widgets beside the viewer | No Rust, no own JavaScript, no HTTP bridge; served on the network; a plain Python file the assistant can run | The controls are marimo widgets beside the viewer, not Rerun's interface (R26b ✗); a pencil over the viewer not available (R24b ?); not drafted | cheap (a shell on the core) | not applicable (R26b, must); comes back if R26b's need is "one surface where the user looks" rather than Rerun's own interface |
+| H5 | Ask Rerun upstream (from the round-4 bias check): an issue or pull request for the selection's position in `ViewerClient`, or a hover or view-transform event for custom viewers | Would let H2 take any point, or shrink H1's fit, with library code only (R16b) | Unknown if and when; does not give a remark box or pencil by itself | cheap | a part, not a rival: lowers H1's or H2's own code |
 | H3 | A screen-annotation tool beside any viewer (from the round-3 bias check): a key opens satty or flameshot over the screen; the annotated picture is saved with the viewer's address read through `ViewerClient` or MCP at that moment | A pencil anywhere on the screen with no own drawing code, whatever viewer is chosen | A desktop tool outside the viewer (R26 ~); the strokes are a picture, with no map coordinates; a small hook to pair picture and address; not tried | cheap | a part, not a rival: a way to meet R24 for H2 or the stock viewer (round 3) |
 | H4 | Remarks logged into the recording (from the round-3 bias check): a remark becomes a text entity at the current time and place in Rerun's recording, so the assistant reads it with its context through MCP | The remark and its view stay together; H2's "matched afterwards" gap closes | A part of any Rerun route, not a display | cheap | a part, not a rival (round 3) |
 
 ## Matrix
 Marks: ✓ meets it, ~ partly, ✗ fails it, ? unknown.
+
+### Round 4 (2026-11-23), after the user tried H1
+Against round 3's answers (R14b, R24b, R26b replace R14, R24, R26) and R27. Columns as in round 3 otherwise; only
+the changed columns and H1's changed cells are shown, the other cells stand as in the round-3 table. R14b ✓ for every
+option: the full viewer may be desktop only and the phone's part is R25's light page, scored there. R27 ✓ for every
+option: the core computes the learned functions over the whole map and each display shows them as one more layer
+(H1 tested). R24b for H1 ✓: an area drawn anywhere, with map coordinates that hold through pan and zoom (tested
+offscreen and in the user's own remarks; two clicks on a map first). R26b: A2 ✗ and A2b ✗ (HTML around or over the
+viewer, which R26b names); B4b, A3 ✓ as in round 3 (their controls are their own interface); H2 ✓ (Rerun's own
+selection), H3 ~ (a separate tool over the screen). H1's R16b stays ~ and grows: 470 lines of Rust code (`lib.rs`
+538 with tests), now also reading Rerun's blueprint store. Corrected after the round-4 checks: H1's R17 and R18b ✓ like
+H2's (the same viewer; the user tried Rerun in round 2 and used H1's window in round 4, moving the time cursor at
+70x and leaving three remarks, with no verdict on speed or feel: asked); H2's R26b ✗ (its remark is typed in the
+chat) and R24b ~ (pixels selected by click and ctrl-click, read in source); H3 left out of the table (a part, as its
+row says); A2c added.
+
+| Option | R14b | R16b | R17 | R18b | R24b | R25 | R26b | R27 | ✗, ~ or ? (all columns) |
+|---|---|---|---|---|---|---|---|---|---|
+| *priority, verified* | could, yes | should, yes | should, yes | should, yes | should (area), yes | could, yes | must, yes | not asked | |
+| H1 | ✓ | ~ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ~ R2 ~ R9 ~ R11 ~ R12 ~ R16b ~ R20 ~ R23 ✗ R25 |
+| A2 | ✓ | ~ | ✓ | ✓ | ? | ✗ | ✗ | ✓ | ~ R2 ~ R9 ~ R11 ~ R12 ~ R16b ~ R20 ~ R23 ? R24b ✗ R25 ✗ R26b |
+| A2b | ✓ | ~ | ✓ | ✓ | ? | ✗ | ✗ | ✓ | ~ R2 ~ R9 ~ R11 ~ R12 ~ R16b ~ R20 ~ R23 ? R24b ✗ R25 ✗ R26b |
+| H2 | ✓ | ✓ | ✓ | ✓ | ~ | ✗ | ✗ | ✓ | ~ R2 ~ R9 ~ R10b ~ R11 ~ R12 ~ R15 ~ R20 ~ R23 ~ R24b ✗ R25 ✗ R26b |
+| A2c | ✓ | ✓ | ? | ✓ | ? | ~ | ✗ | ✓ | ~ R2 ~ R9 ~ R11 ~ R12 ? R17 ~ R20 ~ R23 ? R24b ~ R25 ✗ R26b |
+| B4b | ✓ | ~ | ✓ | ~ | ? | ✓ | ✓ | ✓ | ~ R2 ~ R9 ~ R11 ~ R12 ~ R16b ~ R18b ~ R20 ~ R23 ? R24b |
+| A3 | ✓ | ✓ | ✓ | ~ | ? | ~ | ✓ | ✓ | ~ R2 ~ R9 ~ R11 ~ R12 ~ R18b ~ R20 ~ R23 ? R24b ~ R25 |
 
 ### Round 3 (2026-11-23), after the user tried the drafts
 Against the requirements after round 2's answers (R1b, R16b, R21b, R22b, R23 must, R24, R25, R26). Rows: the
@@ -370,6 +398,17 @@ Assumptions that hold for every row, so that no option gains from them:
 | E8 | ✓ | ~ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ~ | ✓ | ~ | ✓ | ~ | ✓ | ? | ~ R2 ~ R12 ~ R14 ~ R16 ? R18 |
 
 ## Evaluation
+**Round 4 (2026-11-23).** H1 leads: the one Rerun route whose controls, remark box included, are part of Rerun's
+interface (R26b, a must) and that marks an area (R24b, map coordinates through pan and zoom). The user used it;
+their remarks reached the assistant with the address and a screenshot. Its cost is R16b ~: 470 lines of Rust against
+Rerun's internal crates, now including the blueprint store, and an 11 to 12-minute build per Rerun upgrade. After
+the checks, H2 is not applicable (its remark is typed in the chat, outside Rerun: R26b), so the runner-up is B4b,
+the own page (R26b ✓ for its own interface; R18b ~ from the user's verdict on the look). A2, A2b and the new A2c
+(Rerun's notebook widget in a marimo app: clicks with positions in Python, no Rust) are not applicable on R26b.
+R26b decides the ranking and its reason was never asked: if its need is "the controls sit where the user is
+looking, on one surface" rather than "Rerun's own interface", A2c, A2b and H2 come back and A2c would likely lead
+on R16b. R27 separates no option.
+
 **Round 3 (2026-11-23).** The user tried the drafts on a phone and chose Rerun's look ("awesome, much better than
 the hand-rolled version"), asked for the controls inside Rerun (R26) and a pencil anywhere in the interface (R24),
 and prefers less own code (R16b). On the user's choice, round 3 spiked a custom Rerun viewer in Rust (H1); it does
@@ -436,6 +475,53 @@ Bias check (not told the leader):
   (remarks logged into the recording). Taken as rows; `highlight_rect` (the assistant points at a place on the user's
   screen) noted as a part for any Rerun route.
 - R22b, R23, R25 have no reason; R21b no priority: noted; R23's and R25's not asked.
+
+### Findings of the round-4 checks
+Rejection check (given the leader H1 and runner-up H2), seven points, all taken: H2's ✗ R24b stretched R24b ("an area
+or a point is enough"; Rerun selects image pixels, ctrl-click adds more: read in source) and its R10b needs no grid
+(pixel picking); but H2's remark is typed in the chat, so H2 fails R26b as worded: not applicable, not runner-up.
+H1 and H2 run the same viewer, so their R17 and R18b now match (✓, the user's verdict asked). H1's Options row
+was stale (350 lines, the pan/zoom fault, the unseen window): updated, with the blueprint-store reads and the
+panel-layout fault added. H3 was both "a part" and "trailing": a part. A click in H1 gives a position only over a
+layer image; noted in H1's row.
+Bias check (not told the leader):
+- **R26b is worded as a mechanism** and answered a question framed around Rerun; what breaks without it was never
+  asked; it is what pulls the ranking to H1 against R16b. The need could be "the controls sit where the user is
+  looking, on one surface". Asked this round, first.
+- **R16b**: whether "a library's API changes are acceptable" covers Rust edits and an 11-minute rebuild per Rerun
+  upgrade. The user's words when choosing the pencil fix ("50 more lines is acceptable as it's temporary, and the
+  rerun viewer brings many other benefits") suggest the Rust is seen as temporary. Asked.
+- **Missing options**: A2c (Rerun's widget in marimo, clicks with positions in Python; confirmed in source) and H5
+  (an upstream request): added. H2 with the mode chosen inside Rerun (two map views): noted under H2. A remark area
+  logged as `Boxes2D` in scene coordinates (H4's variant) needs a drawing tool first: noted.
+- **R10b "any point"**: a pixel-fine pick meets it; taken in H2's row. **R9, R11, R13** rest on runs not yet
+  recorded in the project (step 7 of the child decision): favours staging (G4); the user chose "Choose now" in
+  round 2, kept. R21b, R22b, R23 and R1b's reasons: as in round 3; R21b's priority asked.
+- The round-3 text the check read ("350 lines", "wrong after a pan or zoom") is round 3's; round 4's text corrects it.
+
+### Rejection records (round 4)
+The leader's weak cells, which no option is charged for below: ~ R2, R9, R11, R12, R20, R23; ✗ R25 (a separate light
+page, the same for every option but B4b).
+- **A2 and A2b: not applicable (R26b, must, verified).** R26b: "the controls (goal, start, remark) are part of the
+  viewer's own interface, not HTML around or over it". Scenario: the user picks the goal in an HTML strip above or
+  over Rerun's web viewer, which the user ruled out ("Must be Rerun's UI"). Checked against the other requirements:
+  they still win R14 (a phone), now a could met by the light page alone. Best variant: A2b, controls drawn over the
+  viewer. Comes back if R26b stops being a must.
+- **H2, the stock viewer read from Python: not applicable (R26b, must, verified).** R26b: "the controls (goal,
+  start, remark) are part of the viewer's own interface". Scenario: the user wants to ask about the low band inside
+  a wall; they select pixels in Rerun, then type the question in the chat, outside Rerun. Checked against the
+  others: its R24b is ~ (points by click and ctrl-click, read in source, untested), not ✗. Best variant: H2 with
+  H4 (the remark logged into the recording) and H5 (the selection's position upstream); still no text entry in
+  Rerun. Cells against the leader: ✗ R26b, ~ R24b, ~ R10b, ~ R15 where the leader has ✓; ✓ R16b where the leader
+  has ~. Comes back if R26b's need allows a remark typed elsewhere.
+- **A2c, Rerun's notebook widget in a marimo app: not applicable (R26b, must, verified).** Scenario: goal, start
+  and the remark box are marimo widgets beside the viewer. Best variant: the widgets in a narrow bar above the
+  viewer. Cells against the leader: ✗ R26b, ? R24b, ? R17 where the leader has ✓; ✓ R16b and ~ R25 where the
+  leader has ~ and ✗.
+- **B4b, the own page: runner-up (R18b, should; R24b ?).** Scenario: the user moves through training in the page
+  they judged less pleasant than Rerun ("much better than the hand-rolled version"). Cells against the leader:
+  ~ R18b, ? R24b where the leader has ✓; ✓ R25 where the leader has ✗; both ~ R16b. Stays the light page of live
+  runs (R25) in any case. A3 trails on the same cells and ~ R25.
 
 ### Rejection records (round 3)
 - **A2, Rerun's web viewer in an own page: runner-up (R26, should, unverified).** R26: "the controls live inside
@@ -901,6 +987,7 @@ unless asked), R7 (same information), R5 (may be redrawn). Still open, for round
 ## Sources
 | Claim | Source (URL or `file:line`) | Date | Reliability |
 |---|---|---|---|
+| A 2-D view shows its visual bounds letterboxed into its rect; pan and zoom keep the bounds' aspect and save them in the blueprint; the transform and hover position are private | Rerun 0.43.2 `crates/viewer_support/re_view/src/pan_zoom_2d.rs:38-86`, `crates/views/re_view_spatial/src/ui_2d.rs:52-72`; checked by the spike's unit tests and an offscreen pan and zoom (error < 0.05 map units) | 2026-11-23 | source and test |
 | A warm view takes 0.052 to 0.073 s; a first view 0.66 to 1.1 s; 254 MB of GPU memory | measured on the draft (`viewer-spike/`), this machine | 2026-11-22 | measured once, one layout |
 | Stored runs keep every network at 81 evaluations; the JSON holds layout, config, steps, curves and not the method | `experiments/gcrl-maze/gcsl/gcsl.py` (`train`, `save_checkpoints`); generator C, `gcsl.py:449-486` | 2026-11-22 | read in the code by two readers |
 | Runs write their files once, at the end | generator C, `gcsl.py:598-602`; the draft found no file for a run in progress | 2026-11-22 | read by one reader, consistent with the draft |
@@ -927,7 +1014,31 @@ unless asked), R7 (same information), R5 (may be redrawn). Still open, for round
 | Tool versions, licences and upkeep in rows A1 to A8 | generator A's report (`r1-field.md`), with its own list of what it could not verify | 2026-11-22 | one report; not cross-checked, not deciding |
 
 ## Round checklist
-Round 3.
+Round 4.
+Checklist:
+- [x] Log (first round): its path in the report; new or resumed, and what was outdated (n/a: round 4)
+- [x] Problem (first round): confirmed by the user (the line in *Problem*) (n/a: round 4)
+- [x] Scope: split, widened or unchanged (unchanged)
+- [x] Requirements: new or changed ones, each a need (no mechanism) with reason, source, priority and verified (R27 from the user's remark; priority not asked)
+- [x] Replaced requirements: new IDs, old rows moved; options re-checked from the old matrix column (none replaced this round; round 3's R14b, R24b, R26b scored in the round-4 table)
+- [x] Written requirements: evidence found for each (commit, decision log) (none new)
+- [x] Deciding unverified requirements: asked this round, or assumptions after "can't answer" (R26b's reason, R16b's scope, R18b by eye; then R27, R21b priorities, R2, R12)
+- [x] Options: added, by the categories of Phase 3 (none new: the user's remarks asked for views, not another route; the pencil's four fixes are variants of H1, recorded in the spike section)
+- [x] Searches: recorded in the round's entry; or "no web search", said in the report (no web search; Rerun 0.43.2 source read for the view transform)
+- [x] Deciding claims: cross-checked against a second source, or marked unverified (the fit: Rerun's source and an offscreen test; Sources updated)
+- [x] Matrix: updated (round-4 table)
+- [x] Rejection records: one per trailing or not applicable option (scenario, best variant, leader's cells compared) (round-4 records)
+- [x] Harms: scenarios for the leading option (H1, spike section, updated)
+- [x] Reversibility: every option rated; one-way means extra stress-testing, said in the report (unchanged from round 3)
+- [x] Draft and stress test: of the leading option; the draft's path in the report (`~/.cache/claude-r3-spike/work/r3/`; the user's own use and offscreen tests)
+- [x] Bias check: findings in the log and the report; or "not independent" (R26b's reason and R16b asked; A2c, H5 added)
+- [x] Rejection check: findings in the log and the report; verdicts corrected (H2 not applicable on R26b; H1's row, R17, R18b corrected)
+- [x] Ranking change: recorded (runner-up H2 → B4b)
+- [x] Report: what changed, recommendation, runner-up, must rejections, the checks' findings
+- [x] Questions: deciding unverified ones first, ordered by ranking impact, through the question tool, remarks last
+- [x] Pushback: if the user picked a worse option, asked what makes it better (R26b's reason asked: it is what puts H1 ahead against R16b)
+
+Round 3 (kept).
 Checklist:
 - [x] Log (first round): its path in the report; new or resumed, and what was outdated (n/a: round 3)
 - [x] Problem (first round): confirmed by the user (the line in *Problem*) (n/a: round 3)
@@ -960,3 +1071,5 @@ Checklist:
 - Round 3 (2026-11-23): the custom Rerun viewer (H1) spiked and tested offscreen; Rerun's MCP server gives the assistant the viewer with no own code. Before the checks H1 led; after them H1 and A2b (the stock web viewer with controls floating over it, not drafted) are close, deciding on R26's reason, R24's priority and R14.
 - After round 3's answers (2026-11-23): R26b (controls part of Rerun's own interface) is a must, so H1 leads and A2, A2b fall out; R24b an area is enough (the pencil a could); R14b the phone needs only the live page. Next: the user tries H1 on the desktop (R17, R18b by eye), the remaining questions (R2, R12, R21b's priority), then the decision.
 - The user tried H1 (2026-11-23): one remark came through; R27 new (learned functions out of the data's reach), its priority for round 4; the pencil's map coordinates fixed by reading the views' bounds (Rerun internals, about 80 lines). No ranking change.
+- Round 4's answers (2026-11-23): R26b's reason: stacked UI frameworks or layers seem prone to breakage (the marimo, overlay and stock-viewer routes stay out); H1's Rust upkeep "Fine long-term" (R16b); H1 feels "Good" (R17, R18b ✓, verified). H1 leads, no ranking change.
+- Round 4 (2026-11-23): H1 still leads; after the checks H2 is not applicable on R26b (remarks typed in the chat), so B4b is runner-up; A2c (Rerun's widget in marimo) and H5 (upstream request) added. R26b decides the ranking and its reason was never asked: asked now with R16b's scope, R18b by eye, and the priorities of R27 and R21b.

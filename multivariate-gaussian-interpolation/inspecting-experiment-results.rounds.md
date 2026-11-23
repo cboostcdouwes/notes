@@ -201,3 +201,19 @@ for every moment when the start changes. Quasimetric-model at its last moment, s
 steps in free space (median 20.8), 2.7 to 60.2 inside walls (median 26.7); 1.35 times the true steps (median, free
 space); d(start, x) and d(x, start) differ by 0.9 steps (median) in free space and 2.0 inside walls. One network, one
 start. Part of R27.
+Remarks through H1 (2026-11-23, 21:39 and 21:42), walls and the goal's layers hidden, `learned_from_start` shown:
+"Why doesn't the model exploit this low cost area?" (a circle at maze x 3.0 to 6.6, y 6.5 to 9.8, read from the
+second remark, "Annotation test 2", which circled the same place after the map fit). At the moment shown (116,952;
+the address said 118,324, the time cursor, not the stored moment) the circle is 56 % wall: the dark band is the
+inside of a wall (x 4 to 6), learned 6.8 to 8.8 steps from the start, as low as the free corridor beside it (6.3;
+true 5.8). Faults seen: the first remark had no map coordinates (no two clicks yet); the screenshot still catches the
+remark box fading; the address gives the cursor's step instead of the stored moment.
+
+## Round 4 (2026-11-23)
+Start, the user: "Fix the two faults, then move on to the next step." Done: the remark box waits for the screenshot;
+the address names each run's shown moment (`moments`) next to the `time_cursor`. Round 4: R27 scored, round 3's
+R14b, R24b, R26b scored; bias and rejection checks (findings in the log); H2 not applicable on R26b (remark typed in
+the chat), B4b runner-up; A2c (Rerun's widget in marimo) and H5 (upstream request) added. No web search; Rerun
+0.43.2's source read by the checks (pixel picking, `Viewer.on_event` position).
+Answers: R26b's reason: "I really dislike having multiple stacked UI frameworks or layers as that seems prone to
+breakage." Upkeep of the Rust wrapper: "Fine long-term". Feel of H1: "Good". Remarks: "No remarks".
