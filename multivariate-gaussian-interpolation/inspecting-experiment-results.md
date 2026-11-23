@@ -142,7 +142,7 @@ annotations/comments for the agent anywhere in the program."
 ## Requirements
 | # | Requirement | Reason (what breaks without it) | Source | Priority | Verified |
 |---|---|---|---|---|---|
-| R1 | A run of any method in the project can be inspected the same way, without the inspection depending on that method | New methods arrive every few days (four in three days); work per method would make upkeep high (R16) | user's request, 2026-11-22 ("any model"); reason inferred | must | yes (part of the problem the user confirmed, 2026-11-22) |
+| R1b | A run of any method in the project can be inspected the same way wherever the method can be asked the same thing; a view a method cannot answer is left out for its runs | New methods arrive every few days; work per method would make upkeep high (R16b) | user, round 2 (2026-11-23: "Where it can"); replaces R1 | must | yes |
 | R2 | A new environment or kind of model is not blocked by it | None is planned ("none known yet"); the wish is not to be blocked when one arrives | user, 2026-11-22 | should | yes |
 | R3 | A new kind of diagnostic can be added later without redoing what exists | Diagnostics keep being added ("other possible future debug utilities") | user's request and answer, 2026-11-22 | must | yes (part of the problem the user confirmed, 2026-11-22) |
 | R4b | The views help answer: where the agent wastes steps; what it learned, next to the truth; how training went; what data it saw | These are the questions the user has about a run | user, 2026-11-22 (replaces R4) | should | yes |
@@ -157,14 +157,16 @@ annotations/comments for the agent anywhere in the program."
 | R13 | A run's results can be seen as they come in, while it trains | Without it the work is slower, not broken (the user's answer) | user's remark and answer, 2026-11-22 | should | yes |
 | R14 | It can be used from another machine over a network | "would be nice, but that may be out of scope" | user's remark, 2026-11-22 | could | yes |
 | R15 | The user can attach a remark to what they are looking at, and the assistant receives it together with what it refers to | To tell the assistant exactly which run, moment and place is meant, and to leave questions and instructions next to the evidence for a later session; without it the assistant may look at the wrong thing and observations get lost between sessions | user's remark and answer ("Both"), 2026-11-22 | should ("Important, not essential", user, round 1) | yes |
-| R16 | It costs little effort to keep working as methods and experiments change. The effort to build it, and breakage when tools it depends on change, do not count | | user, 2026-11-22 (value); scope from round 1 ("Neither") | should | yes |
+| R25 | A run in progress can be followed in a simple form (for example a light page of live runs), apart from the full viewer | | user, round 2 (2026-11-23: "The web page version could be kept in simplified form for keeping track of live runs only.") | could ("could be kept") | yes |
+| R24 | A remark can mark the part of the view it is about by drawing on it, anywhere in the interface, then typing the text; at least by selecting an area | To show the assistant exactly where on the screen the remark is about | user, round 2 (2026-11-23: "I'd like the remarks to be like a pencil tool; draw a remark, then type the remark into a box that pops up. If that's not possible then at least allow selecting an area."; and "an annotation pencil to put marks anywhere on the UI") | should ("at least" an area: the area is the floor) | yes (need); priority assumed |
+| R16b | It costs the user little effort to keep working as methods and experiments change: what a maintained library does is preferred over own code the user would have to keep. The effort to build it does not count | Own code has to be maintained; a library is "more future proof" | user, round 2 (2026-11-23: "I have a preference for using libraries wherever possible as they are more future proof and I don't have to maintain them myself (R16)"); replaces R16, whose scope (round 1) excluded breakage by tool updates. What "future proof" means: "Less own code" (round 2 follow-up); a library's API changes stay acceptable | should | yes |
 | R17 | Getting from a question about a run to seeing the answer is quick | | user, 2026-11-22 (value) | should | yes |
 | R18b | It is pleasant to use: moving through training glides, and values can be read under the cursor | Stepping through static pictures was offered and not accepted | user, round 1 ("Smooth matters"); replaces R18 | should | yes |
 | R19 | A layout is shown by its number only, never by another name | The user must not learn another name for a layout | project `CLAUDE.md` (user, 2026-11-20); raised by the round-1 bias check | must | yes (standing rule) |
-| R20 | A shown result says how much evidence it has: layout, models, environments, seeds | One model's score varies a lot between seeds (1.3 % and 5.2 % for one method), so runs side by side invite over-reading | project `CLAUDE.md` (the assistant's working rule, not the user's); raised by the round-1 bias check | should | no |
-| R21 | Everything about a run can be seen combined in one interactive view, with elements that can be switched on and off | | user's remark, round 1 ("I'd like to be able to view everything combined into one interactive window, with toggleable elements") | not stated | no |
-| R22 | Results stay on the workstation; a page with them is published elsewhere only when the user asks for one | | user, round 1 ("Only on request") | must (as stated; what breaks was not asked) | no |
-| R23 | A human baseline session can be inspected like a run and put next to an agent's runs on the same layout | The person is the baseline every method is measured against; the child decision counts a session as a run | inferred from the child log (user, 2026-11-22: a run is a training run, a probe or a human session); round 2 | not stated | no |
+| R20 | A shown result says how much evidence it has: layout, models, environments, seeds | One model's score varies a lot between seeds | project `CLAUDE.md` (the assistant's working rule); user, round 2 (2026-11-23: "Could") | could | yes |
+| R21b | The elements of the view (layers) can be switched on and off; maps, curves and runs may sit in panels with their own controls | | user, round 2 (2026-11-23, "Layers I can switch"); replaces R21 | should (assumed: no priority given) | yes (meaning); priority not asked |
+| R22b | Results stay on the workstation and the local network; a service outside it (a cloud service, a published page) gets them only when the user asks | | user, round 2 (2026-11-23: "Local network ok"); replaces R22 | must (as stated; what breaks was offered, not chosen) | yes (scope); its reason not given |
+| R23 | A human baseline session can be inspected like a run and put next to an agent's runs on the same layout | The person is the baseline every method is measured against; the child decision counts a session as a run | user, round 2 (2026-11-23: "Must"); first inferred from the child log | must | yes (user, 2026-11-23; what breaks without it not asked) |
 | W3 | Existing runs can be inspected | "Old runs don't matter": only runs made after the run record is in place need to be inspectable. Would come back if an old result has to be re-examined | user, round 1 | won't | yes |
 | W1 | The user answers a question that needs a new computation without the assistant | Offered and not chosen; new computations stay the assistant's work. Would come back if the user wants to write diagnostics themselves | user, 2026-11-22 | won't | yes |
 | W2 | The user can read and change its code themselves | Offered as a value and not chosen. Would come back if the user wants to maintain it | user, 2026-11-22 | won't | yes |
@@ -793,32 +795,33 @@ unless asked), R7 (same information), R5 (may be redrawn). Still open, for round
 | Tool versions, licences and upkeep in rows A1 to A8 | generator A's report (`r1-field.md`), with its own list of what it could not verify | 2026-11-22 | one report; not cross-checked, not deciding |
 
 ## Round checklist
-Round 2.
+Round 3.
 Checklist:
-- [x] Log (first round): its path in the report; new or resumed, and what was outdated (n/a: round 2, resumed)
-- [x] Problem (first round): confirmed by the user (the line in *Problem*) (n/a: round 2; confirmed 2026-11-22)
-- [x] Scope: split, widened or unchanged (unchanged; the child decision is built)
-- [x] Requirements: new or changed ones, each a need (no mechanism) with reason, source, priority and verified (R23 added, unverified; matrix assumptions for R1, R4b, R13 updated)
-- [x] Replaced requirements: new IDs, old rows moved; options re-checked from the old matrix column (none replaced this round; the contenders re-scored against R5b, R7b, R10b, R18b)
-- [x] Written requirements: evidence found for each (commit, decision log) (R6, R19 unchanged in the project CLAUDE.md; R20 still the assistant's rule)
-- [x] Deciding unverified requirements: asked this round, or assumptions after "can't answer" (asked: R21, R18b by trying, staging, R23, R22, R1, R20, R14, R2; R12 left for round 3, it moves no ranking)
-- [x] Options: added, by the categories of Phase 3 (existing tools: F1, F2, F3; how others solved it: Vizarel, PolicyExplainer, MDPVis, the pattern of A6; what was built: the core and the screenshot twin)
-- [x] Searches: recorded in the round's entry; or "no web search", said in the report (in the rounds file)
-- [x] Deciding claims: cross-checked against a second source, or marked unverified (in Sources; the drafts' timings are single measurements)
-- [x] Matrix: updated (round-2 table for the ten options in contention)
-- [x] Rejection records: one per trailing or not applicable option (scenario, best variant, leader's cells compared) (round 2: A3, B7, C2, E1, F1, F2, F3; the stored-only options rest on round 1's records and R10b)
-- [x] Harms: scenarios for the leading option (B4b, in Evaluation)
-- [x] Reversibility: every option rated; one-way means extra stress-testing, said in the report (shells cheap; the address and remark formats one-way)
-- [x] Draft and stress test: of the leading option; the draft's path in the report (r2/page and three rivals)
-- [x] Bias check: findings in the log and the report; or "not independent" (in Evaluation; G1 to G4 added, the core's loop tested)
-- [x] Rejection check: findings in the log and the report; verdicts corrected (seven points taken; B4b and A2 now level)
-- [x] Ranking change: recorded (round 1's C4 and A3 level → B4b and A2 level; A3 and B7 trailing)
-- [x] Report: what changed, recommendation, runner-up, must rejections, the checks' findings (in the chat)
-- [x] Questions: deciding unverified ones first, ordered by ranking impact, through the question tool, remarks last (three calls)
-- [x] Pushback: if the user picked a worse option, asked what makes it better (n/a: nothing picked yet)
+- [x] Log (first round): its path in the report; new or resumed, and what was outdated (n/a: round 3)
+- [x] Problem (first round): confirmed by the user (the line in *Problem*) (n/a: round 3)
+- [ ] Scope: split, widened or unchanged
+- [ ] Requirements: new or changed ones, each a need (no mechanism) with reason, source, priority and verified
+- [ ] Replaced requirements: new IDs, old rows moved; options re-checked from the old matrix column
+- [ ] Written requirements: evidence found for each (commit, decision log)
+- [ ] Deciding unverified requirements: asked this round, or assumptions after "can't answer"
+- [ ] Options: added, by the categories of Phase 3
+- [ ] Searches: recorded in the round's entry; or "no web search", said in the report
+- [ ] Deciding claims: cross-checked against a second source, or marked unverified
+- [ ] Matrix: updated
+- [ ] Rejection records: one per trailing or not applicable option (scenario, best variant, leader's cells compared)
+- [ ] Harms: scenarios for the leading option
+- [ ] Reversibility: every option rated; one-way means extra stress-testing, said in the report
+- [ ] Draft and stress test: of the leading option; the draft's path in the report
+- [ ] Bias check: findings in the log and the report; or "not independent"
+- [ ] Rejection check: findings in the log and the report; verdicts corrected
+- [ ] Ranking change: recorded
+- [ ] Report: what changed, recommendation, runner-up, must rejections, the checks' findings
+- [ ] Questions: deciding unverified ones first, ordered by ranking impact, through the question tool, remarks last
+- [ ] Pushback: if the user picked a worse option, asked what makes it better
 
 ## Rounds
 - Problem formulation (2026-11-22): problem confirmed after four question calls; requirements R1 to R18, W1, W2.
 - Round 1 (2026-11-22): first ranking. Before the checks C4 led and A3 was runner-up; after them C4 and A3 are level (with B6's index, on A8's core), C2, E1 and E8 are near-ties, and the run record (O3) is proposed as the first step and a decision of its own.
 - After round 1's answers (2026-11-22): the options that show only stored views are out (R10b, any point); C4 as drafted no longer leads (R18b smooth, R21 one combined view); the shortlist for round 2 is B4b, a Bokeh or Panel form of A3, napari and Rerun each with computing on request, all on A8's core. Round 2 waits for the decision on what a run records.
 - Round 2 (2026-11-23): the core built on the run record; four displays drafted and measured. Before the checks the own page (B4b) led and Rerun (A2) was runner-up; after them B4b and A2 are level, A3 (Bokeh) and B7 (napari) trail on R18b; G1 to G4 added; the wait after a goal click is the core's and a compiled loop removes it.
+- After round 2's answers (2026-11-23): Rerun (A2) leads on the user's trial ("awesome, much better than the hand-rolled version") and R16b (less own code); the own page is kept only as a simple live-run page (R25); R23 a must; R24 a pencil anywhere in the interface. Round 3 tries a custom Rerun viewer in Rust, on the user's choice.

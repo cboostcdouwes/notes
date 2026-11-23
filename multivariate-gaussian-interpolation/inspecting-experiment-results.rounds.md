@@ -9,6 +9,10 @@
 | R7 | The assistant can read every diagnostic the user can see (as an image, a table or numbers) | The assistant cannot operate an interactive window | user, 2026-11-22 | R7b (round 1): the same information, not the same picture |
 | R10 | The user chooses the run, the moment in training, the goal and the state to look at, among kinds of view that exist, without the assistant writing code | Today every new look needs a new script | user, 2026-11-22 | R10b (round 1): any point of the map |
 | R18 | It is pleasant to use | | user, 2026-11-22 (value) | R18b (round 1): smooth movement and values under the cursor |
+| R16 | It costs little effort to keep working as methods and experiments change. The effort to build it, and breakage when tools it depends on change, do not count | | user, 2026-11-22; scope round 1 ("Neither") | R16b (round 2): libraries preferred over own code the user would keep |
+| R1 | A run of any method in the project can be inspected the same way, without the inspection depending on that method | | user's request, 2026-11-22 | R1b (round 2): "Where it can" |
+| R22 | Results stay on the workstation; a page with them is published elsewhere only when the user asks for one | | user, round 1 | R22b (round 2): "Local network ok" |
+| R21 | Everything about a run can be seen combined in one interactive view, with elements that can be switched on and off | | user, round 1 | R21b (round 2): "Layers I can switch" |
 
 ## Dropped requirements
 | # | Requirement | Why it isn't one (user's reason) | Source | Round |
@@ -123,3 +127,35 @@ Round 2, after the checks (2026-11-23):
   record's `method` is `__main__`. Taken as rows, harms, questions and a test.
 - The researcher's test after the bias check: `vmap` over stored functions fails (no batching rule for
   `call_exported`); `lax.map` gives a goal's arrows for all 81 moments in 10 to 16 ms and paths in about 225 ms.
+
+## Round 2: the user's answers (2026-11-23)
+1. R21: "Layers I can switch" (R21b replaces R21).
+2. Trying the drafts: "I'm on a phone right now; start the servers so I can evaluate them over the network." The
+   servers were started on the Tailscale address, stopped by the user ("Use the wifi interface.") and started again
+   on the Wi-Fi address 192.168.2.135 (ports 5106, 5107, 9877; Rerun's 9876 on every interface, it takes no
+   address). The drafts were made for a mouse; on a phone some controls do not work.
+3. Staging: not answered; instead: "I'd like the remarks to be like a pencil tool; draw a remark, then type the
+   remark into a box that pops up. If that's not possible then at least allow selecting an area." (R24.)
+4. Remarks: "I have a preference for using libraries wherever possible as they are more future proof and I don't
+   have to maintain them myself (R16). Without seeing the comparison I currently have a preference for Rerun."
+   (R16b replaces R16.)
+Effect, to re-score in round 3: R16b turns the page's own drawing code into a cost (~), A3 and A2 keep ✓; R21b
+removes A2's ~ R21; R24 is new: the page can draw on its own canvas, Rerun gives a click's scene position only
+(drawing over its canvas needs the view's transform, unverified). Still to ask: staging, R23, R22, R1, R20, R14, R2.
+Follow-up answers (2026-11-23): staging: "Choose now"; "future proof": "Less own code"; R23: "Must". Remark: "The
+rerun version is awesome, much better than the hand-rolled version, although I expect the features rerun offers are
+not being utilized fully yet. Would it be possible for an annotation pencil to put marks anywhere on the UI? The
+rerun version should probably not have the html input box; try to customize the rerun ui."
+For round 3: Rerun leads on the user's trial and R16b; to find out: how far Rerun's own interface can be changed
+(goal, start and remark entry inside it; a pencil over any part of it) and at what cost in own code (a custom
+viewer is Rust against Rerun's internal API, which may weigh against R16b); what of Rerun's features the draft
+leaves unused; a human session's paths as a Rerun entity (R23); the core's loop over all moments.
+Second follow-up (2026-11-23): R22: "Local network ok" (R22b); R1: "Where it can" (R1b); R20: "Could". Remark: "The
+web page version could be kept in simplified form for keeping track of live runs only." (R25, a could.)
+Not asked yet: R14 (which machine; partly answered by the phone on the Wi-Fi), R2 (attention-toys in scope), R12.
+
+## Round 3 (2026-11-23)
+Start, the user's choice of what to try: "Custom Rust viewer" (not chosen: "Python only", "Pencil layer in page");
+servers: "Stop them" (stopped). The trade-off said before the choice: own Rust code against Rerun's unstable
+internals weighs against R16b ("less own code"); a spike, not a decision. Pushback, if the spike leads to choosing
+it, is due at the decision.
