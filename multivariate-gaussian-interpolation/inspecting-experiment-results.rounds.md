@@ -85,3 +85,41 @@ and the priorities of the new R21 and R22.
 After the round (2026-11-22), the user added: "The results don't have to be the existing figures; they may be
 presented in any way that is best for visualization." Taken into R5b: no view has to keep or imitate today's
 figures. It changes no verdict (redrawing already counted as no cost) and frees the design of the views in round 2.
+
+## Round 2 (2026-11-23)
+Start, the user: "The child decision is resolved, start round 2."
+
+Done in round 2:
+- Read what the child decision built (`runs.py`, `gcsl.train`); updated *Situation*, *Related decisions* and the
+  matrix's assumptions (R1, R4b, R13 now come from the record for every option).
+- Two runs in a scratch clone of the repository (`r2/repo`, outputs in `r2/outputs`): the model method and GCSL on
+  layout-02, one model, 8 environments; a third to test views of a run in progress. The clone ran with the
+  project's Python environment called by path (a second environment did not fit the scratch folder's quota). A
+  symlink to the project's `.venv` was made by mistake and removed at once, against the project rule; nothing was
+  deleted through it.
+- The shared core (`r2/core.py`), measured by the researcher.
+- Four displays drafted by four agents with one brief (`r2/brief.md`): own page, Bokeh, Rerun, napari.
+- The researcher's test of the screenshot twin on the own page.
+- New options F1 (viser), F2 (Foxglove or Lichtblick), F3 (Dear PyGui), from searches; not drafted.
+- New requirement R23 (a human session next to agent runs), inferred from the child log, unverified.
+
+What was learned: smoothness comes from holding a goal's arrays in the display, not from the tool; a screenshot of
+the page at its address is a twin that cannot drift; napari cannot be rendered offscreen on this machine; Rerun's
+clicks reach Python only through its npm viewer in an own page; Bokeh steps.
+
+Searches (web, standard): "viser python web visualization GUI scene click event 2D"; "Foxglove Studio custom python
+websocket server publish clicked point panel"; "Dear PyGui interactive plot drag point real time python scientific
+viewer"; "reinforcement learning policy visualization tool interactive goal selection value function web dashboard
+2025" (found Vizarel, PolicyExplainer, MDPVis: research systems, no maintained tool); "viser on_pointer_event scene
+click ray origin direction" (nothing on viser); "Lichtblick open source fork Foxglove Studio license MPL". The four
+draft agents searched and read their own tools' docs and installed sources (in their reports, summarised in the
+log's *Evaluation*).
+
+Round 2, after the checks (2026-11-23):
+- Rejection check: seven points, all taken (A2's ~ R16 and B7's ~ R7b, C2's ~ R15 stretched; B4b's R14 ✓ on an
+  untested tunnel; "no dependency" only a tie-breaker). B4b and A2 now level.
+- Bias check: one window and gliding were the brief's minimum while R21 is unverified; G1 to G4 missing; batching a
+  goal over all moments in the core; R1, R15, R18b, R21, R7b worded as means; the core reads model 0 only; the
+  record's `method` is `__main__`. Taken as rows, harms, questions and a test.
+- The researcher's test after the bias check: `vmap` over stored functions fails (no batching rule for
+  `call_exported`); `lax.map` gives a goal's arrows for all 81 moments in 10 to 16 ms and paths in about 225 ms.
