@@ -118,7 +118,7 @@
 - [x] Bench, EK1960 alone on `enp66s0` (2026-11-18, scratch program running the lib engine with only this driver):
       OP, 8 outputs at bit 0, 10 s at 10 ms with 0 faults; wrong `inputs`/`outputs` refused naming the object.
       Outputs held at 0 throughout
-- [ ] Bench: which `F788` bit does what (needs the TwinSAFE project or its ENI export); the EK1960 in the full ring
+- [ ] Bench: which `F788` bit does what (needs the TwinSAFE project or its ENI export)
 - [ ] The server can't run a ring without every `Input` enum value on a real input device (`signals.rs`), so the
       EK1960 alone could only be tested with a scratch program. Part of the generic/PolyMX split
 - [ ] Local safe I/O over PDO when the safety project maps it (user, 2026-11-18). Needs the project to enable the
@@ -132,9 +132,12 @@
       remote terminals; field names go in the machine file):
   - [x] Step 1: catalog of every mapped entry both directions, logged at init; input entries readable by
         `index:subindex` (`Ek1960::input_value`)
-  - [ ] Step 2: `SafetyActive` on the Input enum, F688 bit 0; EK1960 in `machine.toml` at index 9 before the
+  - [x] Step 2: `SafetyActive` on the Input enum, F688 bit 0; EK1960 in `machine.toml` at index 9 before the
         ECOMODUL (user, 2026-11-24). Signals stay on F688 via `channel` for now; names go in the proto enums like
         other I/O (`11f677b`)
+  - [x] Full ring with the EK1960 at 9 (2026-11-24): `SafetyActive` shows in the debug panel. First attempt hung
+        the cycle: `Ek1960::update` held the input read guard while taking the output write guard (ethercrab's
+        PDI views share one spin lock per device). Fixed in `take_inputs` (`d819982`)
   - On hold (user, 2026-11-24): the steps below wait until a signal outside F688 is actually needed
   - [ ] Bench: log the full mapping with the current project; enable "Internal I/O" info data and read it again
   - [ ] Machine file binds signals to EK1960 entries (and bits), beyond 32 bits and beyond the proto enums
@@ -144,8 +147,8 @@
 - [x] Docs: the EK1960 and its `inputs`/`outputs` fields in `docs/guide/machine-toml.md` (2026-11-18)
 - [ ] RxPDO `17FE` (the AND gate on safe outputs) stays unassigned: assigning it means writing `1C12`, against the
       no-CoE-writes decision. Revisit only if the project enables "Standard Outputs active"
-- [ ] Low urgency: the EL6224, iX7NH and ECOMODUL `init` bodies still `unwrap()`/`panic!` on SDO failures; return `Err`
-      with the object index now that `init` can fail
+- [x] The EL6224, iX7NH and ECOMODUL `init` bodies return `Err` naming the object on SDO failures, through
+      `drivers::sdo_write` (2026-11-24, awaiting commit). Deliberately tolerated writes stay tolerated
 
 ## Versioning (`decisions.md`)
 

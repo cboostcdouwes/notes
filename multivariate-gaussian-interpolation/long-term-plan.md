@@ -39,6 +39,8 @@ By the user, 2026-11-24. The goals themselves, with every answer, are in `GOALS.
 | C6 | The test games are small games made for this project first, on small screens, with an exact count of what was seen; an existing collection of games follows in stage 3. | They run inside the budget on this laptop, and each can hold one difficulty at a time |
 | C7 | At most about one run in four is a confirmation. An idea gets the least evidence that can show an effect (often one seed on one layout); more seeds and layouts go only to what the next step is built on, and to a gate. | The user's condition on how time is spent |
 | C8 | The quasimetric method keeps its interval embedding; the number of model updates per step is no longer a separate question but part of the trade under the compute budget; experience is recorded for single runs and not for sweeps. | Three older open points from `TODO.md` that are questions of how to run |
+| C9 | For *A session* in `PLAN.md`: the opening check covers both searching the package for parts to reuse and writing what will be used again as a part, limited to the item at hand; machine time is summed from the `seconds` of the run records, per question and per stage; a sweep still running at the end of a session is handed over on the work list with what its result decides; the weekly review and the monthly search are triggered by their dates on the work list. | The user asked for the process to be written down and left these open. An open-ended search for components at every start builds parts before a second use shows their interface, which the rule of fixing at the second workaround is there to prevent |
+| C10 | Stage 0's preparation (2026-11-24), in this order: the findings file; the repeat check; a baseline of the present methods from the old code; the package with the environment interface, sweeps and canaries; worktrees. Same-seed runs repeat by turning GPU autotuning off when `gcrl` is imported. The package is checked against the old code by identical numbers, not by seed spread. The two stores keep their own relabelling (trajectories with uniform later goals; the ring with geometric offsets) instead of a store and a relabelling that combine freely. The Floyd-Warshall try-out is deleted, not made a part. Working trees go in `.worktrees/` inside the repository, each with its own Python environment. Canaries are six short runs on `layout-02`, compared to the bit, and skipped on another GPU or JAX. | Autotuning was the cause of the differences and costs 3 % to turn off. Identical numbers check everything at once and cost one set of runs; seed spread would need more seeds. Separating store and relabelling would change the random draws and lose the exact check, and no question in sight needs another combination yet (stage 1's item 4 would). The try-out has no use in sight and is worse than the quasimetric time-to-goal. Inside the repository the agents' trees are within Claude Code's working folder; their own environments are needed because an editable install points at one tree's source |
 
 ## Working hypothesis
 
@@ -238,6 +240,21 @@ is decided again); a maze version of the *Repeating* game.
 
 **Open for the user:** whether seeing becomes a score in `PROBLEM_STATEMENT.md`, which says methods are compared on
 $J$ "and on nothing else" and has no score for the case without a command.
+
+### 2026-11-24: how a session runs
+
+The user asked what each session would look like, based on the plan. `PLAN.md` had no answer of its own: its unit
+was the question, and three things were open (where the machine hours against a box are added up, how a sweep that
+outlasts a session is picked up, what triggers the weekly review). The user then: "I would also start by searching
+for implementing reusable components at each session start", and, after my answer that this should be limited to
+the item at hand: "I'd like to formalize this process in the plan, so each session does not have to rediscover it."
+
+Added to `PLAN.md`: a section *A session* (one item at a time; the work list as what one session hands to the next;
+five steps at the start and five at the end; how machine time is counted), a sentence in the introduction that
+points to it, and an opening check in *Keeping the tools sharp* next to the close-out check. Nothing was removed.
+
+Not confirmed by the user: which of the two searches was meant (parts that exist, or code that should become a
+part). Both are in the check (C9). The limit to the item at hand is mine as well.
 
 ## Sources
 

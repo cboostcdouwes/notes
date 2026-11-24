@@ -12,9 +12,10 @@ lifts a rule, update it here in the same step.
   - Set by the user on 2026-11-20 ("I'd like to stay blind to the layouts until the proper runs") and 2026-11-21
     ("Evaluate on layouts 1 to 3 only, as I have not seen the others and I must remain blind to them").
   - Why: the user plays them with the walls hidden as the human baseline. Seeing one cannot be undone.
-  - Ends per layout, when the user has played it in both conditions. `gcsl.require_played` refuses the others:
-    training calls it by itself (`gcsl.train`), so probes are covered; every new script that shows or computes
-    something of a layout without training must call it.
+  - Ends per layout, when the user has played it in both conditions. `gcrl.environment.require_played` refuses
+    the others, and every way the package builds a layout calls it (`gcrl.environment.maze` and `maze_params`), so
+    training, sweeps, probes, figures and videos are covered; a new script that reads a layout in some other way
+    (`gcrl_maze.layouts` directly) must call it.
 - **Layouts are named by number only** (`layout-01`, ...); never reveal another name for one.
   - Set by the user on 2026-11-20 ("Do not reveal the named layout names to me (name them `layout-01` etc.)").
   - Ends: never, unless the user says so.
@@ -132,29 +133,44 @@ lifts a rule, update it here in the same step.
   plan into a `PLAN.md` in the project without any history and redundant parts removed"). A change to the plan goes
   into `PLAN.md`; who decided what, when and why goes into `long-term-plan.md` next to this file, which also holds
   the decisions Claude made under the user's delegation. `self-training-robot-plan.md` is the first version, for
-  goal 1 only. Where they differ, `PLAN.md` holds.
-- **Open work and what was found:** `TODO.md` next to this file. Keep it current.
+  goal 1 only. Where they differ, `PLAN.md` holds. Every session of work follows its section *A session*: read it
+  at the start (set by the user on 2026-11-24: "I'd like to formalize this process in the plan, so each session
+  does not have to rediscover it").
+- **Open work and what was found:** `TODO.md` next to this file (the work list of *A session*). Keep it current.
+  Findings, one line each with evidence, runs and status: `FINDINGS.md` in the project root.
 - **Design decisions:** the research logs next to this file. Decided: what a run records
   (`what-a-run-records.md`, its *Decision* and plan). Decided and reviewed (2026-11-23): inspecting
   results (`inspecting-experiment-results.md`): a custom Rerun viewer in Rust on a shared Python core; being
   built (its *Progress on the plan*). Its drafts are in `~/.cache/claude-r3-spike/work/` until the viewer is in use.
 - **Experiments:** `experiments/README.md` and, for the maze, `experiments/gcrl-maze/README.md`, with one README
-  per experiment folder (`human-baseline`, `gcsl`, `wgcsl`, `quasimetric`). The environment is the package
-  `packages/gcrl-maze`.
+  per experiment folder (`human-baseline`, `gcsl`, `wgcsl`, `quasimetric`) and a section per question. The
+  environment is the package `packages/gcrl-maze`.
+- **The methods:** the package `packages/gcrl` (its README): the learner's exchangeable parts, the methods as
+  configurations of them (`gcrl.methods`), the environment interface (`gcrl.environment`), training with members
+  and sweeps (`gcrl.training`, `uv run gcrl`), the run record (`gcrl.runs`), canaries (`gcrl.canaries`). A new idea
+  is a part or a setting there, not a copy; the experiments' scripts only call it.
 - **Looking at runs and sessions:** the results viewer, `experiments/gcrl-maze/viewer/` (its README):
   `uv run python companion.py` opens the window; `core.py KIND ITEM key=value` gives me the numbers of any view;
   remarks the user leaves are in `remarks/remarks.jsonl` in the repository, with screenshots; Rerun's MCP server
   (`.mcp.json`) reads the open window.
-- **Runs and their records:** every run through `gcsl.train` commits the working tree, writes a record under
-  `runs/<id>/` in the repository (ID: date, time and a label) and puts its experience and large outputs under
-  `~/.cache/multivariate-gaussian-interpolation/runs/` (or `$RUN_OUTPUTS`). `experiments/gcrl-maze/gcsl/runs.py`
-  lists, sizes, pins, remakes, cleans and removes runs; `experiments/gcrl-maze/README.md` describes it.
+- **Runs and their records:** every run through `gcrl.training.train` commits the working tree, writes a record
+  under `runs/<id>/` in the repository (ID: date, time and a label; it names its method, members and question) and
+  puts its experience and large outputs under `~/.cache/multivariate-gaussian-interpolation/runs/` (or
+  `$RUN_OUTPUTS`); a sweep keeps no outputs. `uv run runs list|sizes|time|pin|remake|clean|remove` from anywhere in
+  the repository; `runs time` gives machine time per question. `experiments/gcrl-maze/README.md` describes it.
+  Since a run commits the whole tree, don't edit the main tree while a run started from it is going: work in a
+  working tree of its own (`uv run runs worktree add NAME`, in `.worktrees/NAME`, branch `work/NAME`), which is
+  also how parallel agents work.
 - **Probes:** try-outs that are not part of a method. A probe that trains leaves a record like any run, with its
   script in the run's commit: give it a label (`--label NAME`, or the script's name). The probes made before
   2026-11-22 are under an experiment's `results/probes/<name>/`, with their scripts as `.py.txt` and their
   curves; they ran on `gcsl.py` patched in memory and have no record, and their patches may not fit the code
   any more.
-- **Running:** from an experiment's folder, `uv run python <script>.py NUMBER`; `--plot-only` redraws a figure
-  from the records without training; `--label NAME` keeps a try-out apart from the method's own runs.
-- **Tests:** from `experiments/gcrl-maze`, `uv run pytest gcsl human-baseline`; the environment's are in
-  `packages/gcrl-maze`.
+- **Running:** from an experiment's folder, `uv run python <script>.py NUMBER [--seeds 0 1] [--SETTING VALUE]`;
+  `--plot-only` redraws a figure from the records without training; `--label NAME` keeps a try-out apart from the
+  method's own runs; `--question NAME` ties a run to a question of the plan. From anywhere:
+  `uv run gcrl train|sweep|figure METHOD NUMBER ...`. Runs with the same seed and settings repeat exactly.
+- **Tests:** `uv run pytest` in `packages/gcrl` (with the canaries, about a minute more; `-m "not canary"` leaves
+  them out), in `packages/gcrl-maze`, and in `experiments/gcrl-maze` (`human-baseline viewer`). After a change to
+  shared code, `uv run python -m gcrl.canaries` must say "as stored"; a change meant to alter the numbers writes
+  them again with `--write` and says why in its commit.

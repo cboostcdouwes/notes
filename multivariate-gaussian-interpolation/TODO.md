@@ -1,12 +1,22 @@
 # TODO — multivariate-gaussian-interpolation
 
+## Session state (the work list of `PLAN.md`, *A session*: read at every start, brought up to date at every end)
+- Open item: none. Stage 0's preparation (steps 1 to 6) closed on 2026-11-24. Next in order: stage 0, step 7 (a run with one environment and no resets)
+- Sweeps running: none
+- Machine time used: stage 0, about 0.3 of 10 hours (the baseline from the old code, 14 runs, 0.15 h without a question; the package's 14 runs, `runs time stage-0-package`, 0.15 h; scratch checks and tests not counted)
+- Last weekly review: none yet. The plan was committed on 2026-11-24, so the first is due on 2026-12-01
+- Last search of the literature: 2026-11-24 (the literature review made for `PLAN.md`; counting it as the monthly search is Claude's reading). Next due 2026-12-24. The survey before stage 1's first race is still to do
+- Debt list: the section *Tool debt* below
+
 ## Long-term goals (`GOALS.md` and the plan `PLAN.md` in the project root; the plan's history and reasons: [long-term-plan.md](long-term-plan.md))
 - [x] Goal 1 recorded 2026-11-24: a robot that trains on its own. Goal 2 recorded 2026-11-24: a curious agent that plays any game. One method for both. Every answer of the user is in `GOALS.md`
 - [x] Question rounds of 2026-11-24 answered: way of working ("Measure first, then compete"), one plan for both goals, the experiment-size rule lifted entirely (with the condition on how time is spent, now a rule in `CLAUDE.md`), no `research:design` for the methods package and the environment interface ("No, build directly"), a compute budget at two or three levels counted in operations per step, the four readings of goal 1 confirmed, priors may be tried either way, games through the screen from the start, no command in games, no problems reported with the maze environment, the run record or the viewer ("None so far")
 - [x] `PROBLEM_STATEMENT.md` amended 2026-11-24 with the budget (section *Resources*); the wording is Claude's and not checked by the user
 - [x] Plan reworked 2026-11-24 into [long-term-plan.md](long-term-plan.md); [self-training-robot-plan.md](self-training-robot-plan.md) is kept as its first version. Claude's own decisions under the user's delegation are its C1 to C8
 - [x] `PLAN.md` written 2026-11-24 in the project root (the current plan, no history) and refined in four rounds: an independent reader's review twice, a literature review with web search once, and counts made for it (the best agent: 1.5 × 10^9 operations per gradient step, 1.9 × 10^8 per environment step with 8 environments; GCSL 2.4 × 10^7). What changed and why, and the sources, are in [long-term-plan.md](long-term-plan.md), *Changes to `PLAN.md`* and *Sources*
-- [ ] Stage 0 of `PLAN.md`, not started, in its order: a run with one environment and no resets; seeing and the operation count in every run's record; the explorer; four maze variants (noise everywhere, noise in one room, a random step, a one-way door on a loop); the best agent in stage 1's condition at the reference level on `layout-01` to `layout-03` with two seeds
+- [x] How a session runs is in `PLAN.md` since 2026-11-24 (section *A session*, and the opening check in *Keeping the tools sharp*), on the user's word ("I'd like to formalize this process in the plan, so each session does not have to rediscover it"). What Claude decided for it is C9 in [long-term-plan.md](long-term-plan.md)
+- [x] Stage 0's preparation done 2026-11-24 (C10 in [long-term-plan.md](long-term-plan.md)): `FINDINGS.md` and the *Questions* convention in `experiments/gcrl-maze/README.md`; the package `packages/gcrl` with the four methods as configurations, reproducing the old code to the bit (14 pairs of runs, `baseline-*` / `package-*`, layout-02, seeds 0 and 1, 8 environments); the environment interface with F; sweeps; exact repeats (GPU autotuning off) and six canaries; worktrees (`runs worktree`). The baseline's code is on branch `work/baseline` and under `refs/runs/`
+- [ ] Stage 0's measurements, in order: a run with one environment and no resets; seeing and the operation count in every run's record; the explorer; four maze variants (noise everywhere, noise in one room, a random step, a one-way door on a loop); the best agent in stage 1's condition at the reference level on `layout-01` to `layout-03` with two seeds
 - [ ] Open for the user: whether seeing becomes a score in `PROBLEM_STATEMENT.md`. The statement says methods are compared on $J$ "and on nothing else" and has no score for the case without a command; `PLAN.md` uses seeing as goal 2's working measure
 - [x] Committed 2026-11-24: `PLAN.md` and `GOALS.md` (`1d07fb7`), `PROBLEM_STATEMENT.md` (`eb64e1b`). Two earlier commits were refused; they were written as one chained command (`cd`, then add, commit, log), and the same commits went through as a plain add followed by a plain commit, run from the project root
 - [ ] User plays `layout-13` to `layout-20` in both conditions, later ("Yes, later", 2026-11-24): work does not wait, and the layouts stay untouched until then
@@ -15,14 +25,17 @@
 - [ ] Open for the user, no hurry (`GOALS.md`): resets as a property of goal 1, other forms of command, and the working measure and test games of goal 2 if the user wants to decide them
 
 ## Tool debt (rule in `CLAUDE.md`; `PLAN.md`, *Keeping the tools sharp*). Each item: what is missing, its price each time, how often, where it is fixed
-- [ ] No sweep runner. Price: about 14 s of startup and compiling per run (14 of 55 s for the quasimetric method with a model, 12 of 24 s for GCSL), and two commits per run. Every run. Fix: `PLAN.md` stage 0, step 4
-- [ ] Runs with the same seed differ. Price: a paired comparison needs more seeds than it should; the size is not measured. Every comparison. Fix: stage 0, step 5
-- [ ] The methods share code through an import path, and try-outs patch `gcsl.py` in memory. Price: a new idea means copying or patching a method; 15 stored probe scripts may no longer fit the code. Every new idea. Fix: stage 0, step 2
-- [ ] No common interface for environments. Price: each maze variant and each game would need its own scoring code. From stage 0, step 10 on. Fix: stage 0, step 3
-- [ ] No canary runs. Price: a silent change of a method's results is found late or not at all (it has happened: the wall fault, the E5 and E12 results). Every change to shared code. Fix: stage 0, step 5
-- [ ] `manifest.json`'s `method` is `__main__` for every run. Price: nothing can group runs by method. Every table. Fix: with stage 0, step 4
+- [x] No sweep runner. Price was about 14 s of startup and compiling per run and two commits per run. Fixed 2026-11-24: `uv run gcrl sweep` (`gcrl.training`): one process, one record, two commits; members that differ only in seeds and floats compile once
+- [x] Runs with the same seed differ. Fixed 2026-11-24: the cause was GPU autotuning picking kernels per process; importing `gcrl` turns it off (3 % slower); same seed and settings now repeat to the bit (`FINDINGS.md` 18)
+- [x] The methods share code through an import path. Fixed 2026-11-24: the package `packages/gcrl`, the four methods as configurations, reproducing the old numbers to the bit. The 15 stored probe scripts (`results/probes/*.py.txt`) patch the old `gcsl.py` and no longer fit; they stay as records of what was run
+- [x] No common interface for environments. Fixed 2026-11-24: `gcrl.environment.Environment`, the maze as one, with F for seeing
+- [x] No canary runs. Fixed 2026-11-24: `gcrl.canaries`, six short runs compared to the bit, in the package's tests (about 50 s)
+- [x] `manifest.json`'s `method` was `__main__` for every run. Fixed 2026-11-24: it is the method's key (`gcsl`, ...); records before that keep `__main__`
+- [x] Nothing added up the machine time of a question. Fixed 2026-11-24: `--question NAME` on every run, `uv run runs time [QUESTION]`. A stage's time is the sum over its questions; runs without a question are listed apart
+- [ ] Exact repeats hold only if `gcrl` is imported before JAX first uses the GPU; a script that computes with JAX before importing it runs with autotuning on, and nothing says so. Price: a run that silently does not repeat; not yet happened. Rare. Fix: when it is worked around the first time, a check at training time that the backend was started with the flag
+- [ ] Two old records (`20261123-231605-quasimetric-model`, `20261123-231702-gcsl`) were made with autotuning on, and their `method` is `__main__`. Price: none until something reads them; `runs remake` would give other numbers. Not a debt to pay unless they are needed
 - [ ] The `@` import in `CLAUDE.local.md` did not load on 2026-11-23/24. Price: the project rules are read by hand at the start of a session, and are missing if that is forgotten. Every session. Fix: not found; the user's setup
-- [ ] READMEs that still describe checkpoints as stored (`experiments/gcrl-maze/wgcsl/README.md:234`, `quasimetric/README.md:109` and `:124`). Price: a reader looks for files that are gone. Rare. Fix: with stage 0, step 2, when those READMEs are rewritten for the package
+- [x] READMEs that still described checkpoints as stored. Fixed 2026-11-24 with the package's README changes (also `gcsl/README.md`'s results section and `wgcsl/README.md`'s output section)
 
 ## GCRL maze environment (decision: [gcrl-discontinuous-test-environment.md](gcrl-discontinuous-test-environment.md), D2 geodesic-step; package `packages/gcrl-maze` in the uv workspace)
 - [x] Step 1: geometry and exact geodesic distance (ASCII map → walls, corner graph, `visible`, `geodesic`), tests on manufactured layouts + extremitypathfinder cross-check

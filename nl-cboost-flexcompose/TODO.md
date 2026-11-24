@@ -28,21 +28,23 @@ machine; the dev box in VS Code on Linux, then Windows.
   exec-depends on `opcua-pip`, which rosdep refuses under PEP 668. The app's own box only works because `opcua` was
   installed there earlier. Proposed: the same `--packages-up-to` selection in `bootstrap.sh` (starter, then the app).
   Separate question: a pip key the service does need fails in both (rosdep wants `PIP_BREAK_SYSTEM_PACKAGES=1`).
-- **Lock per service, and a build that never clones** (user's decisions 2026-11-19 and 2026-11-23; one step,
-  uncommitted in the starters). `lock.repos` holds `<service>` and `<service>/deps/<repo>`, each service resolved
+- **Lock per service, and a build that never clones** (user's decisions 2026-11-19 and 2026-11-23; committed
+  2026-11-24, 25b8cc7). `lock.repos` holds `<service>` and `<service>/deps/<repo>`, each service resolved
   from its own `dependencies.repos`; the machine-wide `override: true` is dropped. The service `Dockerfile` has two
   stages and copies the checkout with its `deps/` (no `resolve` stage, no SSH mount, no named build context);
   `.dockerignore` holds `**/.git`; the integration override is a stub (`services: {}`, the CLI demands the file).
   An image built outside a release needs `deps/` filled first (`cdr` on the PC, or `bootstrap.sh --update` in a
   host-src box); an as-image service's dependencies are cloned on the PC before the first `up`.
   Next steps, each its own commit:
-  1. CLI: the `release:build` fragment drops `ssh: [default]`; `release.sh` drops its `SSH_AUTH_SOCK` guard (they
-     belong together: BuildKit refuses `ssh: default` without an agent socket); README and design §13; reword
-     `fact-ssh-access` and `private-clones` in REQUIREMENTS.md (the user agreed to reword on 2026-11-23; the exact
-     rows to confirm, as V4).
+  1. Done and committed 2026-11-24 (67adfdc): the `release:build` fragment drops `ssh: [default]` and `release.sh` its
+     `SSH_AUTH_SOCK` guard (they belong together: BuildKit refuses `ssh: default` without an agent socket); the e2e
+     runs with no agent; README and design §13; REQUIREMENTS.md V4 (confirmed by the user): `fact-ssh-access` became
+     `fact-git-access`, `private-clones` covers a service's own box and any git credential.
   2. HTTPS URLs as the starters' standard (asked 2026-11-23: other developers and the original app repo use
      HTTPS, as do its pip `git+https://` requirements). First check in VS Code that an HTTPS clone works in the
-     box through Dev Containers' credential sharing; SSH users map with `url."git@github.com:".insteadOf`.
+     box through Dev Containers' credential sharing; SSH users map with `url."git@github.com:".insteadOf`. Until
+     that check, `private-clones` (any git credential) is verified for SSH only; design §13 still says Dev
+     Containers forwards the SSH agent.
   3. The same in the PolyMX app (`Dockerfile`: two stages, its pip wheel paths under `src/deps/`; `.dockerignore`)
      and integration repo (`lock.sh`, the stub override, re-lock).
   Could: `lock.sh` warns when two services lock different commits of a repository they share. Could: the
