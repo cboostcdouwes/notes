@@ -18,10 +18,13 @@ lifts a rule, update it here in the same step.
 - **Layouts are named by number only** (`layout-01`, ...); never reveal another name for one.
   - Set by the user on 2026-11-20 ("Do not reveal the named layout names to me (name them `layout-01` etc.)").
   - Ends: never, unless the user says so.
-- **Continuous actions only.**
+- **Continuous actions only, for goal 1's problems** (the maze and robot problems).
   - Set by the user on 2026-11-22 ("I am interested in agents with continuous actions only"); no reason given.
   - My reading: new methods and experiments use continuous actions; discrete versions are kept as they are and
     not developed further.
+  - Lifted for goal 2's games by the user on 2026-11-24 (chosen option "Lifted for goal 2 only"): a game is taken
+    with its own controls, discrete ones included. The user chose one method for both goals on the same day, so my
+    reading is that the method gets a discrete form for games while goal 1's problems stay continuous.
   - Ends when the user says so.
 - **Remedies must be general.**
   - Set by the user on 2026-11-21 ("Skipping stalled steps does not seem a general solution, try finding a
@@ -85,6 +88,10 @@ lifts a rule, update it here in the same step.
 
 - **The problem and its scores:** `PROBLEM_STATEMENT.md` in the project root. A change of goal goes through that
   file, with the user's decision and its date.
+- **Long-term goals:** `GOALS.md` in the project root, one section per goal. A new goal or a change to one goes
+  through that file, with the user's decision and its date (set by the user on 2026-11-24: "put the long-term goals
+  in a file in the project root"). The plan for goal 1 is `self-training-robot-plan.md` next to this file; goal 2
+  (2026-11-24) has no plan of its own, and that plan lists what goal 2 changes in it.
 - **Open work and what was found:** `TODO.md` next to this file. Keep it current.
 - **Design decisions:** the research logs next to this file. Decided: what a run records
   (`what-a-run-records.md`, its *Decision* and plan). Decided and reviewed (2026-11-23): inspecting

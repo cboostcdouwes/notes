@@ -1,5 +1,18 @@
 # TODO — multivariate-gaussian-interpolation
 
+## Long-term goals (`GOALS.md` in the project root; plan for goal 1: [self-training-robot-plan.md](self-training-robot-plan.md))
+- [x] Goal 1 recorded 2026-11-24: a robot that trains on its own, with the user's answers of that day (learning on the robot only, any kind of robot, no specific robot, goal observation first, no experience number, safety out of scope; resets and what a robot may start with are undecided). The user expects more goals; each gets its own section in `GOALS.md`
+- [x] Plan for goal 1 written 2026-11-24 (no design research behind it): approach C, measuring proposals M1 to M6, stages 0 to 7 with gates
+- [ ] User to decide: approach C and the measuring proposals M1 to M6 (M1 adds a compute budget to `PROBLEM_STATEMENT.md`)
+- [ ] User to confirm or correct: Claude's readings P1 to P6 of the goal (the plan's second section)
+- [ ] User to decide: lift the temporary experiment-size rule for sweeps (stage 0's first table needs layouts 01 to 12 with 8 seeds)
+- [ ] User to play `layout-13` to `layout-20` in both conditions: the sealed test with a human reference
+- [ ] User to say yes or no: `research:design` for the methods package (combinable parts) and for the environment interface with its problem set
+- [ ] Stage 0 of the plan, not started: sweep runner, exact repeats and canaries, compute count, findings ledger, literature survey, first table
+- [x] Goal 2 recorded 2026-11-24: "an RL agent trained from scratch that can use play any game in full just out of intrinsic curiosity", with the user's answers of that day (single-player video games; "in full" = seeing everything; a game's own controls, so the continuous-only rule is lifted for goal 2 only; one method for both goals; goal 1's limits on experience and computation apply to games too). `CLAUDE.md`'s rule on continuous actions is updated
+- [ ] User to say yes or no: rework the plan for goal 1 into one plan for both goals. Its stages were written before goal 2; its section *Goal 2, stated after this plan was written* lists what changes (curiosity as the shared core, a measure of how much was seen, games in the problem set, screens earlier, a discrete form of the method)
+- [ ] Open for goal 2 (user to decide, `GOALS.md`): how "seeing everything" is measured (proposal M7 in the plan), screen or game state as the observation, whether the agent can also be commanded in a game, which games are the test, and whether goal 2's "from scratch" settles goal 1's open point on what a robot may start with
+
 ## GCRL maze environment (decision: [gcrl-discontinuous-test-environment.md](gcrl-discontinuous-test-environment.md), D2 geodesic-step; package `packages/gcrl-maze` in the uv workspace)
 - [x] Step 1: geometry and exact geodesic distance (ASCII map → walls, corner graph, `visible`, `geodesic`), tests on manufactured layouts + extremitypathfinder cross-check
 - [x] Step 2: dynamics and environment (`project_free`, geodesic-step `f` snapping to targets, reset/step with auto-reset, reward always 0, rollouts end only at the time limit)
