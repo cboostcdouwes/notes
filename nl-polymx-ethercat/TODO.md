@@ -130,13 +130,16 @@
 - [ ] `F688` bits 1–7 and all `F788` bits: meaning still needs the TwinSAFE project
 - [ ] Driver supports everything the EK1960 exposes over PDO (user, 2026-11-24; local I/O only, no FSoE routing to
       remote terminals; field names go in the machine file):
-  - [ ] Step 1: catalog of every mapped entry both directions, logged at init; input entries readable by
-        `index:subindex` (`Ek1960::input_value`). Written, awaiting commit
+  - [x] Step 1: catalog of every mapped entry both directions, logged at init; input entries readable by
+        `index:subindex` (`Ek1960::input_value`)
+  - [ ] Step 2: `SafetyActive` on the Input enum, F688 bit 0; EK1960 in `machine.toml` at index 9 before the
+        ECOMODUL (user, 2026-11-24). Signals stay on F688 via `channel` for now; names go in the proto enums like
+        other I/O. Written, awaiting commit
   - [ ] Bench: log the full mapping with the current project; enable "Internal I/O" info data and read it again
   - [ ] Machine file binds signals to EK1960 entries (and bits), beyond 32 bits and beyond the proto enums
   - [ ] Non-bit values (CRC, serial, state bytes) as a signal kind; generic writes to RxPDO entries if any appear
-- [ ] Server tests fail on `feature/beckhoff-ek1960`: `config/machine.toml` lacks the `PalletAt*` inputs added to the enum in
-      `c64e361` (seen 2026-11-24)
+- [x] Server tests failed on `feature/beckhoff-ek1960` (`config/machine.toml` lacked the `PalletAt*` inputs); fixed by
+      rebasing onto `origin/development` (2026-11-24, rebased tip `4b6e550`: 324 lib + 152 server tests pass)
 - [x] Docs: the EK1960 and its `inputs`/`outputs` fields in `docs/guide/machine-toml.md` (2026-11-18)
 - [ ] RxPDO `17FE` (the AND gate on safe outputs) stays unassigned: assigning it means writing `1C12`, against the
       no-CoE-writes decision. Revisit only if the project enables "Standard Outputs active"

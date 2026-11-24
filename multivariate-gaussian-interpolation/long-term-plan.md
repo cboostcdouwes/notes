@@ -216,6 +216,17 @@ section of questions and the unsourced claims about published work removed. The 
 the plan: by that reviewer's memory, not checked, they are Crafter scores (a mean over success rates per episode)
 and not a share of the game unlocked.
 
+**Round 5, the user's own reading, 2026-11-24** ("The `PLAN.md` seems to be missing several parts from the original
+workflow here"). Put back, on the user's choice: how the search is run (pairing, screening designs, one record per
+sweep, exact repeats and canaries, parallel agents in worktrees, a fresh agent checking each baseline, the cap of
+one confirmation in four), keeping knowledge (`FINDINGS.md`, a survey and a monthly search, re-testing when the
+best method changes, upkeep), and working with the owner (a weekly review with explaining, who decides what).
+Removed, in the user's words: "The plan should not include any details about the far-away goals; they are out of
+scope for now, with the current focus on improving the models themselves instead of converging on specific use
+cases." So stages 3 and 4, the guesses about a robot's computer and the embedded board are gone from `PLAN.md`;
+this file and `self-training-robot-plan.md` keep them. Stage 2 (pictures and small games) was kept, as my reading
+of "the models themselves"; not confirmed.
+
 **Decisions of mine in *Decided by Claude* above that changed with it:** C1 (gates are met without resets only;
 the present rare resets are no longer run next to it), C3 (levels 10^9, 10^8 and 10^7 with 256, 16 and 1 MB, named
 independent of the method, with the gates at the first; C3 had anchored them on the method), C6 (games from an
