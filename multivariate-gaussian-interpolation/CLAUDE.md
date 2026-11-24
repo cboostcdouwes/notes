@@ -39,9 +39,22 @@ lifts a rule, update it here in the same step.
   - How: `PLAN.md`, *Keeping the tools sharp* (a debt list with prices in `TODO.md`, *Tool debt*; fixed at the
     second workaround; a close-out check per question; about a fifth of the time). Preparation is not verification
     and does not count against the rule below.
-  - When `PLAN.md` is reviewed or rewritten, by me or by a subagent, its sections *How the search is run*,
-    *Keeping the tools sharp*, *Keeping knowledge* and stage 0's preparation steps may be reworded but not removed
-    without the user's word; say so in the brief.
+  - Those sections (*How the search is run*, *Keeping the tools sharp*, *Keeping knowledge*, stage 0's preparation
+    steps) are in `PLAN.md`, which since 2026-11-24 changes only with the user's word (rule below). A review or a
+    rewrite of `APPROACH.md`, by me or a subagent, must not move tooling out of the work either; say so in the brief.
+  - Ends when the user says so.
+- **`GOALS.md`, `PROBLEM_STATEMENT.md` and `PLAN.md` change only with the user's word; `APPROACH.md` is mine.**
+  - Set by the user on 2026-11-24, asking how long autonomous sessions could be kept from changing the problem
+    statement, the plan and the goals, and then: "Make the split" (of `PLAN.md` into the owner's part and mine).
+  - How: what decides whether a gate is met (measures, reference lines, conditions, gates, stage 0's steps,
+    stage 2's problems) and how the work is conducted (*A session*, the search, the tools, knowledge, working with
+    the user) is in `PLAN.md`. What is tried and in what order (the starting point, the learner, stage 1's
+    questions, stage 2's order) is in `APPROACH.md`, which I change, writing why in `long-term-plan.md`,
+    *Changes to `APPROACH.md`*. A change I want in the three owner's files is proposed to the user, not made; a
+    subagent's brief says so. Their wording is the user's to approve even where the change seems only editorial.
+  - Enforced only by the user's own lock: `sudo chattr +i` on the three files, which the user sets and lifts. The
+    user decided on 2026-11-24: "Nothing besides the chattr will be added" (no deny rules, hooks or checks of
+    mine). A write that fails on these files is the lock working: stop and propose, never work around it.
   - Ends when the user says so.
 - **Spend run time on new ideas, not on verification.**
   - Set by the user on 2026-11-24, when lifting the experiment-size rule ("It may be lifted entirely, but make sure
@@ -129,7 +142,8 @@ lifts a rule, update it here in the same step.
 - **Long-term goals:** `GOALS.md` in the project root, one section per goal. A new goal or a change to one goes
   through that file, with the user's decision and its date (set by the user on 2026-11-24: "put the long-term goals
   in a file in the project root").
-- **The plan:** `PLAN.md` in the project root, the current plan only (set by the user on 2026-11-24: "Rework the
+- **The plan:** `PLAN.md` in the project root (the user's part, see the rule above) and `APPROACH.md` next to it
+  (mine: what is tried and in what order). `PLAN.md` is the current plan only (set by the user on 2026-11-24: "Rework the
   plan into a `PLAN.md` in the project without any history and redundant parts removed"). A change to the plan goes
   into `PLAN.md`; who decided what, when and why goes into `long-term-plan.md` next to this file, which also holds
   the decisions Claude made under the user's delegation. `self-training-robot-plan.md` is the first version, for

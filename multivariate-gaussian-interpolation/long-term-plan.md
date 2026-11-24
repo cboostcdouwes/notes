@@ -256,6 +256,47 @@ points to it, and an opening check in *Keeping the tools sharp* next to the clos
 Not confirmed by the user: which of the two searches was meant (parts that exist, or code that should become a
 part). Both are in the check (C9). The limit to the item at hand is mine as well.
 
+### 2026-11-24: split into the owner's plan and Claude's approach
+
+The user asked how long autonomous sessions could be guaranteed not to change the problem statement, the plan and
+the goals. My answer: only a lock the user holds (`chattr +i`) guarantees it; deny rules, hooks and a check against
+an approved version stop accidents and make changes visible; and `PLAN.md` must first be split, since part of it is
+meant to change. The user: "Make the split."
+
+Kept in `PLAN.md` (the user's): scope, the measures and reference lines, the stage rules and layouts, stage 0 whole
+(its steps are its gate), each later stage's condition, gate and box, stage 2's problems (the eight games, without
+where each comes from), *What would change the plan*, *A session*, *How the search is run*, *Keeping the tools
+sharp*, *Keeping knowledge*, *Working with the owner*. New text there: who may change it, that a stage's questions
+are in `APPROACH.md`, and that stage 1's own signs of working are required (their choice moved out).
+
+Moved to `APPROACH.md` (mine): the starting point, the learner and its three forms, stage 1's eight questions with
+their order and drop rules, stage 2's order and the NAVIX sources, and what is known beforehand about the games.
+The starting point now counts seven runs of the best agent (the two baseline seeds of 2026-11-24 added; their
+package repeats are identical, not new evidence).
+
+Reading of mine, not confirmed: the measures and the search rules are in the locked part although how to measure,
+run and compare was delegated to me, because the gates depend on the measures and the search rules are the user's
+conditions on how time is spent. A change there now goes to the user as a proposal.
+
+### 2026-11-24: no boxes; a stage ends on the owner's word
+
+After I recommended keeping boxes as the stop rule and dropping the gates' pass/fail numbers, the user: "Remove the
+entire box mechanism. The plan is to work on one part until I say it's ready."
+
+Removed from `PLAN.md`: the boxes of stages 0, 1 and 2 (10, 60 and 120 hours), stage 1's limit of six questions
+before the first try at the gate, a stage's machine time counted against its box, and the decision due when a box
+is used up. New: work stays on one stage until the owner says it is ready; a gate is the stage's measurement, shown
+at every weekly review and with a proposal that the stage is ready, and neither reaching nor missing its numbers ends
+the stage. In `APPROACH.md`, "a first try at the gate" became "a first measurement of the gate".
+
+Kept, as my reading: each question's own budget of machine time and stop criterion (*How the search is run*), which
+serve the user's condition on how time is spent rather than ending a stage. I read "one part" as one stage. Both are
+said to the user.
+
+## Changes to `APPROACH.md`
+
+None since the split (2026-11-24).
+
 ## Sources
 
 From the literature review of 2026-11-24. The reliability is the reviewing subagent's own label and was not checked
