@@ -31,6 +31,17 @@ lifts a rule, update it here in the same step.
     solution that is more generalizable").
   - My reading: don't propose a fix that only removes a symptom special to this maze or to one method's failure.
 
+- **Tool debt is dealt with on the spot, and tooling is never cut from the plan unasked.**
+  - Set by the user on 2026-11-24 ("items like these will be important for the future to keep efficiency high";
+    "Yes, add them"), after the reusable package, the environment interface, the sweep runner and the other
+    preparation steps had dropped out of `PLAN.md` during its rewrites.
+  - How: `PLAN.md`, *Keeping the tools sharp* (a debt list with prices in `TODO.md`, *Tool debt*; fixed at the
+    second workaround; a close-out check per question; about a fifth of the time). Preparation is not verification
+    and does not count against the rule below.
+  - When `PLAN.md` is reviewed or rewritten, by me or by a subagent, its sections *How the search is run*,
+    *Keeping the tools sharp*, *Keeping knowledge* and stage 0's preparation steps may be reworded but not removed
+    without the user's word; say so in the brief.
+  - Ends when the user says so.
 - **Spend run time on new ideas, not on verification.**
   - Set by the user on 2026-11-24, when lifting the experiment-size rule ("It may be lifted entirely, but make sure
     to always storms your time wisely; past runs have spent far too much time running verification instead of
@@ -88,6 +99,11 @@ lifts a rule, update it here in the same step.
   - My reading: committing finished work is allowed, and so are the commits the run record makes (the working
     tree before a run, the record after it). Rewriting history, pushing and anything else beyond committing still
     need the user's word. Commit messages are conventional commits.
+  - How (found 2026-11-24): run `git add` and `git commit` as plain commands from the project root, one per call.
+    Chained into one command (`cd … && git add … && git commit …`) they do not match the allow rules in
+    `.claude/settings.local.json` and are refused. The hook `~/.claude/hooks/guard-git-writes.sh` also blocks any
+    command whose text holds those words when it runs from a folder without `.claude/allow-commits`, such as the
+    notes folder.
 - **The repository must not be published as it is.** Its history holds the layout file in plain text, and a run
   commits every file in the working tree, also untracked ones.
   - Set by Claude on 2026-11-22, from the blindness rule and the run record's design. Ends when the user decides

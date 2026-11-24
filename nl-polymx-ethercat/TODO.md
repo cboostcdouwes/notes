@@ -134,7 +134,8 @@
         `index:subindex` (`Ek1960::input_value`)
   - [ ] Step 2: `SafetyActive` on the Input enum, F688 bit 0; EK1960 in `machine.toml` at index 9 before the
         ECOMODUL (user, 2026-11-24). Signals stay on F688 via `channel` for now; names go in the proto enums like
-        other I/O. Written, awaiting commit
+        other I/O (`11f677b`)
+  - On hold (user, 2026-11-24): the steps below wait until a signal outside F688 is actually needed
   - [ ] Bench: log the full mapping with the current project; enable "Internal I/O" info data and read it again
   - [ ] Machine file binds signals to EK1960 entries (and bits), beyond 32 bits and beyond the proto enums
   - [ ] Non-bit values (CRC, serial, state bytes) as a signal kind; generic writes to RxPDO entries if any appear

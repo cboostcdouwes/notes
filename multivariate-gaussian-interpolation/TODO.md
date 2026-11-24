@@ -14,6 +14,16 @@
 - [ ] Not asked in the rounds, they need reading and not a choice: the problem paragraph of the problem-statement log (unconfirmed since the exact-match correction) and its requirements R6 to R12 (unverified)
 - [ ] Open for the user, no hurry (`GOALS.md`): resets as a property of goal 1, other forms of command, and the working measure and test games of goal 2 if the user wants to decide them
 
+## Tool debt (rule in `CLAUDE.md`; `PLAN.md`, *Keeping the tools sharp*). Each item: what is missing, its price each time, how often, where it is fixed
+- [ ] No sweep runner. Price: about 14 s of startup and compiling per run (14 of 55 s for the quasimetric method with a model, 12 of 24 s for GCSL), and two commits per run. Every run. Fix: `PLAN.md` stage 0, step 4
+- [ ] Runs with the same seed differ. Price: a paired comparison needs more seeds than it should; the size is not measured. Every comparison. Fix: stage 0, step 5
+- [ ] The methods share code through an import path, and try-outs patch `gcsl.py` in memory. Price: a new idea means copying or patching a method; 15 stored probe scripts may no longer fit the code. Every new idea. Fix: stage 0, step 2
+- [ ] No common interface for environments. Price: each maze variant and each game would need its own scoring code. From stage 0, step 10 on. Fix: stage 0, step 3
+- [ ] No canary runs. Price: a silent change of a method's results is found late or not at all (it has happened: the wall fault, the E5 and E12 results). Every change to shared code. Fix: stage 0, step 5
+- [ ] `manifest.json`'s `method` is `__main__` for every run. Price: nothing can group runs by method. Every table. Fix: with stage 0, step 4
+- [ ] The `@` import in `CLAUDE.local.md` did not load on 2026-11-23/24. Price: the project rules are read by hand at the start of a session, and are missing if that is forgotten. Every session. Fix: not found; the user's setup
+- [ ] READMEs that still describe checkpoints as stored (`experiments/gcrl-maze/wgcsl/README.md:234`, `quasimetric/README.md:109` and `:124`). Price: a reader looks for files that are gone. Rare. Fix: with stage 0, step 2, when those READMEs are rewritten for the package
+
 ## GCRL maze environment (decision: [gcrl-discontinuous-test-environment.md](gcrl-discontinuous-test-environment.md), D2 geodesic-step; package `packages/gcrl-maze` in the uv workspace)
 - [x] Step 1: geometry and exact geodesic distance (ASCII map → walls, corner graph, `visible`, `geodesic`), tests on manufactured layouts + extremitypathfinder cross-check
 - [x] Step 2: dynamics and environment (`project_free`, geodesic-step `f` snapping to targets, reset/step with auto-reset, reward always 0, rollouts end only at the time limit)
