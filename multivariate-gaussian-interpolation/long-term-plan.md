@@ -159,3 +159,112 @@ points under *Later*.
 | Pictures do not fit the compute budget on this laptop | Small screens and small games first; the budget levels show what each costs |
 | The operation count misleads | Wall clock on a CPU as the check; stage 4 measures on a real board |
 | The user loses track of what was built | Results are reported with their evidence; explaining is offered after large changes |
+
+## Changes to `PLAN.md`
+
+### 2026-11-24: written from this file and refined in rounds
+
+The user: "Rework the plan into a `PLAN.md` in the project without any history and redundant parts removed, then
+spend several iterations refining it."
+
+**Counted for it** (read-only, `layout-02`, 8 environments, JAX 0.12 on the CPU, no training run):
+
+| What | Count |
+|---|---|
+| One advance of the quasimetric method with a model (8 environment steps and one gradient step) | 1.51 × 10^9 operations, so 1.9 × 10^8 per environment step |
+| One advance of GCSL, continuous | 1.93 × 10^8, so 2.4 × 10^7 per environment step |
+| Learned state of the quasimetric method with a model | policy 122,902 numbers, the rest (time-to-goal, step model and what the weighting keeps) 848,792 numbers; stored experience 1.6 MB (GCSL: 16.1 MB) |
+| A loop in `cost_analysis()` | counted once: a scan of 1, 10 and 100 iterations gives the same `flops` |
+| Hand check | a 4-400-300-2 network at batch 256: 62.9 × 10^6 `flops` forward, which is 2 × parameters × batch; 188 × 10^6 for a gradient step |
+
+**Round 2, an independent reader's review (a subagent given only `PLAN.md`, `GOALS.md` and
+`PROBLEM_STATEMENT.md`), 15 findings.** Applied: stage 0 split into what the first race needs and what is built
+when first needed; "a method at a budget" defined, at one environment; budget levels named independent of the
+present method; a formula for seeing and a definition of the explorer; gates as formulas with layouts, seeds and
+the score named; a box of machine time per stage, after which the curves go to the user; gate numbers fixed once
+and changed only with the user; gates met from scratch, a prior for goal 1 only; discrete controls as a step of
+their own before the games; "seeing" kept for the measure and the part renamed *Encoding*; stages 3 and 4 as
+outlines; no reproduction of published numbers unless a decision rests on it; the learner's own signs as an item of
+stage 1; working rules that copy `CLAUDE.md` removed; a list of what needs the user.
+
+**Round 3, a literature review (a subagent with web search), 11 findings.** Applied: three forms of curiosity are
+raced, with "goal, then curiosity" as the form to beat; a share of stretches ends with staying at the goal, since
+the score charges not resting; three maze variants (a noise coordinate, a random step, a one-way door) so the rules
+can separate before pictures; candidates for picking goals defined on what the learner has, with ensemble
+disagreement added and the farthest place and raw model error kept as controls only; the quasimetric time-to-goal
+raced against a contrastive distance under a random step; the levers ordered, with a memory of visited places and
+planning first, what the buffer keeps second, and gradient steps per step tested on a long changing run; a
+streaming form for the lowest budget; games from existing JAX collections with a counter over their state; the
+state explorer as the reference in games; losing as a transition of the game and not a reset; the person as a line
+and not a gate in games; a plain statement that the gates lie beyond published results.
+
+**Round 4, the reader's second review of the rewritten plan, 9 findings.** Applied: the gates moved to the level of
+10^9 operations per step, since the best agent does not fit 10^8 (one gradient step costs 1.5 × 10^9; at 10^8 it
+would get one per 15 steps, about 550 within the gate's horizon where it now needs over 12,000), and "GPU power
+limited" in the goal points at a small GPU, which is my rough guess for that level; $c$ defined as a mean over 100
+steps with acting alone inside it at every step; stage 1 numbered, with truth swaps, the three forms with three
+scores and the memory of visited places before a first try at the gate, and everything else only if the gate is
+missed; the two controls expected to lose cut; the streaming form moved to stage 4 and the changing maze to stage
+3; the contrastive time-to-goal and Gaussian attention made conditional; a stretch, the share of stretches that end
+resting and "acting on a score" defined; a rule for dropping a form; the state explorer redefined as a search in
+the game's true dynamics, since a table of visits fails where no state repeats; Craftax-Classic moved to stage 3
+and *Repeating* and *Skill* made here; four variants named, with the television in one room and the one-way door
+on a loop; the gate's reaching clause written out with its numbers (the person's mean $J^{\text{reach}}$ on
+`layout-04` to `layout-12` is 0.021, the median steps moved 551); the prior's trigger set to the gate's fifteen
+times; `layout-13` to `layout-20` given a use (one run, unchanged); the person dropped as a reference in games; the
+section of questions and the unsourced claims about published work removed. The Crafter figures were removed from
+the plan: by that reviewer's memory, not checked, they are Crafter scores (a mean over success rates per episode)
+and not a share of the game unlocked.
+
+**Decisions of mine in *Decided by Claude* above that changed with it:** C1 (gates are met without resets only;
+the present rare resets are no longer run next to it), C3 (levels 10^9, 10^8 and 10^7 with 256, 16 and 1 MB, named
+independent of the method, with the gates at the first; C3 had anchored them on the method), C6 (games from an
+existing collection where one holds the difficulty, made here only otherwise).
+
+**Not applied:** a third reset setting of one reset every 10^5 steps (for runs shorter than that it equals no
+resets); the agent-only picture as a fourth variant in stage 1 (it stays the second step of stage 2, where the form
+is decided again); a maze version of the *Repeating* game.
+
+**Open for the user:** whether seeing becomes a score in `PROBLEM_STATEMENT.md`, which says methods are compared on
+$J$ "and on nothing else" and has no score for the case without a command.
+
+## Sources
+
+From the literature review of 2026-11-24. The reliability is the reviewing subagent's own label and was not checked
+again: *read* = it fetched the paper's page in that session; *abstract* = the abstract page only; *recalled* = from
+memory.
+
+| Claim | Source | Reliability |
+|---|---|---|
+| Go to a goal, then explore on ensemble disagreement; beats Skew-Fit, MEGA, LEXA and Plan2Explore; without the explore phase it drops to 0 % | Planning Goals for Exploration, Hu et al. 2023, https://arxiv.org/abs/2303.13002 | read |
+| A separate explorer and achiever on one world model; the separate explorer is crucial | LEXA, Mendonca et al. 2021, https://arxiv.org/abs/2110.09514 | read |
+| Goals at low density of achieved goals; assumes a reward function, a success threshold and a low-dimensional goal space; random actions once the goal is achieved | MEGA, Pitis et al. 2020, https://arxiv.org/abs/2007.02832 | read |
+| Return, then explore; detachment and derailment | First return, then explore, Ecoffet et al. 2021, https://arxiv.org/abs/2004.12919 | read |
+| Without resets on a real robot from pixels: a task policy alternated with an RND-driven one; the visited states are too narrow, the agent stays at the goal | Zhu et al. 2020, https://arxiv.org/abs/2004.12570 | read |
+| Counting states explores best with low-dimensional observations and degrades with pictures | Kayal, Pignatelli, Toni 2025, https://arxiv.org/abs/2501.11533 | abstract |
+| Prediction error on raw pixels does badly; a noisy TV slows learning; without a done signal the agent avoids dying because it returns to the known start | Burda et al. 2018, https://arxiv.org/abs/1808.04355 | read |
+| RND: exploration that needs coordinated decisions over long horizons is beyond it | Burda et al. 2018, https://arxiv.org/abs/1810.12894 | read |
+| QRL is derived for deterministic dynamics; an image holds only part of the state | Wang et al. 2023, https://arxiv.org/abs/2304.01203 | read |
+| Offline: QRL 82 % on a point maze, 4 % on its stochastic teleport version, 0 % on visual ant mazes; contrastive RL is robust to stochasticity | OGBench, Park et al. 2024, https://arxiv.org/abs/2410.20092 | read |
+| A successor distance obeys the triangle inequality under stochasticity; theory for discrete states | Myers et al. 2024, https://arxiv.org/abs/2406.17098 | read |
+| The closest published relative: a QRL-trained representation for goal selection, exploration reward and goal reaching; slow from pixels, 28 to 56 million steps on state tasks | TLDR, Bae, Park, Lee 2024, https://arxiv.org/abs/2407.08464 | read |
+| A latent state that keeps only what the agent controls, from a multi-step inverse model | Lamb et al. 2022, https://arxiv.org/abs/2207.08229 | abstract |
+| Reset-free learning degrades with the training horizon; agents get stuck in parts of the state space | EARL, Sharma et al. 2021, https://arxiv.org/abs/2112.09605 | read |
+| Reset-free PEG over-explores; corners and walls are sink states | Yang et al. 2024, https://arxiv.org/abs/2408.09807 | read |
+| A selectively kept long-term memory prevents forgetting where a first-in-first-out buffer does not | Isele, Cosgun 2018, https://arxiv.org/abs/1802.10269 | abstract |
+| Noisy TV: RND does poorly in MiniGrid, ensemble disagreement is robust there and breaks in Atari with many novel states; subtracting a predicted variance works | Mavor-Parker et al. 2021, https://arxiv.org/abs/2102.04399 | read |
+| Learning progress is not drawn to noise (with oracle object features) | Kim et al. 2020, https://arxiv.org/abs/2007.07853 | read |
+| Reachability from an episodic memory is robust to stochasticity; 1.84 times slower than PPO | Savinov et al. 2018, https://arxiv.org/abs/1810.02274 | read |
+| Operations per time step as the binding constraint of continual learning; no counting protocol | Kumar et al. 2023, https://arxiv.org/abs/2307.04345 | read in part |
+| On a Jetson Nano a SAC update is very slow and memory cut the image buffer to 25,000 transitions | Wang, Vasan, Mahmood 2022, https://arxiv.org/abs/2210.02317 | read |
+| Learning from the stream alone can match batch methods | Elsayed et al. 2024, https://arxiv.org/abs/2410.14606 | abstract |
+| Many gradient steps per step overfit early data; periodic resets of part of the agent fix it | Nikishin et al. 2022, https://arxiv.org/abs/2205.07802 | abstract |
+| Networks lose the ability to learn over long changing streams | Dohare et al. 2023, https://arxiv.org/abs/2306.13812 | abstract |
+| `cost_analysis()` is meant for visualisation and debugging and may differ between versions | https://docs.jax.dev/en/latest/jax.stages.html | read |
+| MiniGrid in JAX with symbolic, RGB and first-person views; the true state is returned | NAVIX, Pignatelli et al. 2024, https://arxiv.org/abs/2407.19396 | read |
+| Craftax-Classic: 22 achievements, pictures of 63 × 63 × 3 | Matthews et al. 2024, https://arxiv.org/abs/2402.16801 | read |
+| Crafter without reward at a million steps: Plan2Explore 2.1 %, RND 2.0 %, random 1.6 %, people 50.5 % | Hafner 2021, https://arxiv.org/abs/2109.06780 | read |
+| Mazes from states take about 0.6 to 1 million steps (PEG) and under a million (MEGA) | the two papers above; for PEG the subagent's calculation from episode counts | read, partly computed |
+| Bonus methods that are best on Montezuma often lose to epsilon-greedy on easier games | Taïga et al. 2020, https://arxiv.org/abs/2109.11052 | abstract |
+| A graph over stored states with search when acting | Search on the Replay Buffer, Eysenbach et al. 2019, https://arxiv.org/abs/1906.05253 | recalled |
+| Goals where an ensemble of values disagrees | Zhang, Abbeel, Pinto 2020, https://arxiv.org/abs/2006.09641 | recalled |
