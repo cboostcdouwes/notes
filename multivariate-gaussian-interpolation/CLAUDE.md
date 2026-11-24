@@ -31,9 +31,21 @@ lifts a rule, update it here in the same step.
     solution that is more generalizable").
   - My reading: don't propose a fix that only removes a symptom special to this maze or to one method's failure.
 
+- **Spend run time on new ideas, not on verification.**
+  - Set by the user on 2026-11-24, when lifting the experiment-size rule ("It may be lifted entirely, but make sure
+    to always storms your time wisely; past runs have spent far too much time running verification instead of
+    trying new ideas") and again on how to treat resets ("Whatever is necessary to advance the research, remember
+    to spend your time wisely").
+  - My reading: give an idea the least evidence that can show an effect; confirm with more seeds and layouts only
+    what the next step is built on, or what a decision of the user rests on; keep no standing table of every method
+    on every layout. At most about one run in four is a confirmation (my number, `long-term-plan.md` C7).
+  - Ends when the user says so.
+
 ## Temporary rules: experiment size
 
-- **Every run uses one model, 8 environments and `layout-02` only** (`--models 1 --environments 8`).
+- **Lifted on 2026-11-24** (the user's words are in the rule above); layouts not yet played stay excluded by the
+  blindness rule. It read: **every run uses one model, 8 environments and `layout-02` only**
+  (`--models 1 --environments 8`).
   - Set by the user on 2026-11-21 ("This probe took way to long, all future experiments will be on one model
     with 8 environments only until I explicitly say so" and "Also only test on layout 2 until I say so").
   - Why: a probe round that I extended with 8-model confirmations and other layouts took too long.
@@ -57,6 +69,15 @@ lifts a rule, update it here in the same step.
   user's input (a choice that is theirs, access, registering tools for Claude Code, anything outside the repository).
   - Set by the user on 2026-11-23 ("this is an AI-managed repository; make all steps autonomously except for the
     ones that require my input"), on the results viewer's plan.
+  - Ends when the user says so.
+- **Questions of how to measure, run or compare are Claude's to answer; ask the user about the goals, their time,
+  their data and permissions.**
+  - Set by the user on 2026-11-24, in answers to a question round: "This is a question that you can answer, ideally
+    one configuration would suffice" (whether settings may differ between problems), "The extent of what is
+    possible is an open question that you can answer", "Trying priors is an interesting question that you could
+    attempt either way".
+  - My reading: decide such questions myself, write the decision and its reason in the plan
+    (`long-term-plan.md`, *Decided by Claude*), and report it; don't put them in a question round.
   - Ends when the user says so.
 - **The notes folder is backed up automatically**: don't propose commit messages for changes in it.
   - Set by the user on 2026-11-23 ("The notes folder is backed op automatically").
@@ -90,8 +111,12 @@ lifts a rule, update it here in the same step.
   file, with the user's decision and its date.
 - **Long-term goals:** `GOALS.md` in the project root, one section per goal. A new goal or a change to one goes
   through that file, with the user's decision and its date (set by the user on 2026-11-24: "put the long-term goals
-  in a file in the project root"). The plan for goal 1 is `self-training-robot-plan.md` next to this file; goal 2
-  (2026-11-24) has no plan of its own, and that plan lists what goal 2 changes in it.
+  in a file in the project root").
+- **The plan:** `PLAN.md` in the project root, the current plan only (set by the user on 2026-11-24: "Rework the
+  plan into a `PLAN.md` in the project without any history and redundant parts removed"). A change to the plan goes
+  into `PLAN.md`; who decided what, when and why goes into `long-term-plan.md` next to this file, which also holds
+  the decisions Claude made under the user's delegation. `self-training-robot-plan.md` is the first version, for
+  goal 1 only. Where they differ, `PLAN.md` holds.
 - **Open work and what was found:** `TODO.md` next to this file. Keep it current.
 - **Design decisions:** the research logs next to this file. Decided: what a run records
   (`what-a-run-records.md`, its *Decision* and plan). Decided and reviewed (2026-11-23): inspecting

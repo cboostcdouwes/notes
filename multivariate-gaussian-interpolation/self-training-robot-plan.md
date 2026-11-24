@@ -1,5 +1,9 @@
 # Plan for goal 1: a robot that trains on its own
 
+**Superseded on 2026-11-24 by [long-term-plan.md](long-term-plan.md)**, the plan for both goals, written after the
+user decided on this plan's proposals. Kept as the first version: its alternatives, proposals and risks are the
+record of what was weighed.
+
 The plan for the first goal in `GOALS.md` (project root of the experiments project). Written by Claude on 2026-11-24
 at the user's request ("Make a plan on how to proceed in the long run"), after two rounds of questions. No design
 research is behind it. Everything marked *proposal* waits for the user's word, and the readings in the second section
