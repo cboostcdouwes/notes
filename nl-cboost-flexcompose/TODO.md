@@ -45,8 +45,14 @@ machine; the dev box in VS Code on Linux, then Windows.
      box through Dev Containers' credential sharing; SSH users map with `url."git@github.com:".insteadOf`. Until
      that check, `private-clones` (any git credential) is verified for SSH only; design §13 still says Dev
      Containers forwards the SSH agent.
-  3. The same in the PolyMX app (`Dockerfile`: two stages, its pip wheel paths under `src/deps/`; `.dockerignore`)
-     and integration repo (`lock.sh`, the stub override, re-lock).
+  3. PolyMX. The app: done 2026-11-24, uncommitted (`Dockerfile` two stages with the pip wheel paths under
+     `src/deps/`, `.dockerignore`, two comments); its image built from the checkout without an agent
+     (`polymx-qc:test-noclone`, 3.8 GB, 15 packages, the four libraries import, no compiled source), with capped
+     parallelism through a temporary base image (`polymx-capped-base:test`: `MAKEFLAGS=-j2`, colcon
+     `parallel-workers: 2`; 5.5 min), as only 9 GB was free. Then the integration repo (`lock.sh`, `release.sh`, the
+     stub override, re-lock): it needs the app's commit pushed first, because `lock.sh` clones from GitHub.
+     Could, in the app: `.dockerignore` leaves out `deps/nl-cboost-yaskawa-hse/docs` (576 MB of manuals; the build
+     context is 621 MB).
   Could: `lock.sh` warns when two services lock different commits of a repository they share. Could: the
   override optional for a template that only imports, so the stub file can go (small CLI change).
 - PolyMX integration repo on the new starter (2026-11-19, uncommitted): imports the app; dev box up (project
