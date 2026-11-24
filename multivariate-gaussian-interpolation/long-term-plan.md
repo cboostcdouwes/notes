@@ -293,13 +293,45 @@ Kept, as my reading: each question's own budget of machine time and stop criteri
 serve the user's condition on how time is spent rather than ending a stage. I read "one part" as one stage. Both are
 said to the user.
 
+### 2026-11-24: no weekly review and no monthly search
+
+The user asked which specific time intervals the plan still named (the weekly review, the monthly search of the
+literature; besides them only facts: 14 of 55 s of a run, six months of JAX releases), then: "Remove the weekly
+review and the monthly search."
+
+Removed from `PLAN.md`: the weekly review (from *Working with the owner*, from a session's start, and as the place a
+gate is shown), the monthly search (from *Keeping knowledge* and from a session's start), and their dates on the work
+list. Kept: the survey before stage 1's first race, which is tied to an event, not a date. A gate is now shown when I
+propose that a stage is ready; what the review held besides (what was built, the debt list with what was paid off,
+the decisions due) has no fixed place any more; a session's report still gives results, decisions on measuring and
+what is needed from the user.
+
 ## Changes to `APPROACH.md`
 
-None since the split (2026-11-24).
+### 2026-11-24: after the survey before stage 1
+
+From the survey (`stage-1-survey.md`), made on the user's word "Do the reading survey first, then start the hour
+long session".
+
+- Which stored experience is kept moved from after the first gate measurement to question 2. Three replay studies
+  agree that a first-in-first-out store under a narrowing visit distribution loses coverage and forgets far regions,
+  and the reset-free successes kept their whole history; every later question runs on the store.
+- The race of three forms by three scores became a race of the scores inside goal, then curiosity, with goals only
+  and curiosity only run once each. Two ablations in continuous mazes (Cell-Free Latent Go-Explore; First Go, then
+  Post-Explore) and PEG already favour that form, and one-step curiosity only was near random; racing them in full
+  would be verification, not a new idea.
+- The scores got their robust forms: the density score measured by the time-to-goal (counts on coordinates fail
+  under a noise coordinate), disagreement as a divergence if the copies predict a spread, learning progress as the
+  previous copy's error minus the present one.
+- The memory: landmarks by farthest-point sampling, edges cleaned online, planning first in training.
+- Imagined steps start as imagined goals of real steps; Gaussian attention is raced beside a Fourier first layer;
+  the time-to-goal for the random step starts as an added averaging term, not a contrastive one.
+- A sign of being stuck added to the learner's own signs.
 
 ## Sources
 
-From the literature review of 2026-11-24. The reliability is the reviewing subagent's own label and was not checked
+From the literature review of 2026-11-24; the survey before stage 1 is in `stage-1-survey.md`, and three labels
+below were raised by it. The reliability is the reviewing subagent's own label and was not checked
 again: *read* = it fetched the paper's page in that session; *abstract* = the abstract page only; *recalled* = from
 memory.
 
@@ -320,7 +352,7 @@ memory.
 | A latent state that keeps only what the agent controls, from a multi-step inverse model | Lamb et al. 2022, https://arxiv.org/abs/2207.08229 | abstract |
 | Reset-free learning degrades with the training horizon; agents get stuck in parts of the state space | EARL, Sharma et al. 2021, https://arxiv.org/abs/2112.09605 | read |
 | Reset-free PEG over-explores; corners and walls are sink states | Yang et al. 2024, https://arxiv.org/abs/2408.09807 | read |
-| A selectively kept long-term memory prevents forgetting where a first-in-first-out buffer does not | Isele, Cosgun 2018, https://arxiv.org/abs/1802.10269 | abstract |
+| A selectively kept long-term memory prevents forgetting where a first-in-first-out buffer does not | Isele, Cosgun 2018, https://arxiv.org/abs/1802.10269 | read (survey before stage 1, `stage-1-survey.md`) |
 | Noisy TV: RND does poorly in MiniGrid, ensemble disagreement is robust there and breaks in Atari with many novel states; subtracting a predicted variance works | Mavor-Parker et al. 2021, https://arxiv.org/abs/2102.04399 | read |
 | Learning progress is not drawn to noise (with oracle object features) | Kim et al. 2020, https://arxiv.org/abs/2007.07853 | read |
 | Reachability from an episodic memory is robust to stochasticity; 1.84 times slower than PPO | Savinov et al. 2018, https://arxiv.org/abs/1810.02274 | read |
@@ -335,5 +367,5 @@ memory.
 | Crafter without reward at a million steps: Plan2Explore 2.1 %, RND 2.0 %, random 1.6 %, people 50.5 % | Hafner 2021, https://arxiv.org/abs/2109.06780 | read |
 | Mazes from states take about 0.6 to 1 million steps (PEG) and under a million (MEGA) | the two papers above; for PEG the subagent's calculation from episode counts | read, partly computed |
 | Bonus methods that are best on Montezuma often lose to epsilon-greedy on easier games | Taïga et al. 2020, https://arxiv.org/abs/2109.11052 | abstract |
-| A graph over stored states with search when acting | Search on the Replay Buffer, Eysenbach et al. 2019, https://arxiv.org/abs/1906.05253 | recalled |
-| Goals where an ensemble of values disagrees | Zhang, Abbeel, Pinto 2020, https://arxiv.org/abs/2006.09641 | recalled |
+| A graph over stored states with search when acting | Search on the Replay Buffer, Eysenbach et al. 2019, https://arxiv.org/abs/1906.05253 | read (survey before stage 1, `stage-1-survey.md`) |
+| Goals drawn in proportion to the disagreement of an ensemble of 3 goal-conditioned Q-functions, the candidates drawn uniformly from the goal space | Zhang, Abbeel, Pinto 2020, https://arxiv.org/abs/2006.09641 | read (survey before stage 1, `stage-1-survey.md`) |

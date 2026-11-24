@@ -4,8 +4,7 @@
 - Open item: none. Stage 0's preparation (steps 1 to 6) closed on 2026-11-24. Next in order: stage 0, step 7 (a run with one environment and no resets)
 - Sweeps running: none
 - Machine time used: stage 0, about 0.3 hours (stages have no box since 2026-11-24; a stage ends when the user says it is ready) (the baseline from the old code, 14 runs, 0.15 h without a question; the package's 14 runs, `runs time stage-0-package`, 0.15 h; scratch checks and tests not counted)
-- Last weekly review: none yet. The plan was committed on 2026-11-24, so the first is due on 2026-12-01
-- Last search of the literature: 2026-11-24 (the literature review made for `PLAN.md`; counting it as the monthly search is Claude's reading). Next due 2026-12-24. The survey before stage 1's first race is still to do
+- Reading: the survey before stage 1's first race done 2026-11-24 ([stage-1-survey.md](stage-1-survey.md)); `APPROACH.md`'s stage 1 changed after it (`long-term-plan.md`, *Changes to `APPROACH.md`*)
 - Debt list: the section *Tool debt* below
 
 ## Long-term goals (`GOALS.md` and the plan `PLAN.md` in the project root; the plan's history and reasons: [long-term-plan.md](long-term-plan.md))
@@ -22,7 +21,7 @@
 - [ ] Open for the user: whether seeing becomes a score in `PROBLEM_STATEMENT.md`. The statement says methods are compared on $J$ "and on nothing else" and has no score for the case without a command; `PLAN.md` uses seeing as goal 2's working measure
 - [x] Committed 2026-11-24: `PLAN.md` and `GOALS.md` (`1d07fb7`), `PROBLEM_STATEMENT.md` (`eb64e1b`). Two earlier commits were refused; they were written as one chained command (`cd`, then add, commit, log), and the same commits went through as a plain add followed by a plain commit, run from the project root
 - [ ] User plays `layout-13` to `layout-20` in both conditions, later ("Yes, later", 2026-11-24): work does not wait, and the layouts stay untouched until then
-- [ ] Not asked in the rounds, still open: which Zhang paper was meant on 2026-11-21 (my guess: Zhang and Stadie 2022, HDM); the reading pass may settle whether it matters
+- [ ] Open for the user, no hurry: which Zhang paper was meant on 2026-11-21. The survey's candidates ([stage-1-survey.md](stage-1-survey.md), *Which Zhang extended GCSL*): likeliest Lunjun Zhang and Stadie 2022 (HDM), then WGCSL (last author Chongjie Zhang, already run), then Zeqiang Zhang et al. 2025 (GCSL with negative feedback). Nothing in stage 1 waits on it
 - [ ] Not asked in the rounds, they need reading and not a choice: the problem paragraph of the problem-statement log (unconfirmed since the exact-match correction) and its requirements R6 to R12 (unverified)
 - [ ] Open for the user, no hurry (`GOALS.md`): resets as a property of goal 1, other forms of command, and the working measure and test games of goal 2 if the user wants to decide them
 
