@@ -5,6 +5,7 @@
 - Sweeps running: none
 - Machine time used: stage 0, about 0.6 hours (`runs time`: stage-0-package 0.15 h, stage-0-one-environment 0.30 h against its budget of 0.2 h, without a question 0.18 h, of which the baseline from the old code 0.15 h; scratch checks and tests not counted). Stages have no box since 2026-11-24; a stage ends when the user says it is ready
 - Reading: the survey before stage 1's first race done 2026-11-24 ([stage-1-survey.md](stage-1-survey.md)); `APPROACH.md`'s stage 1 changed after it (`long-term-plan.md`, *Changes to `APPROACH.md`*)
+- Theory: a dialog with the user on 2026-11-25 (exact models, the worth of a step as a function, exploration as planning, local gradient steps, the Gaussian attention as a world model). The results worth exploring are in [theory-session-2026-11-25.md](theory-session-2026-11-25.md), seven candidates, none tested, sources unchecked; `APPROACH.md` is not changed by it. Its first three: an agent that learns only on the model (first with the exact step), whether the time-to-goal's excess of 1.3 to 1.4 is the soft bound or the data's bound, and interference as a second yardstick for question 7
 - Debt list: the section *Tool debt* below
 
 ## Long-term goals (`GOALS.md` and the plan `PLAN.md` in the project root; the plan's history and reasons: [long-term-plan.md](long-term-plan.md))
