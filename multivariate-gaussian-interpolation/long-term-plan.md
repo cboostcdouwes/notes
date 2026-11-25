@@ -328,10 +328,47 @@ long session".
   the time-to-goal for the random step starts as an added averaging term, not a contrastive one.
 - A sign of being stuck added to the learner's own signs.
 
+### 2026-11-25: the theory session's candidates into stage 1
+
+On the user's word ("The findings from the theory session are very interesting to me, put them into the plan at
+stage 1"). They went into `APPROACH.md` and not `PLAN.md`: they are what is tried, which the split of 2026-11-24
+puts in `APPROACH.md`, and `PLAN.md`'s gates and conditions are untouched. The candidates and their derivations are
+in `theory-session-2026-11-25.md`; none is tested and their sources are cited from memory.
+
+The questions keep their numbers, since the notes and the run records refer to them; each candidate went into the
+question it bears on.
+
+- Question 1 (truth swaps) got three additions. The measurement of the true time, the data's shortest path and the
+  learned time comes before the swaps because it is made on stored experience without a run and decides between two
+  remedies for finding 10. Learning on the model only is a fourth swap because its first run uses the exact step,
+  which the swaps already build; with the learned model it runs right after them only if the exact step at least
+  halves the steps, the swaps' own criterion. The tie between step model and time-to-goal is logged there because
+  only the swaps can say whether it points at the part that is wrong.
+- Question 2 (the store) got the interference test, because forgetting has two remedies and the test is cheap: no
+  environment, recorded experience only. It can move question 7 before the first measurement of the gate.
+- Question 3 (the scores) got two variants run with the leading score only, not raced over all scores: a score of
+  a place and an action there, and the score per step of travel.
+- Question 5 (the budget) measures the two gains it trades. Question 6 points to the fourth swap as its far end.
+  Question 7 got the second yardstick and four candidate changes for the attention as a step model. Question 8 got
+  the reason relabelled bounds fail under a random step.
+- The learner's signs got a candidate fourth.
+
+Not taken over: nothing was left out.
+
+The sources were checked the same day, on the user's word ("Check the theory session's sources"): four agents, one
+per group, reading the papers; each source with what it says and how it was checked is in
+`theory-session-2026-11-25.md`, *Sources*. Two statements of the dialog were wrong (softmax policy gradient is slow
+in the horizon, not in the number of states; a wide network is not a Gaussian process with the tangent kernel) and
+thirteen were too loose. No candidate fell. Two lines changed in `APPROACH.md`: the fourth swap names learning from
+real and generated steps both as its fallback, since that is what Dyna does, and the score of a place and an action
+names the proof that uses such goals (Richens et al. 2025). Seven books and papers could not be opened and rest on
+secondary sources or abstracts; the note lists them.
+
 ## Sources
 
 From the literature review of 2026-11-24; the survey before stage 1 is in `stage-1-survey.md`, and three labels
-below were raised by it. The reliability is the reviewing subagent's own label and was not checked
+below were raised by it. The sources of the theory session of 2026-11-25 are in
+`theory-session-2026-11-25.md`, *Sources*, each with how it was checked. The reliability is the reviewing subagent's own label and was not checked
 again: *read* = it fetched the paper's page in that session; *abstract* = the abstract page only; *recalled* = from
 memory.
 

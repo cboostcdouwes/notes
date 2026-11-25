@@ -7,7 +7,7 @@ lifts a rule, update it here in the same step.
 ## Lasting rules
 
 - **The user stays blind to every layout they have not played in both conditions of the human baseline**
-  (on 2026-11-23, after `layout-12` was played in both conditions: `layout-13` to `layout-20`). Don't print, draw or describe their maps, how they were built or
+  (on 2026-11-25, after `layout-13` to `layout-16` were played in both conditions: `layout-17` to `layout-20`). Don't print, draw or describe their maps, how they were built or
   what they are like, not even as a hint; don't train or evaluate on them or show anything computed from them.
   - Set by the user on 2026-11-20 ("I'd like to stay blind to the layouts until the proper runs") and 2026-11-21
     ("Evaluate on layouts 1 to 3 only, as I have not seen the others and I must remain blind to them").
