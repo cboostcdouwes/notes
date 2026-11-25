@@ -7,11 +7,17 @@ lifts a rule, update it here in the same step.
 ## Lasting rules
 
 - **The user stays blind to every layout they have not played in both conditions of the human baseline**
-  (on 2026-11-25, after `layout-13` to `layout-16` were played in both conditions: `layout-17` to `layout-20`). Don't print, draw or describe their maps, how they were built or
+  (on 2026-11-25 the user played `layout-13` to `layout-20` in both conditions, so no layout is left under this rule). Don't print, draw or describe their maps, how they were built or
   what they are like, not even as a hint; don't train or evaluate on them or show anything computed from them.
   - Set by the user on 2026-11-20 ("I'd like to stay blind to the layouts until the proper runs") and 2026-11-21
     ("Evaluate on layouts 1 to 3 only, as I have not seen the others and I must remain blind to them").
   - Why: the user plays them with the walls hidden as the human baseline. Seeing one cannot be undone.
+  - State on 2026-11-25: the user said "The rest of the layouts have been played", and the sessions are in
+    `human-baseline/results` (two per layout, `layout-13` to `layout-20`, all of that day). Nothing is hidden from
+    the user any more, and `require_played` refuses no layout.
+  - Still held out, by `PLAN.md` and not by this rule: `layout-13` to `layout-20` "are run once, unchanged, with
+    the configuration stage 1 ends with". No training, tuning or evaluation on them before that run. Nothing in
+    the code enforces this since `require_played` lets them through.
   - Ends per layout, when the user has played it in both conditions. `gcrl.environment.require_played` refuses
     the others, and every way the package builds a layout calls it (`gcrl.environment.maze` and `maze_params`), so
     training, sweeps, probes, figures and videos are covered; a new script that reads a layout in some other way

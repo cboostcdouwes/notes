@@ -306,6 +306,17 @@ propose that a stage is ready; what the review held besides (what was built, the
 the decisions due) has no fixed place any more; a session's report still gives results, decisions on measuring and
 what is needed from the user.
 
+### 2026-11-25: the owner has played all twenty layouts
+
+On the user's word ("The rest of the layouts have been played", then "Update `PLAN.md`"); the lock on the file was
+lifted. Two passages changed, nothing else:
+
+- The layouts' paragraph no longer says `layout-13` to `layout-20` are run "after the owner has played them". It
+  now says the owner has played all twenty, and spells out what the hold-out means until the one run: nothing
+  trained, tuned or evaluated on them. That sentence is my wording of what "run once, unchanged" already implied; it
+  was added because the code's check (`require_played`) no longer keeps runs off these layouts.
+- *Working with the owner* no longer lists the layouts among what is needed from the owner.
+
 ## Changes to `APPROACH.md`
 
 ### 2026-11-24: after the survey before stage 1
