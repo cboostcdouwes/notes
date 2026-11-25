@@ -375,6 +375,39 @@ real and generated steps both as its fallback, since that is what Dyna does, and
 names the proof that uses such goals (Richens et al. 2025). Seven books and papers could not be opened and rest on
 secondary sources or abstracts; the note lists them.
 
+### 2026-11-25: the best agent's operation count after the sort was removed
+
+*Starting point*, *Its computation*: 1.5 × 10^9 and 1.9 × 10^8 became 1.6 × 10^9 and 2.0 × 10^8. The interval
+time-to-goal sorted its endpoints, and `cost_analysis()` counts a sort as almost nothing; it now compares pairs, with
+the same values, and the count rose by the comparisons it now sees. The method is unchanged (`FINDINGS.md` 24).
+
+### 2026-11-25: a learned rule that does the updating, as a potential experiment
+
+On the user's word ("Write these results into the theory session notes, add the second way as a potential
+experiment in stage 1"), after a second dialog on a trained part as a prior and on learning without
+backpropagation. The results are sections 8 to 11 of `theory-session-2026-11-25.md`; "the second way" is its
+section 11. `PLAN.md` and `GOALS.md` are untouched.
+
+- It is question 9, after question 8 and outside the order. It is a prior, and its training is computation off
+  the robot, which `GOALS.md` does not allow for goal 1 and which goal 2's "from scratch" excludes. So it is a
+  try-out and no candidate for a gate, taken up on the owner's word or put to the owner with the first row of
+  `PLAN.md`'s *What would change the plan*. Trying a prior is allowed by `GOALS.md` ("could attempt either way").
+- Decided by Claude, as how to run and compare: the cheapest form comes first, the rule as the step model only,
+  on stored experience with no environment in the loop (`PLAN.md`, *How the search is run*, the cheapest question
+  first). It is compared by the experience needed to reach the same error at equal operations per step at use,
+  with the operations of the training beforehand reported next to it and not counted in the budget, since the
+  budget is per environment step. The rule acts only if that form is clearly ahead.
+- Training worlds come from `gcrl_maze.layouts.generate`; the test is on `layout-01` to `layout-03`, the layouts
+  for trying ideas.
+- Not taken over: sections 8 to 10 (a frozen trained part with keys added, the map by closed-form updates, a
+  policy read off the map). The user's word named the second way only. Section 10's first form is question 4 with
+  a closed-form inverse of the step model, and is a candidate to add there.
+
+The sources of the second dialog were checked the same day by one agent, not on the user's word: the note's
+*Sources*, *The second dialog*. One statement of mine was wrong (learned rules were said to work only in worlds
+like their training worlds; RL² was tested on larger mazes and lost little) and two were too loose. Question 9
+names what the published rules do not show for this problem: no reward as an input, and one long life.
+
 ## Sources
 
 From the literature review of 2026-11-24; the survey before stage 1 is in `stage-1-survey.md`, and three labels

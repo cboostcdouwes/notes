@@ -10,6 +10,11 @@ The papers were named from memory in the session and checked afterwards, on 2026
 end: what each says, how it was checked, and what the dialog had wrong). The text below is corrected to match. The
 derivations (marked *derived*) were made in the dialog and not checked by a second reader.
 
+Sections 8 to 11 come from a second dialog on the same day: whether a trained part can serve as a prior while
+another part is added in a new world, and whether the map and the policy can be updated without backpropagation.
+On the user's word ("add the second way as a potential experiment in stage 1") section 11 is in `APPROACH.md` as a
+potential experiment outside stage 1's order; sections 8 to 10 are in this note only.
+
 ## The three most promising
 
 1. An agent that learns its time-to-goal and policy only from the model (section 1), tried first with the exact
@@ -206,6 +211,176 @@ time-to-goal are tied by d(s, g) ≤ 1 + d(m(s, a), g) for every action, with eq
 state without the truth. It is a candidate signal for where one of the two is wrong, beside the truth swaps, and a
 candidate uncertainty score. Which of the two is wrong it does not say.
 
+## 8. A trained part as a prior, a part added in a new world
+
+The user's question: can part of the model be learned, and another part added in a new world without training
+there, so that the training acts as the agent's prior?
+
+**Result** (*derived* from the model's form; no experiment adds or freezes keys).
+
+- The output is a sum over keys, and at a high logit scale a key's values are felt only inside its cell
+  (section 6). So trained keys can be frozen and new ones placed where there are none.
+- The softmax gives every input to some key. Without a new key a new region is claimed by the nearest old one,
+  and a new key takes weight from its neighbours. Freezing needs a weight limited to a key's reach; only the
+  values have such a limit so far (E15).
+- Keys at walls belong to one layout. What carries over to another world is the part shared by all places: the
+  law of motion in free space (one linear term), the precision shapes and the logit scale, and a prior on a new
+  key's values.
+- Before any step in the new world only the shared term predicts. A new key needs a few samples, so that part is
+  few-shot, not zero-shot. With the position as the observation, a wall cannot be known before it is bumped into.
+
+**In section 5's terms.** The trained part is the kernel K, and the part added is the update made with it.
+
+- Training across worlds estimates K, the covariance of the target under a prior over worlds. In the Gaussian
+  attention K lives in the features: the precision shapes, the logit scale and the shared linear term.
+- What is added in the new world is the posterior under that K. With the features fixed the model is linear in
+  the values, so new data update only the values, in closed form per key, and no gradient step touches the
+  trained part.
+- The split follows section 5's sum. The global part of low rank is the same in every world: it is learned once
+  and frozen, and as the prior mean it is the only zero-shot prediction. The local part's values belong to one
+  world; what carries over from it is its statistics (zero mean, short reach, sharp borders).
+- The global part must be frozen in the new world. Its K is non-zero everywhere by design, so a step on it there
+  changes the old predictions too. This is section 5's price.
+- The local part's prior variance gives the information gain of section 6 from the first step in the new world,
+  so the prior also says where to explore.
+
+**Where it falls short.**
+
+- Key positions are not part of the prior. The cells' borders settle on one world's walls, so with the position as
+  the observation they do not carry over. In a new world the keys are placed again, and by gradient they move only
+  where cells meet and disagree (section 6). Section 9 has rules that place them without a gradient.
+- The covariance reading holds for the values only: with the weights fixed their tangent kernel is a covariance.
+  The attention weights are a smoother, not a covariance (correction 15).
+- E18: held sharp, a model adapted badly to a sudden shift (band 0.137 against 0.093), and re-initialising dead
+  keys recovered only about half. Patching new keys into a trained model is not free.
+
+**In the project.** `GOALS.md` has goal 2 from scratch and, for goal 1, nothing learned in simulation carried over
+to a robot, while a prior may be tried. Without a change there, the trained part can only be the same learner's
+own earlier experience. That is the forgetting test of question 2, with "new keys for new regions" from section
+6's table. Touches questions 2 and 7.
+
+**Published form.** ALPaCA (*Sources*, *Kernels and local updates*): features and a prior on the last layer's
+weights learned across tasks by gradient steps, and in a new task only a closed-form Bayesian update of that
+layer, applied to dynamics in the paper itself.
+
+## 9. A map updated without backpropagation
+
+The user's question: could an agent with a state update its map of the environment without any backpropagation?
+
+**Result** (*derived*; none of it is tried here).
+
+- **Values.** With the keys fixed, each key's local fit is a linear regression, so it updates by recursive least
+  squares. The state is a matrix and a vector per key. With p value features per key a step costs on the order of
+  p² operations per key it touches (p = 5 for values linear in state and action, 15 for quadratic ones), against
+  about 1.5 × 10^9 for one gradient step of the best agent (finding 24). A forgetting factor lets it follow a
+  world that changes.
+- **New keys.** A fixed rule can add them: where no existing key has much weight, or where a key's error stays
+  high.
+- **Positions and shapes.** A running mean and covariance of the inputs each key is responsible for gives them.
+  This is online EM for a Gaussian mixture. A mixture over input and output together, read as a regression (the
+  mean of the output given the input), is Σ hᵢ(x) · (μ_y,i + Σ_yx,i · Σ_xx,i⁻¹ · (x − μ_x,i)) with hᵢ the
+  normalised responsibilities of the inputs: this model's form with linear values (Ghahramani and Jordan 1993,
+  for components of equal weight; the recursive form of EM is Cappé and Moulines's).
+- **Distances.** Shortest paths over the landmark graph of question 4 need no gradient either: edges are added
+  and deleted as steps succeed or fail.
+
+**Where it falls short.**
+
+- Border placement is the open risk. These rules put keys where the data are dense or new, not where the function
+  jumps. In the regression experiments the error at edges was set by edge position, and getting the borders onto
+  the jumps took long gradient training with an annealed logit scale (`edge-position`, `edge-width`).
+- An encoding learned from a screen (stage 2) still needs gradients. The map can be free of them only on top of an
+  encoder trained some other way.
+- The policy and the learned time-to-goal still use gradients, unless section 10 replaces them.
+
+**Published relatives** (*Sources*). Neither is free of gradients throughout.
+
+- Locally weighted projection regression (Vijayakumar, D'Souza and Schaal 2005) has this model's form: Gaussian
+  receptive fields with a linear model each, the prediction their normalised weighted mean. The linear models
+  update incrementally from running statistics with a forgetting factor (partial least squares, "similar to
+  recursive least squares"). A field is added when no existing one is activated above a threshold. Centres stay
+  where they were created, "to minimize negative interference". The fields' shapes are learned by gradient, on a
+  penalised leave-one-out error.
+- The resource-allocating network (Platt 1991) adds a Gaussian unit when an input is far from every centre and
+  the error is large. Otherwise it moves heights and centres by gradient; widths are never adapted.
+
+So adding keys by rule and updating values in closed form are published. Shapes and borders without any gradient
+are in neither, which is the open risk above.
+
+Touches questions 4 and 7.
+
+## 10. A policy without backpropagation
+
+The user's question: could a policy be learned beside the map, also without backpropagation? It has two readings.
+This section takes the acting policy; section 11 takes a learned rule that does the updating.
+
+**Result** (*derived*; none of it is tried here). Three forms, from the least learned to the most:
+
+- **No policy.** Search the landmark graph for the next waypoint, then invert the local step model. In free space
+  the model is linear in the action, so the action toward a waypoint is a small closed-form solve. The policy is
+  read off the map and is never stale.
+- **A policy by closed-form regression.** Relabelling makes goal reaching supervised ("the action I took led to
+  where I ended up"), and with fixed keys that is recursive least squares per key, as for the map's values. It is
+  GCSL without the network and inherits GCSL's weaknesses: 44 to 77 % of steps wasted after 200,000 on `layout-01`
+  to `layout-03` (finding 1), and short steps, since it fits the mean of the actions that made progress
+  (finding 3).
+- **Regression onto the planner's actions.** The same fit per key with the first form's actions as targets. It
+  caches the plan, so acting needs no search, and its targets are the best known action, not the average of those
+  taken.
+
+All three are local per key, so they run beside the map's update and beside each other.
+
+**In the project.** The first form is question 4 with a closed-form inverse of the step model added. It is not
+written into `APPROACH.md`. Touches questions 4 and 7.
+
+## 11. A learned rule that does the updating
+
+The second reading of section 10's question: a policy whose actions are the updates of the agent.
+
+**Result.**
+
+- A network with a state can do the learning in its forward pass: it reads each step and writes the agent's
+  memory. At use there is no backpropagation. The rule itself is trained beforehand across many worlds, normally
+  by backpropagation through the network's unrolled life.
+- It is section 8's prior in its strongest form: not only the kernel comes from other worlds, but the update
+  itself.
+
+**Published forms** (*Sources*).
+
+- RL² (Duan et al. 2016): a recurrent network whose weights are trained by an ordinary reinforcement learning
+  method across many tasks; the fast learning is "a computation whose state is stored in the RNN activations".
+  Its input holds the reward and the end of an episode beside state and action, and its state is kept over the
+  few episodes of one task. Trained on mazes of 5 × 5 and tested on 9 × 9 it lost little.
+- Algorithm Distillation (Laskin et al. 2022): a transformer trained to predict the actions in the learning
+  histories of an ordinary method; it then improves in context "without updating the transformer network
+  parameters". Its context must span 2 to 4 episodes for a near-optimal rule. The authors name long episodes as
+  its main limit, and with 1, 9 or 18 training tasks it showed no learning on test tasks. It is claimed to solve
+  one task outside its training distribution, a bandit.
+- Trained without backpropagation in the outer loop as well: Najarro and Risi (2020) evolve the coefficients of
+  a Hebbian rule per connection; the weights start random and change at every step.
+
+**What the published forms do not cover** (*derived*).
+
+- No reward. RL² is fed the reward; this problem has none, so the rule must learn from the steps and the
+  commanded goal alone.
+- One long life. The published rules learn over a few short episodes. Stage 1's condition is one life without
+  resets of thousands of steps, so the rule's state must hold a whole maze.
+- Many worlds are needed to train on, far more than eighteen.
+
+**In the project.**
+
+- It is a prior, and its training is computation off the robot. `GOALS.md` has goal 2 from scratch and, for goal
+  1, every gradient step on the robot's own computer and nothing learned in simulation carried over. Whether a
+  prior becomes part of the method is the owner's decision (`PLAN.md`, *What would change the plan*, first row).
+- Worlds to train on exist: `gcrl_maze.layouts.generate` makes a random maze from a seed. The twenty layouts are
+  too few to train on, and `layout-04` to `layout-20` are reserved.
+
+**A first test.** The rule as the step model only, on stored experience with no environment in the loop: trained
+across generated mazes to predict the next position from the steps read so far, then set against the best agent's
+step model on stored experience of `layout-01` to `layout-03`, by the experience each needs to reach the same
+error at equal operations per step at use. Only if it is clearly ahead does the rule get to act. In `APPROACH.md`
+as question 9, a potential experiment outside stage 1's order.
+
 ## Sources
 
 Checked on 2026-11-25, on the user's word ("Check the theory session's sources"). Four agents of the session each
@@ -300,5 +475,37 @@ No candidate of this note falls with these. The state-action goals gain a backer
 | Tsai et al., "Transformer dissection", EMNLP 2019; *Dive into Deep Learning*, chapter 11 | Attention is a kernel smoother over the inputs; the book names it Nadaraya–Watson regression with a learned similarity. | Full text |
 | Albus, "A new approach to manipulator control: the cerebellar model articulation controller", 1975; Sutton and Barto, *Reinforcement Learning*, 2nd edition, section 9.5.4 | Tile coding generalises only to states that share a tile. Hashed tiles are not local. Sutton and Barto credit tile coding to Albus 1971 and 1981. | Full text of both |
 
+### The second dialog: updates without backpropagation, and learned rules
+
+For sections 8 to 11. Checked on 2026-11-25 by one agent of the session, not on the user's word; it was told to
+look for where the recollection was wrong and reported quotes with their sections. I did not reread the papers.
+ALPaCA, the published form of section 8, is in the table above.
+
+What the second dialog had wrong or too loose:
+
+1. **Learned rules "work only in worlds like those they were trained on"** (wrong as stated). RL² was tested on
+   larger mazes than it was trained on and lost little, and Algorithm Distillation claims one task outside its
+   training distribution. The limits the papers state are long episodes and the number of training tasks.
+2. **The nearest published methods to a map without backpropagation** (too loose). Both named use a gradient
+   for a part: locally weighted projection regression for the fields' shapes, the resource-allocating network for
+   heights and centres.
+3. **Online EM.** The regression form of a joint mixture is in Ghahramani and Jordan, for components of equal
+   weight; they say nothing on an online form. The recursive form is Cappé and Moulines's.
+4. **ALPaCA** was said to be named from memory and unchecked. It was already in this note, read in full.
+
+| Source | What it says | How checked |
+|---|---|---|
+| Vijayakumar, D'Souza and Schaal, "Incremental online learning in high dimensions", *Neural Computation* 2005 | The prediction is "the normalized weighted mean of all K linear models" of Gaussian receptive fields. Local models by incremental partial least squares with a forgetting factor; a new field "if no RF was activated by more than w_gen"; "the centers c_k of the RFs remain fixed in order to minimize negative interference"; shapes by "stochastic gradient descent in a penalized leave-one-out cross-validation cost function". | Full text (author's copy), section 3 and tables 3 and 5 |
+| Platt, "A resource-allocating network for function interpolation", *Neural Computation* 1991 | A unit is allocated on a "two-part novelty condition" (far from every centre, and a large error), the distance threshold shrinking over time. Otherwise the Widrow-Hoff rule on the heights, and "in addition, we adjust the centers". The output is a sum that is not normalised. | Full text (a mirror copy), section 2 |
+| Ghahramani and Jordan, "Supervised learning from incomplete data via an EM approach", NIPS 1993 | The mean of the missing part given the rest is "a convex sum of linear approximations" (equation 14), derived for Gaussians of equal prior. E and M steps in closed form. | Full text, sections 2.1 and 4.1 |
+| Cappé and Moulines, "On-line expectation-maximization algorithm for latent data models", *JRSS B* 2009 (arXiv 0712.4273) | A running average of the sufficient statistics, with the parameters set from it after each sample (equation 15). They credit the idea of updating the statistics one sample at a time to Nowlan (1991). Their worked case is a mixture of regressions, not a mixture over input and output together. | Full text (arXiv); the journal's volume and pages not checked |
+| Neal and Hinton, "A view of the EM algorithm that justifies incremental, sparse, and other variants", 1998 | Incremental EM keeps the last statistics of every item, so it is not a streaming form; Nowlan's decaying average is, and "will not converge to the exact answer". | Full text, as page images |
+| Duan, Schulman, Chen, Bartlett, Sutskever and Abbeel, "RL²: fast reinforcement learning via slow reinforcement learning", arXiv 1611.02779, 2016 | As in section 11. The input is "the tuple (s, a, r, d)"; the state is "preserved to the next episode, but not preserved between trials". Extrapolation is tested in the mazes only: "a small drop in the rate of success in the larger mazes". No sentence says that no gradient step is taken at test time; it follows from the design. | Full text (arXiv v2), sections 2 and 3.3 |
+| Laskin et al., "In-context reinforcement learning with algorithm distillation", arXiv 2210.14215, 2022 (ICLR 2023 by a secondary listing) | As in section 11. "Multi-episodic contexts of 2-4 episodes are necessary to learn a near-optimal in-context RL algorithm"; "the main limitation of AD is that most RL environments of interest have long episodes"; "models trained on 1, 9 or 18 training tasks did not show any in-context learning on test tasks". | Full text (arXiv), sections 4, 5 and 7 and the appendix |
+| Najarro and Risi, "Meta-learning through Hebbian plasticity in random networks", NeurIPS 2020 (arXiv 2007.02686) | Evolution strategies find "the set of Hebbian coefficients", not the weights; the rule inside a life uses no reward. | Full text (arXiv) |
+| Song et al., "ES-MAML", ICLR 2020 (arXiv 1910.01215); Salimans et al., "Evolution strategies as a scalable alternative to reinforcement learning", arXiv 1703.03864, 2017 | Not learned rules: the first learns a starting point with evolution strategies in the outer loop ("it does not use backpropagation"), the second trains ordinary policies and names meta-learning as future work. | Full text (arXiv) |
+
 Not opened at all: Nemirovsky and Yudin 1983, Nesterov 2004, Lindley 1956, Bellman 1961, Duff's thesis, Puterman
-1994, Hernández-Lerma and Lasserre 1996. Howard 1966 and Gittins 1979 by abstract only.
+1994, Hernández-Lerma and Lasserre 1996. Howard 1966 and Gittins 1979 by abstract only. From the second dialog:
+Vijayakumar and Schaal 2000, Nowlan 1991, and Sato and Ishii 2000 ("On-line EM algorithm for the normalized
+Gaussian network"), a lead from Cappé and Moulines that by its title is the nearest to section 9.
