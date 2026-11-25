@@ -55,3 +55,40 @@ Testing is its own activity from here on.
 | 23:16 | 23:17 | writing | commit, work list |
 
 Totals: design 6, tools 3, testing 6 (of them 4 waiting on the full suite), writing 2, upkeep 2.
+
+## 2026-11-25, 23:18: trying the variants in the game (`--try-out`, `--variant`), on the user's word
+
+| From | To | Activity | What |
+|---|---|---|---|
+| 23:18 | 23:20 | upkeep, design | merge of `work/door`; how the game steps and scores |
+| 23:20 | 23:24 | tools | `variant_from_params`; the session through a variant's environment; drawing; the two flags |
+| 23:24 | 23:27 | testing, tools | four tests; they imported main's packages: pytest declared for the root project |
+| 23:27 | 23:29 | testing | the game's and the variants' tests; frames of each variant rendered and looked at; the gauge made readable |
+| 23:29 | 23:30 | writing | the game README, commit, notes |
+
+## 2026-11-25, 23:50: stage 1, a session of four hours
+
+Testing is its own activity.
+
+| From | To | Activity | What |
+|---|---|---|---|
+| 23:50 | 23:51 | orientation, writing | stage 0 closed in the notes; the change to question 1 in `APPROACH.md` and why |
+| 23:51 | 23:53 | analysis | why the time-to-goal is too long: stored experience against the true time and the data's shortest path |
+| 23:53 | 23:55 | tools | a multiplier on the time-to-goal's bounds |
+| 23:55 | 23:58 | testing | its tests (two rewrites: the first two did not break a bound in time); canaries |
+| 23:58 | 23:59 | writing, runs | question 1's section in the maze README; the multiplier runs started (once more: a label with a dot) |
+| 23:59 | 00:01 | tools | the truth swaps as parts and environment fields |
+| 00:01 | 00:02 | testing | seven tests (test points first inside walls); canaries |
+| 00:02 | 00:03 | runs | the swap chains started |
+| 00:03 | 00:05 | analysis, design | question 2's first measurement (the store forgets half of what was seen); question 2's remedy after question 3 |
+| 00:05 | 00:07 | tools | novel goals, curiosity, newness; the time-to-goal as a matrix |
+| 00:07 | 00:10 | testing | five tests; the count test restated for acting's new meaning; canaries; commit |
+| 00:10 | 00:12 | analysis | the runs' progress (slow side by side); curiosity counted at 1.57 × 10^9, over the level |
+| 00:12 | 00:15 | tools, testing | every state embedded once, 16 candidates, 64 sampled: 9.8 × 10^8; tests, canaries, commit |
+| 00:15 | 00:16 | runs, writing | question 3's section; its runs started |
+| 00:16 | 00:17 | tools, analysis | a script for the runs' results; the sign without the truth (gap 0.44 to 0.51 on the learned pair) |
+| 00:17 | 00:18 | analysis | question 2's interference test: plain, Fourier first layer, Gaussian attention |
+| 00:18 | 00:20 | analysis | the multiplier run: full steps 1.01 to 1.03, the learned time 1.08, the sign's gap 0.06; curiosity's first layout |
+| 00:20 | 00:21 | writing | findings 27 to 30; the maze README |
+| 00:21 | 00:23 | tools, testing | the reference (`--exploring random`); tests; canaries; two commits |
+| 00:23 | 00:24 | runs, writing | the race's budget; its two chains started |

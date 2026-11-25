@@ -408,6 +408,14 @@ The sources of the second dialog were checked the same day by one agent, not on 
 like their training worlds; RL² was tested on larger mazes and lost little) and two were too loose. Question 9
 names what the published rules do not show for this problem: no reward as an input, and one long life.
 
+### 2026-11-25: the truth swaps run with resets
+
+Question 1: the swaps run with one environment and a restart every 100 steps. In stage 1's condition the best agent
+saw 9 to 94 % of F and never reached the person's level (finding 26), so the criterion "halves the steps to the
+person's level" would be undefined and a swap's worth hidden behind the missing exploration. With resets the agent
+reaches the level in 37,000 to 40,000 steps (finding 23), which separates knowing from exploring. Told to the user
+before the session; the user then opened stage 1.
+
 ## Sources
 
 From the literature review of 2026-11-24; the survey before stage 1 is in `stage-1-survey.md`, and three labels

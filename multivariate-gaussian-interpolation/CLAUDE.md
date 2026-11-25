@@ -117,8 +117,12 @@ lifts a rule, update it here in the same step.
   - Set by the user on 2026-11-22 ("autonomous commits are okay in this repository, they will not be reviewed").
     The project is a git repository since 2026-11-22 (branch `main`, no remote).
   - My reading: committing finished work is allowed, and so are the commits the run record makes (the working
-    tree before a run, the record after it). Rewriting history, pushing and anything else beyond committing still
-    need the user's word. Commit messages are conventional commits.
+    tree before a run, the record after it). Commit messages are conventional commits.
+  - Widened by the user on 2026-11-25 ("Yes, this repo should be managed autonomously"), on whether merging
+    needs their word: I merge a working tree's branch into main on my own once its tests and, after a change to
+    shared code, the canaries pass, and report it; I also remove working trees and branches that are merged.
+    My reading: rewriting history (rebase, amend, reset of published commits, force) and pushing still need the
+    user's word, since they cannot be undone; there is no remote.
   - How (found 2026-11-24): run `git add` and `git commit` as plain commands from the project root, one per call.
     Chained into one command (`cd … && git add … && git commit …`) they do not match the allow rules in
     `.claude/settings.local.json` and are refused. The hook `~/.claude/hooks/guard-git-writes.sh` also blocks any
