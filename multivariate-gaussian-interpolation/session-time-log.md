@@ -115,3 +115,17 @@ Testing is its own activity.
 | 02:00 | 02:21 | runs | waiting for the learned agent on layout-01 (three waits) |
 | 02:21 | 02:22 | analysis, writing | the swaps on layout-01 against the learned agent; curiosity on layout-03; README and findings 31 and 33 |
 | 02:22 | 02:24 | runs | two more tests started: the multiplier on layout-01 with resets, curiosity that never rests |
+| 02:24 | 02:27 | upkeep | the stopped run removed with `runs remove`; my uncommitted `APPROACH.md` edit in main found and committed |
+| 02:27 | 02:43 | runs | waiting (two waits) |
+| 02:43 | 02:45 | analysis, writing | the exact step on layout-02; the race on the television and the random step; findings 33 and 34 |
+| 02:45 | 02:48 | analysis, writing | both truths on layout-01 after the fix; never resting (finding 35); `APPROACH.md` and its reasons |
+| 02:48 | 02:51 | upkeep, testing | `work/scores` into `work/stage1` into main; canaries on main; the `scores` tree removed |
+| 02:51 | 02:53 | writing | machine time per question; the work list |
+| 02:53 | 03:01 | runs | never resting queued on layouts 02 and 03 and the noise mazes (detached); waiting for the multiplier on layout-01 |
+| 03:01 | 03:06 | writing | the exact time on layout-03; the time log's totals; the report |
+
+Totals, 23:50 to 03:06 (minutes, mixed rows split evenly, rounded): waiting on runs 80, testing 43 (of it 18 waiting on
+full suites beside the runs, and 9 on a test run twice for a warning), analysis 22, writing 22, tools 17, upkeep 6,
+design 2. Runs side by side kept the GPU full from 00:03 on; the multiplier on layout-01 and about a dozen runs were
+still going at the end.
+| 03:06 | 03:15 | analysis, writing | never resting at its end; the multiplier on layout-01 against the learned agent and the exact time: the time-to-goal gets work |

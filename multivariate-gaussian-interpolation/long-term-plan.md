@@ -425,6 +425,20 @@ score per step of travel, both built as settings. Question 7: the Fourier first 
 since on the forgetting test it fitted best and forgot far less than the plain network while the attention was not
 clearly better (finding 30).
 
+### 2026-11-26: the form stops resting; question 1's verdicts so far
+
+Question 3: never resting saw 95 % of `layout-01` 4 to 5 times sooner and reached no worse (finding 35), so the form
+no longer rests on every second stretch and the race's remaining scores run without resting. Question 1: the step model
+gets no work (its truth reached no sooner on `layout-02` and worse on `layout-01`); the time-to-goal's verdict waits on
+the multiplier on `layout-01`, since its truth made the level reachable there and gained nothing on `layout-02`.
+
+### 2026-11-26: the time-to-goal gets work
+
+Question 1: on `layout-01` the multiplier, which fixes the learned time's scale, reaches no better than the learned agent
+(J^reach 0.052 and 0.038 at step 143,019) while the exact time is at the person's level by step 60,000, so an error
+beyond the scale holds reaching back and the time-to-goal gets work: first where its error lies, on recorded
+experience, then the Fourier first layer of question 7.
+
 ## Sources
 
 From the literature review of 2026-11-24; the survey before stage 1 is in `stage-1-survey.md`, and three labels
