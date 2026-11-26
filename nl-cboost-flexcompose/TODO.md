@@ -55,10 +55,44 @@ machine; the dev box in VS Code on Linux, then Windows.
      context is 621 MB).
   Could: `lock.sh` warns when two services lock different commits of a repository they share. Could: the
   override optional for a template that only imports, so the stub file can go (small CLI change).
-- PolyMX integration repo on the new starter (2026-11-19, uncommitted): imports the app; dev box up (project
-  `nl-polymx-automated-qc`, service `app`), simulated stack cycle passes; `./lock.sh` locked 10 repos (the flat lock,
-  before the lock per service). Next: commit, the lock per service, lock commit and tag (user), `./release.sh`, a run
-  on the machine; VS Code on Linux, then Windows.
+- PolyMX integration repo on the new starters (2026-11-26, uncommitted; the app's side is committed and pushed,
+  b021f41): `lock.sh` and `release.sh` are the starter's, the override is the stub, `lock.repos` is the lock per
+  service (the app at b021f41 and its 9 dependencies under `deps/`). Dry run from the lock, in
+  `~/.cache/polymx-release-dryrun` (not the real `release.sh`, which needs a commit and a tag): checkout, generate,
+  the image built without an agent and with capped parallelism (`cboost-c-nas:5100/polymx-qc:0.0.0-dryrun`, 5 min 23
+  s), and the app's simulated stack cycle (`scripts/simulate_stack_cycle.py`, 2 plates, recipe sled) passed in a
+  container started from the generated `compose.release.yaml` (73 s). Next: commit and tag (user), `./release.sh`
+  (about 17 GB free memory, or the parallelism cap below first; `make install` first: the installed `flexcompose`
+  1.2.0 still adds `ssh: [default]`), a run on the machine; VS Code on Linux, then Windows.
+- **PolyMX: what a real cycle on the cell still needs** (read from the app's docs and launch files 2026-11-26,
+  nothing tried on hardware). The release runs `polymx_stack.launch.py` without arguments: real arm at
+  `controller_ip` 127.0.0.1, gates closed, so the cell's values belong in the machine's override (`command:`). The
+  EtherCAT server: for now it runs on a separate machine, `cboost-dd-test:50051` (user, 2026-11-26), so the app
+  gets `io_address:=cboost-dd-test:50051` and the machine needs no server service yet. If it becomes one: a
+  release-only service in the app's `flexcompose.release.yaml`, built from `deps/nl-polymx-ethercat`
+  (`docker/server/Dockerfile`, no stage `release`; `privileged`, host network). Its TOML configuration could then
+  live in the integration repo (asked 2026-11-26): a `config/` folder that `release.sh` copies into the bundle and
+  the machine's override mounts; the server's `--check-config` guards a config that doesn't fit the server version;
+  dev boxes can't get machine files through the template today.
+  Spike 2026-11-26, in `~/.cache/polymx-config-spike` (no repo changed): a machine override with a service
+  `ethercat` (build context `nl-polymx-automated-qc-application/deps/nl-polymx-ethercat`, mount
+  `./config/ethercat:/app/config:ro`) and `io_address:=...` in the app's `command:`. The server image built from
+  the lock through `compose.release-build.yaml` (1.5 min; needs the fragment without `target: release`, which is
+  uncommitted in the FlexCompose checkout). The mount path stays relative to the bundle folder; the server reads
+  the mount, not the copy its Dockerfile bakes in; `--check-config` through `docker compose run` works in the
+  bundle. Config and server must come from one commit: the dev checkout's files (2a24002) were refused by the
+  locked server (faf82d9, four pallet inputs newer), and the locked files by the image 0.0.5 of 11 Nov. To build:
+  `release.sh` copies `config/` to the locked checkout and the bundle, lists every file in `SHA256SUMS` (`find`,
+  not a fixed list), and runs the check before `docker save`. Open: who owns `axis.toml` and `light-lift.toml`
+  (measured on the machine; an edit there breaks the bundle's checksums), and the image name (0.0.5 is a local
+  tag that two different builds carry).
+  `target: release` removed from the `release:build` fragment 2026-11-26 (uncommitted in the FlexCompose checkout,
+  waiting for the user's commit). `build: .` now gets `BASE_IMAGE` in the long syntax (it was refused before).
+  `BASE_IMAGE` injection, the other half of F2, stays.
+  The validated middleware (patched Fast DDS, rclpy backport, `scripts/with-validated-runtime.sh`) is not in the
+  image. The ledger, datastore and captures are in `~/.local/state/polymx/` in the container: no volume, lost at
+  every update. The detectors are not wired into the recipe (the app's OI-A-010, OI-A-011). Unverified: the rviz
+  panels on the IPC's display, the GPU, `restart: always` against no unattended restart.
 - **Service starter: `colcon build` has no parallelism cap** (found 2026-11-18). It runs as many packages and
   compilers as there are cores; `packml_ros` takes about 1.2 GB per compiler. In the PolyMX dev box that ran the PC out
   of memory and took the desktop with it; the image build failed in a 10 GB builder and passed with 17 GB free
