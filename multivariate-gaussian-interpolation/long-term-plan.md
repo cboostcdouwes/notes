@@ -416,6 +416,15 @@ person's level" would be undefined and a swap's worth hidden behind the missing 
 reaches the level in 37,000 to 40,000 steps (finding 23), which separates knowing from exploring. Told to the user
 before the session; the user then opened stage 1.
 
+### 2026-11-26: question 2's remedy after question 3's first score; new candidates for questions 3 and 7
+
+Question 2: the store forgets much only where the agent saw much (finding 29), and before curiosity it seldom did
+(finding 26), so the store's remedy waits for question 3's first score, its first test being a store that keeps every
+step. Question 3: two more candidates, never resting (the last tenth of the maze takes most of the steps) and the
+score per step of travel, both built as settings. Question 7: the Fourier first layer goes before the attention,
+since on the forgetting test it fitted best and forgot far less than the plain network while the attention was not
+clearly better (finding 30).
+
 ## Sources
 
 From the literature review of 2026-11-24; the survey before stage 1 is in `stage-1-survey.md`, and three labels

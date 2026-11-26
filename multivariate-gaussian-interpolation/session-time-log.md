@@ -92,3 +92,15 @@ Testing is its own activity.
 | 00:20 | 00:21 | writing | findings 27 to 30; the maze README |
 | 00:21 | 00:23 | tools, testing | the reference (`--exploring random`); tests; canaries; two commits |
 | 00:23 | 00:24 | runs, writing | the race's budget; its two chains started |
+| 00:25 | 00:26 | runs | the reference chain started again (a commit had found nothing: a run had swept the edit into its code) |
+| 00:26 | 00:29 | tools, testing | the score per step of travel, in its own working tree; a test of its rule; canaries; commit |
+| 00:29 | 00:41 | runs | waiting: seven runs share the GPU |
+| 00:41 | 00:42 | writing | the work list |
+| 00:42 | 01:05 | runs | waiting for the first swaps (three waits) |
+| 01:05 | 01:07 | analysis | curiosity on layout-01 against the agent without it; question 2's first test started (keep every step), its section after the run had begun |
+| 01:07 | 01:09 | analysis | the swaps and the first race runs on layout-01: both truths together stand still (NaN policy) |
+| 01:09 | 01:13 | testing, tools | a failing test, then a length with gradient 0 at zero in the geometry; geometry, door and swap tests; canaries |
+| 01:13 | 01:14 | upkeep, runs | the fix merged into `work/stage1`; both truths and the learned baselines started again |
+| 01:14 | 01:17 | analysis, writing | the rate 1.0 multiplier; exact steps to each level of seeing from stored positions; the README |
+| 01:17 | 01:20 | tools | `--rest-every` in the `scores` tree |
+| 01:20 | 01:29 | testing | its tests twice (a deprecation warning showed `~False` used as a mask; fixed); canaries; commit |
