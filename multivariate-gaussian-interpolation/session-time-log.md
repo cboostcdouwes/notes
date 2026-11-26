@@ -104,3 +104,14 @@ Testing is its own activity.
 | 01:14 | 01:17 | analysis, writing | the rate 1.0 multiplier; exact steps to each level of seeing from stored positions; the README |
 | 01:17 | 01:20 | tools | `--rest-every` in the `scores` tree |
 | 01:20 | 01:29 | testing | its tests twice (a deprecation warning showed `~False` used as a mask; fixed); canaries; commit |
+| 01:29 | 01:31 | writing | `APPROACH.md` (question 2's remedy after 3's first score; candidates for 3 and 7) and its reasons |
+| 01:31 | 01:40 | testing, runs | the full package suite with canaries in the background (13 minutes beside the runs); waiting |
+| 01:40 | 01:42 | analysis | curiosity on layout-02: the person's level reached for the first time in stage 1's condition |
+| 01:42 | 01:44 | writing | question 3's results, finding 31 |
+| 01:44 | 01:53 | testing | the maze package's and the experiments' tests in the background; waiting |
+| 01:53 | 01:57 | tools, testing | the maze tests died beside the runs (second time): the GPU grab turned off in their conftest; 56 passed |
+| 01:57 | 01:58 | analysis, writing | question 2's first test: keeping every step does not help (finding 32) |
+| 01:58 | 02:00 | analysis | the race on the noise mazes; the exact time on layout-02 |
+| 02:00 | 02:21 | runs | waiting for the learned agent on layout-01 (three waits) |
+| 02:21 | 02:22 | analysis, writing | the swaps on layout-01 against the learned agent; curiosity on layout-03; README and findings 31 and 33 |
+| 02:22 | 02:24 | runs | two more tests started: the multiplier on layout-01 with resets, curiosity that never rests |
