@@ -129,3 +129,17 @@ full suites beside the runs, and 9 on a test run twice for a warning), analysis 
 design 2. Runs side by side kept the GPU full from 00:03 on; the multiplier on layout-01 and about a dozen runs were
 still going at the end.
 | 03:06 | 03:15 | analysis, writing | never resting at its end; the multiplier on layout-01 against the learned agent and the exact time: the time-to-goal gets work |
+
+## 2026-11-26, morning, ending 08:50: the last runs and question 1's close-out, on the user's word
+
+Start times were not taken with `date`; the rows give the order and rough minutes.
+
+| Minutes | Activity | What |
+|---|---|---|
+| 5 | analysis | the never-resting runs on layouts 02 and 03 and the noise and television mazes against the resting runs |
+| 5 | writing, tools | maze README, finding 35, `APPROACH.md`; `rest_every` 0 the default; curiosity tests (2 minutes); commit |
+| 2 | upkeep | the `stage1` tree and branch removed; work list |
+| 5 | design | which scratch scripts become package parts (`results`, `check`) and which are deleted |
+| 8 | tools | `gcrl.checks`, `runs.experience`, the two commands; checked against the scratch scripts on `bound-rate-01` |
+| 9 | testing | nine tests (one expectation of mine wrong); the whole package with canaries (6.7 minutes) |
+| 3 | upkeep, writing | merge, tree removed, scratch scripts deleted, work list |
